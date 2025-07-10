@@ -240,7 +240,7 @@ internal class GoogleFunctionDeclaration(
  * @property topP The maximum cumulative probability of tokens to consider when sampling.
  * @property topK The maximum number of tokens to consider when sampling.
  * @property thinkingConfig Controls whether the model should expose its chain-of-thought
- *                           and how many tokens it may spend on it (see [GoogleThinkingConfig]).
+ * and how many tokens it may spend on it (see [GoogleThinkingConfig]).
  */
 @Serializable
 internal class GoogleGenerationConfig(
@@ -252,7 +252,6 @@ internal class GoogleGenerationConfig(
     val numberOfChoices: Int? = null,
     val topP: Double? = null,
     val topK: Int? = null,
-    @SerialName("thinkingConfig")
     val thinkingConfig: GoogleThinkingConfig? = null
 )
 
@@ -278,8 +277,8 @@ internal class GoogleToolConfig(
  */
 @Serializable
 internal data class GoogleThinkingConfig(
-    @SerialName("includeThoughts") val includeThoughts: Boolean? = null,
-    @SerialName("thinkingBudget") val thinkingBudget: Int? = null
+    val includeThoughts: Boolean? = null,
+    val thinkingBudget: Int? = null
 )
 
 /**

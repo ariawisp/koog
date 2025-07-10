@@ -308,8 +308,8 @@ public open class GoogleLLMClient(
             numberOfChoices = if (model.capabilities.contains(LLMCapability.MultipleChoices)) prompt.params.numberOfChoices else null,
             maxOutputTokens = 2048,
             thinkingConfig = GoogleThinkingConfig(
-                includeThoughts = settings.includeThoughts.takeIf { it },
-                thinkingBudget = settings.thinkingBudget
+                includeThoughts = prompt.params.includeThoughts.takeIf { it == true },
+                thinkingBudget = prompt.params.thinkingBudget
             ).takeIf { it.includeThoughts != null || it.thinkingBudget != null }
         )
 
