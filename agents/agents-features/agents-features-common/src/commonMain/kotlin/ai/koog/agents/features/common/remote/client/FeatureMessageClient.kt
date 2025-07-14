@@ -2,6 +2,7 @@ package ai.koog.agents.features.common.remote.client
 
 import ai.koog.agents.features.common.message.FeatureMessage
 import ai.koog.agents.utils.Closeable
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * An interface representing a client to interact with a feature messaging system.
@@ -22,7 +23,7 @@ public interface FeatureMessageClient : Closeable {
      * This property reflects the connection state of the client. It is `true` if the client has
      * successfully established a communication link with the remote service and `false` otherwise.
      */
-    public val isConnected: Boolean
+    public val isConnected: StateFlow<Boolean>
 
     /**
      * Establishes a connection to the remote feature messaging service.

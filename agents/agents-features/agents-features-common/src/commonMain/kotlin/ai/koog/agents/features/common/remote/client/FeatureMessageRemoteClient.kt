@@ -16,6 +16,8 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.sse.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.serializer
 import kotlin.properties.Delegates
 
@@ -40,7 +42,7 @@ public class FeatureMessageRemoteClient(
         private val logger = KotlinLogging.logger {  }
     }
 
-    private var isInitialized = false
+    private val _isConnected: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     private var session: ClientSSESession by Delegates.notNull()
 
@@ -57,8 +59,8 @@ public class FeatureMessageRemoteClient(
      * and `false` otherwise. The connectivity is derived from the internal initialization state
      * of the client.
      */
-    override val isConnected: Boolean
-        get() = isInitialized
+    override val isConnected: StateFlow<Boolean>
+        get() = _isConnected
 
     /**
      * A communication channel for receiving feature messages or events.
@@ -80,7 +82,7 @@ public class FeatureMessageRemoteClient(
     override suspend fun connect() {
         logger.info { "Feature Message Remote Client. Start connecting to server: ${connectionConfig.url}" }
 
-        if (isInitialized) {
+        if (isConnected.value) {
             logger.warn { "Feature Message Remote Client. Client is already connected. Skip initialization." }
             return
         }
@@ -88,13 +90,13 @@ public class FeatureMessageRemoteClient(
         createSSESession()
 
         logger.info { "Feature Message Remote Client. Client is connected successfully to server: ${connectionConfig.url}" }
-        isInitialized = true
+        _isConnected.value = true
     }
 
     override suspend fun close() {
         logger.info { "Feature Message Remote Client. Closing client: ${connectionConfig.url}" }
 
-        if (!isInitialized) {
+        if (!isConnected.value) {
             logger.warn { "Feature Message Remote Client. Client is already stopped. Skip stopping." }
             return
         }
@@ -120,7 +122,7 @@ public class FeatureMessageRemoteClient(
             client.close()
         }
 
-        isInitialized = false
+        _isConnected.value = false
 
         logger.info { "Feature Message Remote Client. Client is successfully closed: ${connectionConfig.url}" }
     }

@@ -18,6 +18,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTime
 
 class FeatureMessageRemoteServerTest {
 
@@ -35,7 +36,7 @@ class FeatureMessageRemoteServerTest {
         val serverConfig = DefaultServerConnectionConfig(port = port)
         FeatureMessageRemoteServer(connectionConfig = serverConfig).use { server ->
             server.start()
-            assertTrue(server.isStarted)
+            assertTrue(server.isStarted.value)
         }
     }
 
@@ -46,10 +47,10 @@ class FeatureMessageRemoteServerTest {
 
         FeatureMessageRemoteServer(connectionConfig = serverConfig).use { server ->
             server.start()
-            assertTrue(server.isStarted)
+            assertTrue(server.isStarted.value)
 
             server.start()
-            assertTrue(server.isStarted)
+            assertTrue(server.isStarted.value)
         }
     }
 
@@ -80,10 +81,10 @@ class FeatureMessageRemoteServerTest {
 
         val server = FeatureMessageRemoteServer(connectionConfig = serverConfig)
         server.start()
-        assertTrue(server.isStarted)
+        assertTrue(server.isStarted.value)
 
         server.close()
-        assertFalse(server.isStarted)
+        assertFalse(server.isStarted.value)
     }
 
     @Test
@@ -92,12 +93,41 @@ class FeatureMessageRemoteServerTest {
         val serverConfig = DefaultServerConnectionConfig(port = port)
 
         val server = FeatureMessageRemoteServer(connectionConfig = serverConfig)
-        assertFalse(server.isStarted)
+        assertFalse(server.isStarted.value)
         server.close()
-        assertFalse(server.isStarted)
+        assertFalse(server.isStarted.value)
     }
 
     //endregion Start / Stop
+
+    //region Suspend
+
+    @Test
+    fun `test server is running with suspend flag`() = runBlocking {
+        val port = findAvailablePort()
+        val serverConfig = DefaultServerConnectionConfig(port = port, wait = true)
+        FeatureMessageRemoteServer(connectionConfig = serverConfig).use { server ->
+            val suspendedServerJob = launch(Dispatchers.IO) {
+                server.start()
+            }
+
+            var isServerStarted = false
+            val connectionAttemptsTime = measureTime {
+                isServerStarted = withTimeoutOrNull(defaultClientServerTimeout) {
+                    suspendedServerJob.join()
+                } != null
+
+                server.close()
+                suspendedServerJob.cancelAndJoin()
+            }
+
+            assertFalse(isServerStarted)
+            assertFalse(server.isStarted.value, "Server is started when it should waits for connection.")
+            assertTrue(connectionAttemptsTime >= defaultClientServerTimeout, "Server did not wait for timeout.")
+        }
+    }
+
+    //endregion Suspend
 
     //region SSE
 

@@ -6,7 +6,7 @@ import ai.koog.agents.features.common.remote.server.config.ServerConnectionConfi
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.cio.CIO
+import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -16,6 +16,8 @@ import io.ktor.sse.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.serialization.serializer
 import kotlin.properties.Delegates
@@ -39,15 +41,14 @@ public class FeatureMessageRemoteServer(
         private val logger = KotlinLogging.logger {  }
     }
 
-    private var isInitialized = false
-
     private var server: EmbeddedServer<ApplicationEngine, ApplicationEngine.Configuration> by Delegates.notNull()
 
     private val toSendMessages: Channel<FeatureMessage> = Channel(Channel.UNLIMITED)
 
+    private val _isStarted: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    override val isStarted: Boolean
-        get() = isInitialized
+    override val isStarted: StateFlow<Boolean>
+        get() = _isStarted
 
     /**
      * A channel used to receive and process incoming feature messages sent to the server.
@@ -58,7 +59,8 @@ public class FeatureMessageRemoteServer(
      *
      * Key Characteristics:
      * - The channel is configured with an unlimited capacity, allowing it to buffer incoming messages
-     *   without restriction. This ensures robustness during high message throughput scenarios.
+     *   without restriction.
+     *   This ensures robustness during high-message throughput scenarios.
      * - Incoming feature messages may represent various system events, categorized by their
      *   `messageType` or timestamp as per the [FeatureMessage] interface.
      *
@@ -100,28 +102,29 @@ public class FeatureMessageRemoteServer(
     override suspend fun start() {
         logger.info { "Feature Message Remote Server. Starting server on port ${connectionConfig.port}" }
 
-        if (isInitialized) {
+        if (isStarted.value) {
             logger.warn { "Feature Message Remote Server. Server is already started! Skip initialization." }
             return
         }
 
-        startServer(host = connectionConfig.host, port = connectionConfig.port)
-        logger.debug { "Feature Message Remote Server. Initialized successfully on port ${connectionConfig.port}" }
+        startServer(
+            host = connectionConfig.host,
+            port = connectionConfig.port,
+            wait = connectionConfig.wait,
+        )
 
-        isInitialized = true
+        logger.debug { "Feature Message Remote Server. Initialized successfully on port ${connectionConfig.port}" }
     }
 
     override suspend fun close() {
-        logger.info { "Feature Message Remote Server. Starting closing server on port ${connectionConfig.port}" }
+        logger.info { "Feature Message Remote Server. Closing server on port ${connectionConfig.port}" }
 
-        if (!isInitialized) {
-            logger.warn { "Feature Message Remote Server. Server is already stopped! Skip stopping." }
+        if (!isStarted.value) {
+            logger.warn { "Feature Message Remote Server. Server is not running. Skip stopping." }
             return
         }
 
         stopServer()
-
-        isInitialized = false
     }
 
     //endregion Start / Stop
@@ -136,10 +139,10 @@ public class FeatureMessageRemoteServer(
 
     //region Private Methods
 
-    private fun startServer(host: String, port: Int) {
+    private suspend fun startServer(host: String, port: Int, wait: Boolean) {
         try {
             val server = createServer(host = host, port = port)
-            server.start(wait = false)
+            server.startSuspend(wait = wait)
         }
         catch (t: CancellationException) {
             // Server start() method starts a coroutine job canceled in case of IOException.
@@ -215,6 +218,16 @@ public class FeatureMessageRemoteServer(
                         call.respond(HttpStatusCode.InternalServerError, "Error on receiving message: ${t.message}")
                     }
                 }
+            }
+
+            monitor.subscribe(ServerReady) {
+                logger.debug { "Feature Message Remote Server. Server has been started and ready to receive connections." }
+                _isStarted.value = true
+            }
+
+            monitor.subscribe(ApplicationStopped) {
+                logger.debug { "Feature Message Remote Server. Server has been stopped." }
+                _isStarted.value = false
             }
         }
 
