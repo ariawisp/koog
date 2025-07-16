@@ -1,24 +1,26 @@
-package ai.koog.prompt.structure.json
+package ai.koog.prompt.structure.json.generator
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.ClassDiscriminatorMode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class JsonSchemaGeneratorTest {
     private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        explicitNulls = false
-        coerceInputValues = true
-        classDiscriminator = "kind"
         prettyPrint = true
+        explicitNulls = false
+        isLenient = true
+        ignoreUnknownKeys = true
         prettyPrintIndent = "  "
+        classDiscriminator = "#type"
+        classDiscriminatorMode = ClassDiscriminatorMode.POLYMORPHIC
 
         serializersModule = SerializersModule {
             polymorphic(TestOpenPolymorphism::class) {
@@ -28,9 +30,8 @@ class JsonSchemaGeneratorTest {
         }
     }
 
-    private val jsonSchemaGenerator = JsonSchemaGenerator(json, JsonSchemaGenerator.SchemaFormat.JsonSchema, 10)
-    private val simpleSchemaGenerator = JsonSchemaGenerator(json, JsonSchemaGenerator.SchemaFormat.Simple, 10)
-
+    private val simpleGenerator = SimpleJsonSchemaGenerator
+    private val fullGenerator = FullJsonSchemaGenerator
 
     @Serializable
     @SerialName("TestClass")
@@ -111,10 +112,60 @@ class JsonSchemaGeneratorTest {
         ) : TestOpenPolymorphism()
     }
 
+    @Serializable
+    @SerialName("NonRecursiveOpenPolymorphism")
+    abstract class NonRecursiveOpenPolymorphism {
+        abstract val id: String
+
+        @Suppress("unused")
+        @Serializable
+        @SerialName("NonRecursiveOpenSubclass1")
+        data class SubClass1(
+            override val id: String,
+            val property1: String
+        ) : NonRecursiveOpenPolymorphism()
+
+        @Suppress("unused")
+        @Serializable
+        @SerialName("NonRecursiveOpenSubclass2")
+        data class SubClass2(
+            override val id: String,
+            val property2: Int
+        ) : NonRecursiveOpenPolymorphism()
+    }
+
+    @Serializable
+    @SerialName("NonRecursivePolymorphism")
+    sealed class NonRecursivePolymorphism {
+        abstract val id: String
+
+        @Suppress("unused")
+        @Serializable
+        @SerialName("NonRecursiveSubclass1")
+        data class SubClass1(
+            override val id: String,
+            val property1: String
+        ) : NonRecursivePolymorphism()
+
+        @Suppress("unused")
+        @Serializable
+        @SerialName("NonRecursiveSubclass2")
+        data class SubClass2(
+            override val id: String,
+            val property2: Int
+        ) : NonRecursivePolymorphism()
+    }
+
+    @Serializable
+    @SerialName("RecursiveTestClass")
+    data class RecursiveTestClass(
+        val recursiveProperty: RecursiveTestClass?
+    )
 
     @Test
     fun testGenerateJsonSchema() {
-        val schema = json.encodeToString(jsonSchemaGenerator.generate("TestClass", serializer<TestClass>()))
+        val result = fullGenerator.generate(json, "TestClass", serializer<TestClass>(), emptyMap())
+        val schema = json.encodeToString(result.schema)
 
         val expectedSchema = """
             {
@@ -123,7 +174,6 @@ class JsonSchemaGeneratorTest {
               "${"$"}defs": {
                 "TestClass": {
                   "type": "object",
-                  "description": "A test class",
                   "properties": {
                     "stringProperty": {
                       "type": "string",
@@ -136,8 +186,10 @@ class JsonSchemaGeneratorTest {
                       "type": "boolean"
                     },
                     "nullableProperty": {
-                      "type": "string",
-                      "nullable": true
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "listProperty": {
                       "type": "array",
@@ -156,11 +208,12 @@ class JsonSchemaGeneratorTest {
                     "stringProperty",
                     "intProperty",
                     "booleanProperty"
-                  ]
+                  ],
+                  "additionalProperties": false,
+                  "description": "A test class"
                 }
               },
-              "${"$"}ref": "#/defs/TestClass",
-              "type": "object"
+              "${"$"}ref": "#/${"$"}defs/TestClass"
             }
         """.trimIndent()
 
@@ -169,12 +222,12 @@ class JsonSchemaGeneratorTest {
 
     @Test
     fun testGenerateSimpleSchema() {
-        val schema = json.encodeToString(simpleSchemaGenerator.generate("TestClass", serializer<TestClass>()))
+        val result = simpleGenerator.generate(json, "TestClass", serializer<TestClass>(), emptyMap())
+        val schema = json.encodeToString(result.schema)
 
         val expectedSchema = """
             {
               "type": "object",
-              "description": "A test class",
               "properties": {
                 "stringProperty": {
                   "type": "string",
@@ -207,7 +260,8 @@ class JsonSchemaGeneratorTest {
                 "stringProperty",
                 "intProperty",
                 "booleanProperty"
-              ]
+              ],
+              "additionalProperties": false
             }
         """.trimIndent()
 
@@ -221,7 +275,8 @@ class JsonSchemaGeneratorTest {
             "TestClass.intProperty" to "An integer property"
         )
 
-        val schema = json.encodeToString(jsonSchemaGenerator.generate("TestClass", serializer<TestClass>(), descriptions))
+        val result = fullGenerator.generate(json, "TestClass", serializer<TestClass>(), descriptions)
+        val schema = json.encodeToString(result.schema)
 
         val expectedSchema = """
             {
@@ -230,7 +285,6 @@ class JsonSchemaGeneratorTest {
               "${"$"}defs": {
                 "TestClass": {
                   "type": "object",
-                  "description": "A test class (override)",
                   "properties": {
                     "stringProperty": {
                       "type": "string",
@@ -244,8 +298,10 @@ class JsonSchemaGeneratorTest {
                       "type": "boolean"
                     },
                     "nullableProperty": {
-                      "type": "string",
-                      "nullable": true
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "listProperty": {
                       "type": "array",
@@ -264,11 +320,12 @@ class JsonSchemaGeneratorTest {
                     "stringProperty",
                     "intProperty",
                     "booleanProperty"
-                  ]
+                  ],
+                  "additionalProperties": false,
+                  "description": "A test class (override)"
                 }
               },
-              "${"$"}ref": "#/defs/TestClass",
-              "type": "object"
+              "${"$"}ref": "#/${"$"}defs/TestClass"
             }
         """.trimIndent()
 
@@ -282,12 +339,12 @@ class JsonSchemaGeneratorTest {
             "TestClass.intProperty" to "An integer property"
         )
 
-        val schema = json.encodeToString(simpleSchemaGenerator.generate("TestClass", serializer<TestClass>(), descriptions))
+        val result = simpleGenerator.generate(json, "TestClass", serializer<TestClass>(), descriptions)
+        val schema = json.encodeToString(result.schema)
 
         val expectedSchema = """
             {
               "type": "object",
-              "description": "A test class (override)",
               "properties": {
                 "stringProperty": {
                   "type": "string",
@@ -321,7 +378,8 @@ class JsonSchemaGeneratorTest {
                 "stringProperty",
                 "intProperty",
                 "booleanProperty"
-              ]
+              ],
+              "additionalProperties": false
             }
         """.trimIndent()
 
@@ -338,7 +396,8 @@ class JsonSchemaGeneratorTest {
             "NestedProperty.bar" to "Nested bar property",
         )
 
-        val schema = json.encodeToString(jsonSchemaGenerator.generate("NestedTestClass", serializer<NestedTestClass>(), descriptions))
+        val result = fullGenerator.generate(json, "NestedTestClass", serializer<NestedTestClass>(), descriptions)
+        val schema = json.encodeToString(result.schema)
 
         val expectedDotSchema = """
             {
@@ -347,7 +406,6 @@ class JsonSchemaGeneratorTest {
               "${"$"}defs": {
                 "NestedProperty": {
                   "type": "object",
-                  "description": "Nested property class",
                   "properties": {
                     "foo": {
                       "type": "string",
@@ -361,30 +419,32 @@ class JsonSchemaGeneratorTest {
                   "required": [
                     "foo",
                     "bar"
-                  ]
+                  ],
+                  "additionalProperties": false,
+                  "description": "Nested property class"
                 },
                 "NestedTestClass": {
                   "type": "object",
-                  "description": "Nested test class",
                   "properties": {
                     "name": {
                       "type": "string",
                       "description": "The name (override)"
                     },
                     "nested": {
-                      "${"$"}ref": "#/defs/NestedProperty"
+                      "${"$"}ref": "#/${"$"}defs/NestedProperty",
+                      "description": "Nested property class"
                     },
                     "nestedList": {
                       "type": "array",
                       "items": {
-                        "${"$"}ref": "#/defs/NestedProperty"
+                        "${"$"}ref": "#/${"$"}defs/NestedProperty"
                       },
                       "description": "List of nested properties"
                     },
                     "nestedMap": {
                       "type": "object",
                       "additionalProperties": {
-                        "${"$"}ref": "#/defs/NestedProperty"
+                        "${"$"}ref": "#/${"$"}defs/NestedProperty"
                       },
                       "description": "Map of nested properties"
                     }
@@ -392,13 +452,15 @@ class JsonSchemaGeneratorTest {
                   "required": [
                     "name",
                     "nested"
-                  ]
+                  ],
+                  "additionalProperties": false,
+                  "description": "Nested test class"
                 }
               },
-              "${"$"}ref": "#/defs/NestedTestClass",
-              "type": "object"
+              "${"$"}ref": "#/${"$"}defs/NestedTestClass"
             }
         """.trimIndent()
+
 
         assertEquals(expectedDotSchema, schema)
     }
@@ -414,12 +476,12 @@ class JsonSchemaGeneratorTest {
         )
 
 
-        val schema = json.encodeToString(simpleSchemaGenerator.generate("NestedTestClass", serializer<NestedTestClass>(), descriptions))
+        val result = simpleGenerator.generate(json, "NestedTestClass", serializer<NestedTestClass>(), descriptions)
+        val schema = json.encodeToString(result.schema)
 
         val expectedDotSchema = """
             {
               "type": "object",
-              "description": "Nested test class",
               "properties": {
                 "name": {
                   "type": "string",
@@ -427,7 +489,6 @@ class JsonSchemaGeneratorTest {
                 },
                 "nested": {
                   "type": "object",
-                  "description": "Nested property class",
                   "properties": {
                     "foo": {
                       "type": "string",
@@ -441,13 +502,14 @@ class JsonSchemaGeneratorTest {
                   "required": [
                     "foo",
                     "bar"
-                  ]
+                  ],
+                  "additionalProperties": false,
+                  "description": "Nested property class"
                 },
                 "nestedList": {
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Nested property class",
                     "properties": {
                       "foo": {
                         "type": "string",
@@ -461,7 +523,8 @@ class JsonSchemaGeneratorTest {
                     "required": [
                       "foo",
                       "bar"
-                    ]
+                    ],
+                    "additionalProperties": false
                   },
                   "description": "List of nested properties"
                 },
@@ -469,7 +532,6 @@ class JsonSchemaGeneratorTest {
                   "type": "object",
                   "additionalProperties": {
                     "type": "object",
-                    "description": "Nested property class",
                     "properties": {
                       "foo": {
                         "type": "string",
@@ -483,7 +545,8 @@ class JsonSchemaGeneratorTest {
                     "required": [
                       "foo",
                       "bar"
-                    ]
+                    ],
+                    "additionalProperties": false
                   },
                   "description": "Map of nested properties"
                 }
@@ -491,7 +554,8 @@ class JsonSchemaGeneratorTest {
               "required": [
                 "name",
                 "nested"
-              ]
+              ],
+              "additionalProperties": false
             }
         """.trimIndent()
 
@@ -508,7 +572,9 @@ class JsonSchemaGeneratorTest {
             "ClosedSubclass2.property2" to "Property 2 for subclass 2",
         )
 
-        val schema = json.encodeToString(jsonSchemaGenerator.generate("TestClosedPolymorphism", serializer<TestClosedPolymorphism>(), descriptions))
+        val result = fullGenerator.generate(json, "TestClosedPolymorphism",
+            serializer<TestClosedPolymorphism>(), descriptions)
+        val schema = json.encodeToString(result.schema)
 
         val expectedSchema = """
             {
@@ -518,9 +584,6 @@ class JsonSchemaGeneratorTest {
                 "ClosedSubclass1": {
                   "type": "object",
                   "properties": {
-                    "kind": {
-                      "const": "ClosedSubclass1"
-                    },
                     "id": {
                       "type": "string",
                       "description": "ID for subclass 1"
@@ -528,20 +591,21 @@ class JsonSchemaGeneratorTest {
                     "property1": {
                       "type": "string",
                       "description": "Property 1 for subclass 1"
+                    },
+                    "#type": {
+                      "const": "ClosedSubclass1"
                     }
                   },
                   "required": [
-                    "kind",
                     "id",
-                    "property1"
-                  ]
+                    "property1",
+                    "#type"
+                  ],
+                  "additionalProperties": false
                 },
                 "ClosedSubclass2": {
                   "type": "object",
                   "properties": {
-                    "kind": {
-                      "const": "ClosedSubclass2"
-                    },
                     "id": {
                       "type": "string",
                       "description": "ID for subclass 2"
@@ -553,115 +617,32 @@ class JsonSchemaGeneratorTest {
                     "recursiveTypeProperty": {
                       "oneOf": [
                         {
-                          "${"$"}ref": "#/defs/ClosedSubclass1"
+                          "${"$"}ref": "#/${"$"}defs/ClosedSubclass1"
                         },
                         {
-                          "${"$"}ref": "#/defs/ClosedSubclass2"
+                          "${"$"}ref": "#/${"$"}defs/ClosedSubclass2"
                         }
                       ]
+                    },
+                    "#type": {
+                      "const": "ClosedSubclass2"
                     }
                   },
                   "required": [
-                    "kind",
                     "id",
                     "property2",
-                    "recursiveTypeProperty"
-                  ]
+                    "recursiveTypeProperty",
+                    "#type"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "oneOf": [
                 {
-                  "${"$"}ref": "#/defs/ClosedSubclass1"
+                  "${"$"}ref": "#/${"$"}defs/ClosedSubclass1"
                 },
                 {
-                  "${"$"}ref": "#/defs/ClosedSubclass2"
-                }
-              ],
-              "type": "object"
-            }
-        """.trimIndent()
-
-        assertEquals(expectedSchema, schema)
-    }
-
-    @Serializable
-    @SerialName("NonRecursivePolymorphism")
-    sealed class NonRecursivePolymorphism {
-        abstract val id: String
-
-        @Suppress("unused")
-        @Serializable
-        @SerialName("NonRecursiveSubclass1")
-        data class SubClass1(
-            override val id: String,
-            val property1: String
-        ) : NonRecursivePolymorphism()
-
-        @Suppress("unused")
-        @Serializable
-        @SerialName("NonRecursiveSubclass2")
-        data class SubClass2(
-            override val id: String,
-            val property2: Int
-        ) : NonRecursivePolymorphism()
-    }
-
-    @Test
-    fun testSimpleSchemaClosedPolymorphic() {
-        val descriptions = mapOf(
-            "NonRecursiveSubclass1.id" to "ID for subclass 1",
-            "NonRecursiveSubclass1.property1" to "Property 1 for subclass 1",
-
-            "NonRecursiveSubclass2.id" to "ID for subclass 2",
-            "NonRecursiveSubclass2.property2" to "Property 2 for subclass 2",
-        )
-
-        val schema = json.encodeToString(simpleSchemaGenerator.generate("NonRecursivePolymorphism", serializer<NonRecursivePolymorphism>(), descriptions))
-
-        val expectedSchema = """
-            {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "const": "NonRecursiveSubclass1"
-                    },
-                    "id": {
-                      "type": "string",
-                      "description": "ID for subclass 1"
-                    },
-                    "property1": {
-                      "type": "string",
-                      "description": "Property 1 for subclass 1"
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "id",
-                    "property1"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "const": "NonRecursiveSubclass2"
-                    },
-                    "id": {
-                      "type": "string",
-                      "description": "ID for subclass 2"
-                    },
-                    "property2": {
-                      "type": "integer",
-                      "description": "Property 2 for subclass 2"
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "id",
-                    "property2"
-                  ]
+                  "${"$"}ref": "#/${"$"}defs/ClosedSubclass2"
                 }
               ]
             }
@@ -680,7 +661,8 @@ class JsonSchemaGeneratorTest {
             "OpenSubclass2.property2" to "Property 2 for subclass 2",
         )
 
-        val schema = json.encodeToString(jsonSchemaGenerator.generate("TestOpenPolymorphism", serializer<TestOpenPolymorphism>(), descriptions))
+        val result = fullGenerator.generate(json, "TestOpenPolymorphism", serializer<TestOpenPolymorphism>(), descriptions)
+        val schema = json.encodeToString(result.schema)
 
         val expectedSchema = """
             {
@@ -690,9 +672,6 @@ class JsonSchemaGeneratorTest {
                 "OpenSubclass1": {
                   "type": "object",
                   "properties": {
-                    "kind": {
-                      "const": "OpenSubclass1"
-                    },
                     "id": {
                       "type": "string",
                       "description": "ID for subclass 1"
@@ -700,20 +679,21 @@ class JsonSchemaGeneratorTest {
                     "property1": {
                       "type": "string",
                       "description": "Property 1 for subclass 1"
+                    },
+                    "#type": {
+                      "const": "OpenSubclass1"
                     }
                   },
                   "required": [
-                    "kind",
                     "id",
-                    "property1"
-                  ]
+                    "property1",
+                    "#type"
+                  ],
+                  "additionalProperties": false
                 },
                 "OpenSubclass2": {
                   "type": "object",
                   "properties": {
-                    "kind": {
-                      "const": "OpenSubclass2"
-                    },
                     "id": {
                       "type": "string",
                       "description": "ID for subclass 2"
@@ -725,139 +705,44 @@ class JsonSchemaGeneratorTest {
                     "recursiveTypeProperty": {
                       "oneOf": [
                         {
-                          "${"$"}ref": "#/defs/OpenSubclass1"
+                          "${"$"}ref": "#/${"$"}defs/OpenSubclass1"
                         },
                         {
-                          "${"$"}ref": "#/defs/OpenSubclass2"
+                          "${"$"}ref": "#/${"$"}defs/OpenSubclass2"
                         }
                       ]
+                    },
+                    "#type": {
+                      "const": "OpenSubclass2"
                     }
                   },
                   "required": [
-                    "kind",
                     "id",
                     "property2",
-                    "recursiveTypeProperty"
-                  ]
+                    "recursiveTypeProperty",
+                    "#type"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "oneOf": [
                 {
-                  "${"$"}ref": "#/defs/OpenSubclass1"
+                  "${"$"}ref": "#/${"$"}defs/OpenSubclass1"
                 },
                 {
-                  "${"$"}ref": "#/defs/OpenSubclass2"
-                }
-              ],
-              "type": "object"
-            }
-        """.trimIndent()
-
-        assertEquals(expectedSchema, schema)
-    }
-
-    @Serializable
-    @SerialName("NonRecursiveOpenPolymorphism")
-    abstract class NonRecursiveOpenPolymorphism {
-        abstract val id: String
-
-        @Suppress("unused")
-        @Serializable
-        @SerialName("NonRecursiveOpenSubclass1")
-        data class SubClass1(
-            override val id: String,
-            val property1: String
-        ) : NonRecursiveOpenPolymorphism()
-
-        @Suppress("unused")
-        @Serializable
-        @SerialName("NonRecursiveOpenSubclass2")
-        data class SubClass2(
-            override val id: String,
-            val property2: Int
-        ) : NonRecursiveOpenPolymorphism()
-    }
-
-    @Test
-    fun testSimpleSchemaOpenPolymorphic() {
-        val json = Json {
-            ignoreUnknownKeys = true
-            encodeDefaults = true
-            explicitNulls = false
-            coerceInputValues = true
-            classDiscriminator = "kind"
-            prettyPrint = true
-            prettyPrintIndent = "  "
-
-            serializersModule = SerializersModule {
-                polymorphic(NonRecursiveOpenPolymorphism::class) {
-                    subclass(NonRecursiveOpenPolymorphism.SubClass1::class, NonRecursiveOpenPolymorphism.SubClass1.serializer())
-                    subclass(NonRecursiveOpenPolymorphism.SubClass2::class, NonRecursiveOpenPolymorphism.SubClass2.serializer())
-                }
-            }
-        }
-
-        val simpleSchemaGenerator = JsonSchemaGenerator(json, JsonSchemaGenerator.SchemaFormat.Simple, 10)
-
-        val descriptions = mapOf(
-            "NonRecursiveOpenSubclass1.id" to "ID for subclass 1",
-            "NonRecursiveOpenSubclass1.property1" to "Property 1 for subclass 1",
-
-            "NonRecursiveOpenSubclass2.id" to "ID for subclass 2",
-            "NonRecursiveOpenSubclass2.property2" to "Property 2 for subclass 2",
-        )
-
-        val schema = json.encodeToString(simpleSchemaGenerator.generate("NonRecursiveOpenPolymorphism", serializer<NonRecursiveOpenPolymorphism>(), descriptions))
-
-        val expectedSchema = """
-            {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "const": "NonRecursiveOpenSubclass1"
-                    },
-                    "id": {
-                      "type": "string",
-                      "description": "ID for subclass 1"
-                    },
-                    "property1": {
-                      "type": "string",
-                      "description": "Property 1 for subclass 1"
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "id",
-                    "property1"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "const": "NonRecursiveOpenSubclass2"
-                    },
-                    "id": {
-                      "type": "string",
-                      "description": "ID for subclass 2"
-                    },
-                    "property2": {
-                      "type": "integer",
-                      "description": "Property 2 for subclass 2"
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "id",
-                    "property2"
-                  ]
+                  "${"$"}ref": "#/${"$"}defs/OpenSubclass2"
                 }
               ]
             }
         """.trimIndent()
 
         assertEquals(expectedSchema, schema)
+    }
+
+    @Test
+    fun testSimpleSchemaFailsOnTypeRecursion() {
+        assertFailsWith<IllegalStateException> {
+            simpleGenerator.generate(json, "RecursiveTestClass", serializer<RecursiveTestClass>(), emptyMap())
+        }
     }
 }

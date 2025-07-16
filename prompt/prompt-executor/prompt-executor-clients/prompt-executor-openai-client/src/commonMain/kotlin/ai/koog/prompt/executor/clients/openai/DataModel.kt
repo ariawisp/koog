@@ -22,6 +22,7 @@ internal data class OpenAIRequest(
     val audio: OpenAIAudioConfig? = null,
     val stream: Boolean = false,
     val toolChoice: OpenAIToolChoice? = null,
+    val responseFormat: OpenAIResponseFormat? = null,
     val user: String? = null,
 )
 
@@ -66,16 +67,22 @@ internal sealed interface ContentPart {
     val type: String
 
     @Serializable
-    data class Text(val text: String, override val type: String = "text") : ContentPart
+    data class Text(val text: String) : ContentPart {
+        override val type: String = "text"
+    }
 
     @Serializable
-    data class Image(val imageUrl: ImageUrl, override val type: String = "image_url") : ContentPart
+    data class Image(val imageUrl: ImageUrl) : ContentPart {
+        override val type: String = "image_url"
+    }
 
     @Serializable
     data class ImageUrl(val url: String)
 
     @Serializable
-    data class Audio(val inputAudio: InputAudio, override val type: String = "input_audio") : ContentPart
+    data class Audio(val inputAudio: InputAudio) : ContentPart {
+        override val type: String = "input_audio"
+    }
 
     /**
      * @property data Base64 encoded audio data
@@ -85,7 +92,9 @@ internal sealed interface ContentPart {
     data class InputAudio(val data: String, val format: String)
 
     @Serializable
-    data class File(val file: FileData, override val type: String = "file") : ContentPart
+    data class File(val file: FileData) : ContentPart {
+        override val type: String = "file"
+    }
 
     @Serializable
     data class FileData(val fileData: String?, val fileId: String? = null, val filename: String? = null)
@@ -95,9 +104,10 @@ internal sealed interface ContentPart {
 @Serializable
 internal data class OpenAIToolCall(
     val id: String,
-    val type: String = "function",
     val function: OpenAIFunction
-)
+) {
+    val type: String = "function"
+}
 
 @Serializable
 internal data class OpenAIFunction(
@@ -107,9 +117,10 @@ internal data class OpenAIFunction(
 
 @Serializable
 internal data class OpenAITool(
-    val type: String = "function",
     val function: OpenAIToolFunction
-)
+) {
+    val type: String = "function"
+}
 
 @Serializable
 internal data class OpenAIToolFunction(
@@ -232,6 +243,23 @@ internal data class OpenAIAudio(
     val transcript: String? = null,
 )
 
+@Serializable(with = OpenAIResponseFormatSerializer::class)
+internal sealed interface OpenAIResponseFormat {
+    val type: String
+
+    @Serializable
+    data class JsonSchema(val jsonSchema: JsonSchemaDefinition) : OpenAIResponseFormat {
+        override val type: String = "json_schema"
+
+        @Serializable
+        data class JsonSchemaDefinition(
+            val name: String,
+            val schema: JsonObject,
+            val strict: Boolean,
+        )
+    }
+}
+
 internal object ContentSerializer : KSerializer<Content?> {
     @OptIn(InternalSerializationApi::class)
     override val descriptor: SerialDescriptor = buildSerialDescriptor("Content", PolymorphicKind.SEALED)
@@ -257,12 +285,23 @@ internal object ContentSerializer : KSerializer<Content?> {
             is JsonPrimitive -> Content.Text(element.content)
             is JsonArray -> Content.Parts(
                 jsonDecoder.json.decodeFromJsonElement(
+                    // FIXME this deserialization very likely would not work, need to define a custom serializer here properly
                     ListSerializer(ContentPart.serializer()),
                     element
                 )
             )
 
             else -> throw SerializationException("Content must be either a string or an array")
+        }
+    }
+}
+
+
+internal object OpenAIResponseFormatSerializer : JsonContentPolymorphicSerializer<OpenAIResponseFormat>(OpenAIResponseFormat::class) {
+    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<OpenAIResponseFormat> {
+        when (val type  = element.jsonObject["type"]?.jsonPrimitive?.content) {
+            "json_schema" -> return OpenAIResponseFormat.JsonSchema.serializer()
+            else -> throw SerializationException("Unknown response format type: $type")
         }
     }
 }

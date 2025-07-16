@@ -468,6 +468,27 @@ public open class OpenAILLMClient(
             )
         }
 
+        val responseFormat: OpenAIResponseFormat? = prompt.params.schema?.let { schema ->
+            require(schema.capability in model.capabilities) {
+                "Model ${model.id} does not support structured output schema ${schema.name}"
+            }
+
+            @Suppress("REDUNDANT_ELSE_IN_WHEN") // if more formats are added later
+            when (schema) {
+                is LLMParams.Schema.JSON -> {
+                    OpenAIResponseFormat.JsonSchema(
+                        jsonSchema = OpenAIResponseFormat.JsonSchema.JsonSchemaDefinition(
+                            name = schema.name,
+                            schema = schema.schema,
+                            strict = true,
+                        ),
+                    )
+                }
+
+                else -> throw IllegalArgumentException("Unsupported schema type: $schema")
+            }
+        }
+
         return OpenAIRequest(
             model = model.id,
             messages = messages,
@@ -478,6 +499,7 @@ public open class OpenAILLMClient(
             audio = audio,
             stream = stream,
             toolChoice = toolChoice,
+            responseFormat = responseFormat,
             user = prompt.params.user,
         )
     }

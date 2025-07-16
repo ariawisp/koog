@@ -45,8 +45,6 @@ fun main(): Unit = runBlocking {
         edge(getMdOutput forwardTo nodeFinish)
     }
 
-    val token = System.getenv("GRAZIE_TOKEN") ?: error("Environment variable GRAZIE_TOKEN is not set")
-
     val toolRegistry = ToolRegistry {
         tool(BookTool())
     }

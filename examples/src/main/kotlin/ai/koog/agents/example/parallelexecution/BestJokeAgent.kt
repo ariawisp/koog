@@ -14,6 +14,8 @@ import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.structure.StructuredOutput
+import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.json.JsonStructuredData
 import io.opentelemetry.exporter.logging.LoggingSpanExporter
 import kotlinx.coroutines.runBlocking
@@ -94,7 +96,13 @@ fun main(args: Array<String>) = runBlocking {
                         }
                     }
 
-                    val response = requestLLMStructured(JsonStructuredData.createJsonStructure<JokeWinner>())
+                    val response = requestLLMStructured(
+                        config = StructuredOutputConfig(
+                            default = StructuredOutput.Manual(
+                                structure = JsonStructuredData.createJsonStructure<JokeWinner>()
+                            )
+                        )
+                    )
                     val bestJoke = response.getOrNull()!!.structure
                     bestJoke.index
                 }

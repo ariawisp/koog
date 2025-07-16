@@ -15,11 +15,14 @@ import ai.koog.agents.example.banking.tools.transactionAnalysisPrompt
 import ai.koog.agents.ext.agent.ProvideStringSubgraphResult
 import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.agents.ext.tool.AskUser
-import ai.koog.prompt.structure.json.JsonSchemaGenerator
-import ai.koog.prompt.structure.json.JsonStructuredData
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import ai.koog.prompt.structure.StructureFixingParser
+import ai.koog.prompt.structure.StructuredOutput
+import ai.koog.prompt.structure.StructuredOutputConfig
+import ai.koog.prompt.structure.json.JsonStructuredData
+import ai.koog.prompt.structure.json.generator.FullJsonSchemaGenerator
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
@@ -38,21 +41,27 @@ fun main() = runBlocking {
             tools = listOf(AskUser)
         ) {
             val requestClassification by nodeLLMRequestStructured(
-                structure = JsonStructuredData.createJsonStructure<ClassifiedBankRequest>(
-                    schemaFormat = JsonSchemaGenerator.SchemaFormat.JsonSchema,
-                    examples = listOf(
-                        ClassifiedBankRequest(
-                            requestType = RequestType.Transfer,
-                            userRequest = "Send 25 euros to Daniel for dinner at the restaurant."
+                config = StructuredOutputConfig(
+                    default = StructuredOutput.Manual(
+                        structure = JsonStructuredData.createJsonStructure<ClassifiedBankRequest>(
+                            schemaGenerator = FullJsonSchemaGenerator,
+                            examples = listOf(
+                                ClassifiedBankRequest(
+                                    requestType = RequestType.Transfer,
+                                    userRequest = "Send 25 euros to Daniel for dinner at the restaurant."
+                                ),
+                                ClassifiedBankRequest(
+                                    requestType = RequestType.Analytics,
+                                    userRequest = "Provide transaction overview for the last month"
+                                )
+                            )
                         ),
-                        ClassifiedBankRequest(
-                            requestType = RequestType.Analytics,
-                            userRequest = "Provide transaction overview for the last month"
-                        )
-                    )
+                    ),
+                    fixingParser = StructureFixingParser(
+                        fixingModel = OpenAIModels.CostOptimized.GPT4oMini,
+                        retries = 2,
+                    ),
                 ),
-                retries = 2,
-                fixingModel = OpenAIModels.CostOptimized.GPT4oMini
             )
 
             val callLLM by nodeLLMRequest()

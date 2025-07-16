@@ -44,7 +44,6 @@ public object AnthropicModels: LLModelDefinitions {
             LLMCapability.Tools,
             LLMCapability.ToolChoice,
             LLMCapability.Vision.Image,
-            LLMCapability.Schema.JSON.Full,
             LLMCapability.Completion
         )
     )
@@ -66,7 +65,6 @@ public object AnthropicModels: LLModelDefinitions {
             LLMCapability.Tools,
             LLMCapability.ToolChoice,
             LLMCapability.Vision.Image,
-            LLMCapability.Schema.JSON.Full,
             LLMCapability.Completion
         )
     )
@@ -88,7 +86,6 @@ public object AnthropicModels: LLModelDefinitions {
             LLMCapability.Tools,
             LLMCapability.ToolChoice,
             LLMCapability.Vision.Image,
-            LLMCapability.Schema.JSON.Full,
             LLMCapability.Completion
         )
     )
@@ -110,7 +107,6 @@ public object AnthropicModels: LLModelDefinitions {
             LLMCapability.Tools,
             LLMCapability.ToolChoice,
             LLMCapability.Vision.Image,
-            LLMCapability.Schema.JSON.Full,
             LLMCapability.Completion
         )
     )
@@ -132,7 +128,6 @@ public object AnthropicModels: LLModelDefinitions {
             LLMCapability.Tools,
             LLMCapability.ToolChoice,
             LLMCapability.Vision.Image,
-            LLMCapability.Schema.JSON.Full,
             LLMCapability.Completion
         )
     )
@@ -153,7 +148,6 @@ public object AnthropicModels: LLModelDefinitions {
             LLMCapability.Tools,
             LLMCapability.ToolChoice,
             LLMCapability.Vision.Image,
-            LLMCapability.Schema.JSON.Full,
             LLMCapability.Completion
         )
     )
@@ -175,7 +169,6 @@ public object AnthropicModels: LLModelDefinitions {
             LLMCapability.Tools,
             LLMCapability.ToolChoice,
             LLMCapability.Vision.Image,
-            LLMCapability.Schema.JSON.Full,
             LLMCapability.Completion
         )
     )

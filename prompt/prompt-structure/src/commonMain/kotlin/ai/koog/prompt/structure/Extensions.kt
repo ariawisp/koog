@@ -2,135 +2,151 @@ package ai.koog.prompt.structure
 
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.prompt
-import ai.koog.prompt.executor.model.PromptExecutorExt.execute
-import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.executor.model.PromptExecutorExt.execute
+import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.markdown.markdown
-import ai.koog.prompt.structure.json.JsonStructureLanguage
+import ai.koog.prompt.message.Message
 import ai.koog.prompt.text.TextContentBuilderBase
-import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
-
-private val logger = KotlinLogging.logger {  }
+import ai.koog.prompt.structure.json.JsonStructuredData
+import ai.koog.prompt.structure.json.generator.JsonSchemaGenerator
 
 /**
- * Adds a structured representation of the given value to the text content using the specified language.
+ * Adds a structured representation of the given value to the [TextContentBuilderBase].
  *
- * The method uses the language's formatting capabilities to generate a textual representation
- * of the input value and appends it to the content being built by the `TextContentBuilder`.
- *
- * @param T The type of the value to be structured.
- * @param language The `JsonStructureLanguage` instance used to format the value into a structured textual representation.
- * @param value The value of type `T` to be formatted and added to the text content.
- */
-public inline fun <reified T> TextContentBuilderBase<*>.structure(language: JsonStructureLanguage, value: T) {
-    +language.pretty(value)
-}
-
-/**
- * Adds a structured JSON representation of the given value to the [TextContentBuilderBase].
- *
- * @param language The [JsonStructureLanguage] instance used for defining the serialization and formatting rules.
+ * @param structure The structure definition
  * @param value The value to be serialized and added to the builder.
- * @param serializer The [KSerializer] instance used to serialize the value into the structured JSON format.
  */
-public fun <T> TextContentBuilderBase<*>.structure(language: JsonStructureLanguage, value: T, serializer: KSerializer<T>) {
-    +language.pretty(value, serializer)
+public fun <T> TextContentBuilderBase<*>.structure(structure: StructuredData<T, *>, value: T) {
+    +structure.pretty(value)
 }
 
 /**
- * Represents a container for structured data parsed from raw text.
+ * Represents a container for structured data parsed from response message.
  *
  * This class is designed to encapsulate both the parsed structured output and the original raw
  * text as returned from a processing step, such as a language model execution.
  *
  * @param T The type of the structured data contained within this response.
  * @property structure The parsed structured data corresponding to the specific schema.
- * @property raw The raw string from which the structured data was parsed.
+ * @property message The original assistant message from which the structure was parsed.
  */
-public data class StructuredResponse<T>(val structure: T, val raw: String)
+public data class StructuredResponse<T>(val structure: T, val message: Message.Assistant)
 
 /**
- * Executes a given prompt and parses the resulting text, expecting structured data in the response message.
+ * Configures structured output behavior.
+ * Defines which structures in which modes should be used for each provider when requesting a structured output.
  *
- * NOTE: you have to manually handle LLM coercion into structured output, e.g. using prompt schema parameter.
+ * @property default Fallback [StructuredOutput] to be used when there's no suitable structure found in [byProvider]
+ * for a requested [LLMProvider]. Defaults to `null`, meaning structured output would fail with error in such a case.
  *
- * @param prompt The prompt to be executed.
- * @param structure The structure definition that includes the parser and schema information
- * for interpreting the raw response from the execution.
- * @return A [StructuredResponse] containing both parsed structure and raw text
+ * @property byProvider A map matching [LLMProvider] to compatible [StructuredOutput] definitions. Each provider may
+ * require different schema formats. E.g. for [JsonStructuredData] this means you have to use the appropriate
+ * [JsonSchemaGenerator] implementation for each provider for [StructuredOutput.Native], or fallback to [StructuredOutput.Manual]
+ *
+ * @property fixingParser Optional parser that handles malformed responses by using an auxiliary LLM to
+ * intelligently fix parsing errors. When specified, parsing errors trigger additional
+ * LLM calls with error context to attempt correction of the structure format.
  */
-public suspend fun <T> PromptExecutor.executeStructuredOneShot(
-    prompt: Prompt,
-    model: LLModel,
-    structure: StructuredData<T>
-): StructuredResponse<T> {
-    val response = this.execute(prompt = prompt, model = model)
-    val responseContent = response.content
-    return StructuredResponse(
-        structure = structure.parse(responseContent),
-        raw = responseContent
-    )
+public data class StructuredOutputConfig<T>(
+    public val default: StructuredOutput<T>? = null,
+    public val byProvider: Map<LLMProvider, StructuredOutput<T>> = emptyMap(),
+    public val fixingParser: StructureFixingParser? = null
+)
+
+/**
+ * Defines how structured outputs should be generated.
+ *
+ * Can be [StructuredOutput.Manual] or [StructuredOutput.Native]
+ * 
+ * @param T The type of structured data.
+ */
+public sealed interface StructuredOutput<T> {
+    /**
+     * The definition of a structure.
+     */
+    public val structure: StructuredData<T, *>
+
+    /**
+     * Instructs the model to produce structured output through explicit prompting.
+     * 
+     * Uses an additional user message containing [StructuredData.definition] to guide 
+     * the model in generating correctly formatted responses.
+     * 
+     * @property structure The structure definition to be used in output generation.
+     */
+    public data class Manual<T>(override val structure: StructuredData<T, *>) : StructuredOutput<T>
+
+    /**
+     * Leverages a model's built-in structured output capabilities.
+     * 
+     * Uses [StructuredData.schema] to define the expected response format through the model's
+     * native structured output functionality.
+     *
+     * Note: [StructuredData.examples] are not used with this mode, only the schema is sent via parameters.
+     *
+     * @property structure The structure definition to be used in output generation.
+     */
+    public data class Native<T>(override val structure: StructuredData<T, *>) : StructuredOutput<T>
 }
 
 /**
- * Executes a prompt and ensures the response is properly structured by applying automatic output coercion.
+ * Executes a prompt with structured output parsing, automatically augmenting the prompt
+ * with schema instructions and parsing the response into the defined structure.
  *
- * This method enhances structured output parsing reliability by:
- * 1. Injecting structured output instructions into the original prompt
- * 2. Executing the enriched prompt to receive a raw response
- * 3. Using a separate LLM call to parse/coerce the response if direct parsing fails
+ * **Note**: While many language models advertise support for structured output via JSON schema,
+ * the actual level of support varies between models and even between versions
+ * of the same model. Some models may produce malformed outputs or deviate from
+ * the schema in subtle ways, especially with complex structures like polymorphic types.
+ * In such cases, consider using [StructuredOutputConfig.fixingParser] to handle potential formatting issues.
  *
- * Unlike [execute(prompt, structure)] which simply attempts to parse the raw response and fails
- * if the format doesn't match exactly, this method actively works to transform unstructured or
- * malformed outputs into the expected structure through additional LLM processing.
+ * @param prompt The prompt to be executed.
+ * @param model LLM to execute requests.
+ * @param config A configuration defining structures and behavior.
  *
- * @param structure The structured data definition with schema and parsing logic
- * @param prompt The prompt to execute
- * @param mainModel The main model to execute prompt
- * @param retries Number of parsing attempts before giving up
- * @param fixingModel LLM used for output coercion (transforming malformed outputs)
- * @return A [StructuredResponse] containing both parsed structure and raw text
- * @throws IllegalStateException if parsing fails after all retries
+ * @return [kotlin.Result] with parsed [StructuredResponse] or error.
  */
 public suspend fun <T> PromptExecutor.executeStructured(
     prompt: Prompt,
-    mainModel: LLModel,
-    structure: StructuredData<T>,
-    retries: Int = 1,
-    fixingModel: LLModel = OpenAIModels.Chat.GPT4o
+    model: LLModel,
+    config: StructuredOutputConfig<T>,
 ): Result<StructuredResponse<T>> {
-    val prompt = prompt(prompt) {
-        user {
-            markdown {
-                StructuredOutputPrompts.output(this, structure)
+    val mode = config.byProvider[model.provider]
+        ?: config.default
+        ?: throw IllegalArgumentException("No structure found for provider ${model.provider}")
+
+    val (structure: StructuredData<T, *>, updatedPrompt: Prompt) = when (mode) {
+        // Don't set schema parameter in prompt and coerce the model manually with user message to provide a structured response.
+        is StructuredOutput.Manual -> {
+            mode.structure to prompt(prompt) {
+                user {
+                    markdown {
+                        StructuredOutputPrompts.outputInstruction(this, mode.structure)
+                    }
+                }
             }
         }
-    }
 
-    val structureParser = StructureParser(this, fixingModel)
-
-    repeat(retries) { attempt ->
-        logger.debug { "Execute the prompt: <$prompt>" }
-        val response = execute(prompt = prompt, model = mainModel)
-
-        try {
-            logger.debug { "$attempt/$retries: Try to parse LLM response content: <${response.content}>" }
-            val structure = structureParser.parse(structure, response.content)
-            return Result.success(
-                StructuredResponse(
-                    structure = structure,
-                    raw = response.content,
-                )
-            )
-        } catch (t: SerializationException) {
-            logger.warn(t) { "Failed to Unable to parse structure from content: <${response.content}>" }
+        // Rely on built-in model capabilities to provide structured response.
+        is StructuredOutput.Native -> {
+            mode.structure to prompt.withUpdatedParams { schema = mode.structure.schema }
         }
     }
 
-    return Result.failure(
-        exception = LLMStructuredParsingError("Unable to parse structure after <$retries> retries")
-    )
+    val response = this.execute(prompt = updatedPrompt, model = model)
+
+    return runCatching {
+        require(response is Message.Assistant) { "Response for structured output must be an assistant message, got ${response::class.simpleName} instead" }
+
+        // Use fixingParser if provided, otherwise parse directly
+        val structureResponse = config.fixingParser
+            ?.parse(this, structure, response.content)
+            ?: structure.parse(response.content)
+
+        StructuredResponse(
+            structure = structureResponse,
+            message = response
+        )
+    }
 }

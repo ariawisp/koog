@@ -3,11 +3,7 @@ package ai.koog.agents.core.agent.session
 import ai.koog.agents.core.agent.config.AIAgentConfigBase
 import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.environment.SafeTool
-import ai.koog.agents.core.tools.Tool
-import ai.koog.agents.core.tools.ToolArgs
-import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.core.tools.ToolResult
+import ai.koog.agents.core.tools.*
 import ai.koog.agents.core.utils.ActiveProperty
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.PromptBuilder
@@ -16,9 +12,10 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.structure.StructuredData
 import ai.koog.prompt.structure.StructuredDataDefinition
+import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.StructuredResponse
+import ai.koog.prompt.structure.executeStructured
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
@@ -414,23 +411,19 @@ public class AIAgentLLMWriteSession internal constructor(
     }
 
     /**
-     * Requests an LLM (Language Model) to generate a structured output based on the provided structure.
-     * The response is post-processed to update the prompt with the raw response.
+     * Sends a request to LLM and gets a structured response.
      *
-     * @param structure The structured data definition specifying the expected structured output format, schema, and parsing logic.
-     * @param retries The number of retry attempts to allow in case of generation failures.
-     * @param fixingModel The language model to use for re-parsing or error correction during retries.
-     * @return A structured response containing both the parsed structure and the raw response text.
+     * @param config A configuration defining structures and behavior.
+     *
+     * @see [executeStructured]
      */
     override suspend fun <T> requestLLMStructured(
-        structure: StructuredData<T>,
-        retries: Int,
-        fixingModel: LLModel
+        config: StructuredOutputConfig<T>,
     ): Result<StructuredResponse<T>> {
-        return super.requestLLMStructured(structure, retries, fixingModel).also {
+        return super.requestLLMStructured(config).also {
             it.onSuccess { response ->
                 updatePrompt {
-                    assistant(response.raw)
+                    message(response.message)
                 }
             }
         }
@@ -454,20 +447,5 @@ public class AIAgentLLMWriteSession internal constructor(
         }
 
         return executor.executeStreaming(prompt, model)
-    }
-
-    /**
-     * Sends a request to the LLM using the given structured data and expects a structured response in one attempt.
-     * Updates the prompt with the raw response received from the LLM.
-     *
-     * @param structure The structured data defining the schema, examples, and parsing logic for the response.
-     * @return A structured response containing both the parsed data and the raw response text from the LLM.
-     */
-    override suspend fun <T> requestLLMStructuredOneShot(structure: StructuredData<T>): StructuredResponse<T> {
-        return super.requestLLMStructuredOneShot(structure).also { response ->
-            updatePrompt {
-                assistant(response.raw)
-            }
-        }
     }
 }

@@ -33,8 +33,6 @@ fun main(): Unit = runBlocking {
         edge(getMdOutput forwardTo nodeFinish)
     }
 
-    val token = System.getenv("GRAZIE_TOKEN") ?: error("Environment variable GRAZIE_TOKEN is not set")
-
     val agentConfig = AIAgentConfig.withSystemPrompt(
         prompt = """
             You're AI library assistant. Please provide users with comprehensive and structured information about the books of the world.

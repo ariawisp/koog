@@ -8,6 +8,7 @@ import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
 import ai.koog.prompt.executor.clients.LLMClient
+import ai.koog.prompt.executor.clients.google.structure.GoogleResponseFormat
 import ai.koog.prompt.executor.model.LLMChoice
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
@@ -299,9 +300,33 @@ public open class GoogleLLMClient(
             .takeIf { it.isNotEmpty() }
             ?.let { GoogleContent(parts = it) }
 
+        val responseFormat: GoogleResponseFormat? = prompt.params.schema?.let { schema ->
+            require(schema.capability in model.capabilities) {
+                "Model ${model.id} does not support structured output schema ${schema.name}"
+            }
+
+            @Suppress("REDUNDANT_ELSE_IN_WHEN") // if more formats are added later
+            when (schema) {
+                is LLMParams.Schema.JSON.Simple -> GoogleResponseFormat(
+                    responseMimeType = "application/json",
+                    responseSchema = schema.schema,
+                )
+
+                is LLMParams.Schema.JSON.Full -> GoogleResponseFormat(
+                    responseMimeType = "application/json",
+                    responseJsonSchema = schema.schema,
+                )
+
+                else -> throw IllegalArgumentException("Unsupported schema type: $schema")
+            }
+        }
+
         val generationConfig = GoogleGenerationConfig(
+            responseMimeType = responseFormat?.responseMimeType,
+            responseSchema = responseFormat?.responseSchema,
+            responseJsonSchema = responseFormat?.responseJsonSchema,
             temperature = if (model.capabilities.contains(LLMCapability.Temperature)) prompt.params.temperature else null,
-            numberOfChoices = if (model.capabilities.contains(LLMCapability.MultipleChoices)) prompt.params.numberOfChoices else null,
+            candidateCount = if (model.capabilities.contains(LLMCapability.MultipleChoices)) prompt.params.numberOfChoices else null,
             maxOutputTokens = 2048,
         )
 

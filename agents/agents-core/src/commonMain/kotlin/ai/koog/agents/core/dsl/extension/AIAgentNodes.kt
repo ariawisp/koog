@@ -17,8 +17,8 @@ import ai.koog.prompt.dsl.PromptBuilder
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
-import ai.koog.prompt.structure.StructuredData
 import ai.koog.prompt.structure.StructuredDataDefinition
+import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.StructuredResponse
 import kotlinx.coroutines.flow.Flow
 
@@ -167,19 +167,15 @@ public fun AIAgentSubgraphBuilderBase<*, *>.nodeLLMModerateMessage(
     }
 
 /**
- * A node that appends a user message to the LLM prompt and requests structured data from the LLM with error correction capabilities.
+ * A node that appends a user message to the LLM prompt and requests structured data from the LLM with optional error correction capabilities.
  *
  * @param name Optional node name.
- * @param structure Definition of expected output format and parsing logic.
- * @param retries Number of retry attempts for failed generations.
- * @param fixingModel LLM used for error correction.
+ * @param config A configuration defining structures and behavior.
  */
 @AIAgentBuilderDslMarker
 public inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.nodeLLMRequestStructured(
     name: String? = null,
-    structure: StructuredData<T>,
-    retries: Int,
-    fixingModel: LLModel
+    config: StructuredOutputConfig<T>,
 ): AIAgentNodeDelegate<String, Result<StructuredResponse<T>>> =
     node(name) { message ->
         llm.writeSession {
@@ -187,11 +183,7 @@ public inline fun <reified T> AIAgentSubgraphBuilderBase<*, *>.nodeLLMRequestStr
                 user(message)
             }
 
-            requestLLMStructured(
-                structure,
-                retries,
-                fixingModel
-            )
+            requestLLMStructured(config)
         }
     }
 

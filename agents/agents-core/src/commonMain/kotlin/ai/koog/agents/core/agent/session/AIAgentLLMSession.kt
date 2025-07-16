@@ -6,16 +6,14 @@ import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.utils.ActiveProperty
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
-import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.model.LLMChoice
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.structure.StructuredData
+import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.StructuredResponse
 import ai.koog.prompt.structure.executeStructured
-import ai.koog.prompt.structure.executeStructuredOneShot
 
 /**
  * Represents a session for an AI agent that interacts with an LLM (Language Learning Model).
@@ -240,30 +238,24 @@ public sealed class AIAgentLLMSession(
     }
 
     /**
-     * Coerce LLM to provide a structured output.
+     * Sends a request to LLM and gets a structured response.
+     *
+     * @param config A configuration defining structures and behavior.
      *
      * @see [executeStructured]
      */
     public open suspend fun <T> requestLLMStructured(
-        structure: StructuredData<T>,
-        retries: Int = 1,
-        fixingModel: LLModel = OpenAIModels.Chat.GPT4o
+        config: StructuredOutputConfig<T>,
     ): Result<StructuredResponse<T>> {
         validateSession()
-        val preparedPrompt = preparePrompt(prompt, tools = emptyList())
-        return executor.executeStructured(preparedPrompt, model, structure, retries, fixingModel)
-    }
 
-    /**
-     * Expect LLM to reply in a structured format and try to parse it.
-     * For more robust version with model coercion and correction see [requestLLMStructured]
-     *
-     * @see [executeStructuredOneShot]
-     */
-    public open suspend fun <T> requestLLMStructuredOneShot(structure: StructuredData<T>): StructuredResponse<T> {
-        validateSession()
         val preparedPrompt = preparePrompt(prompt, tools = emptyList())
-        return executor.executeStructuredOneShot(preparedPrompt, model, structure)
+
+        return executor.executeStructured(
+            prompt = preparedPrompt,
+            model = model,
+            config = config,
+        )
     }
 
     /**
