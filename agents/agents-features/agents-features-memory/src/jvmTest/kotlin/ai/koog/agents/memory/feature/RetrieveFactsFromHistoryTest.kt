@@ -2,35 +2,32 @@ package ai.koog.agents.memory.feature
 
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.AIAgentLLMContext
-import ai.koog.agents.core.agent.session.AIAgentLLMWriteSession
+import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.memory.model.*
-import ai.koog.agents.memory.prompts.MemoryPrompts
 import ai.koog.agents.testing.tools.MockEnvironment
 import ai.koog.agents.testing.tools.getMockExecutor
 import ai.koog.agents.testing.tools.mockLLMAnswer
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.prompt
-import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.message.Message
-import ai.koog.prompt.structure.StructuredResponse
-import ai.koog.prompt.structure.json.JsonStructuredData
-import ai.koog.agents.core.tools.ToolRegistry
-import io.mockk.*
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 
 class RetrieveFactsFromHistoryTest {
 
     private val testModel = mockk<LLModel> {
         every { id } returns "test-model"
+        every { provider } returns mockk<LLMProvider>()
     }
 
     private val testClock: Clock = object : Clock {

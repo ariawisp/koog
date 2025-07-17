@@ -42,11 +42,15 @@ val envs = credentialsResolver.resolve(
     layout.projectDirectory.file(provider { "env.properties" })
 )
 
-tasks.withType<Test> {
-    doFirst {
-        environment(envs.get())
+// Try loading envs from file for integration tests only.
+tasks.withType<Test>()
+    .matching { it.name == "jvmIntegrationTest" }
+    .configureEach {
+        doFirst {
+            logger.info("Loading envs from local file")
+            environment(envs.get())
+        }
     }
-}
 
 dokka {
     dokkaSourceSets.configureEach {
