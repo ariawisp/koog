@@ -17,7 +17,6 @@ kotlin {
                 api(project(":prompt:prompt-executor:prompt-executor-clients"))
                 api(project(":prompt:prompt-llm"))
                 api(project(":prompt:prompt-model"))
-                api(project(":prompt:prompt-structure"))
                 api(libs.kotlinx.coroutines.core)
                 api(libs.kotlinx.datetime)
                 api(libs.ktor.client.content.negotiation)

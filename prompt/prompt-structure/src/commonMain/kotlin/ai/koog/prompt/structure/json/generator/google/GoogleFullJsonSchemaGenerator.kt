@@ -1,8 +1,8 @@
-package ai.koog.prompt.executor.clients.google.structure
+package ai.koog.prompt.structure.json.generator.google
 
 import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.structure.json.generator.FullJsonSchemaGenerator
-import ai.koog.prompt.structure.json.generator.JsonSchemaConsts
+import ai.koog.prompt.structure.json.generator.default.FullJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.JsonSchemaConsts
 import kotlinx.serialization.json.*
 
 /**

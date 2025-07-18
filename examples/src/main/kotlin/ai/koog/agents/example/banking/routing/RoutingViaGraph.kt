@@ -22,7 +22,7 @@ import ai.koog.prompt.structure.StructureFixingParser
 import ai.koog.prompt.structure.StructuredOutput
 import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.json.JsonStructuredData
-import ai.koog.prompt.structure.json.generator.FullJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.default.FullJsonSchemaGenerator
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {

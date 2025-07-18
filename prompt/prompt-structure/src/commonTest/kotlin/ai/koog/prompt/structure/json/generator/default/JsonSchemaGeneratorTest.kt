@@ -1,4 +1,4 @@
-package ai.koog.prompt.structure.json.generator
+package ai.koog.prompt.structure.json.generator.default
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.SerialName
@@ -661,7 +661,8 @@ class JsonSchemaGeneratorTest {
             "OpenSubclass2.property2" to "Property 2 for subclass 2",
         )
 
-        val result = fullGenerator.generate(json, "TestOpenPolymorphism", serializer<TestOpenPolymorphism>(), descriptions)
+        val result = fullGenerator.generate(json, "TestOpenPolymorphism",
+            serializer<TestOpenPolymorphism>(), descriptions)
         val schema = json.encodeToString(result.schema)
 
         val expectedSchema = """

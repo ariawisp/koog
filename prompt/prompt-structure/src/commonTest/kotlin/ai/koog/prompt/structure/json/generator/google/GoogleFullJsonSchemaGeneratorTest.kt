@@ -1,4 +1,4 @@
-package ai.koog.prompt.executor.clients.google.structure
+package ai.koog.prompt.structure.json.generator.google
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.SerialName

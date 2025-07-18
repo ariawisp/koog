@@ -1,4 +1,4 @@
-package ai.koog.prompt.structure.json.generator
+package ai.koog.prompt.structure.json.generator.core
 
 /**
  * Collection of special constants, such as keys and data types, from JSON schema definition.

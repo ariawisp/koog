@@ -8,9 +8,9 @@ import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.message.Message
-import ai.koog.prompt.text.TextContentBuilderBase
 import ai.koog.prompt.structure.json.JsonStructuredData
-import ai.koog.prompt.structure.json.generator.JsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.JsonSchemaGenerator
+import ai.koog.prompt.text.TextContentBuilderBase
 
 /**
  * Adds a structured representation of the given value to the [TextContentBuilderBase].

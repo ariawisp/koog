@@ -3,8 +3,8 @@ package ai.koog.prompt.structure.json
 import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.structure.StructuredData
-import ai.koog.prompt.structure.json.generator.JsonSchemaGenerator
-import ai.koog.prompt.structure.json.generator.SimpleJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.JsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.default.SimpleJsonSchemaGenerator
 import ai.koog.prompt.structure.structure
 import ai.koog.prompt.text.TextContentBuilderBase
 import kotlinx.serialization.KSerializer

@@ -1,13 +1,26 @@
-package ai.koog.prompt.structure.json.generator
+package ai.koog.prompt.structure.json.generator.default
 
 import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.structure.json.generator.core.GenericJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.JsonSchemaConsts
+import ai.koog.prompt.structure.json.generator.core.getPolymorphicDescriptors
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.StructureKind
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.ClassDiscriminatorMode
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
+import kotlin.collections.plus
 
 /**
- * Full implementation of [GenericJsonSchemaGenerator] to generate advanced generic [ai.koog.prompt.params.LLMParams.Schema.JSON.Full].
+ * Full implementation of [GenericJsonSchemaGenerator] to generate advanced generic [LLMParams.Schema.JSON.Full].
  * Generates LLM-agnostic schema not tied to any specific provider format.
  * For LLMs requiring custom formats when using native structured output, consider provider-specific generators instead.
  *
@@ -24,7 +37,7 @@ public open class FullJsonSchemaGenerator : GenericJsonSchemaGenerator() {
     public companion object Default : FullJsonSchemaGenerator()
 
     /**
-     * Generates generic [ai.koog.prompt.params.LLMParams.Schema.JSON.Full]
+     * Generates generic [LLMParams.Schema.JSON.Full]
      */
     override fun generate(
         json: Json,
@@ -184,7 +197,7 @@ public open class FullJsonSchemaGenerator : GenericJsonSchemaGenerator() {
 
         // Provide an array of all possible schemas for polymorphic types
         put(JsonSchemaConsts.Keys.ONE_OF, buildJsonArray {
-             context.descriptor
+            context.descriptor
                 .getPolymorphicDescriptors(context.json)
                 .forEach { polymorphicDescriptor ->
                     processObject(context.copy(descriptor = polymorphicDescriptor))
@@ -192,10 +205,16 @@ public open class FullJsonSchemaGenerator : GenericJsonSchemaGenerator() {
                     // Modify polymorphic subtypes, if already processed
                     context.processedTypeDefs[polymorphicDescriptor]?.toMutableMap()?.let { schema ->
                         // Add class discriminators, if enabled
-                        if (classDiscriminatorMode in listOf(ClassDiscriminatorMode.ALL_JSON_OBJECTS, ClassDiscriminatorMode.POLYMORPHIC)) {
-                            val updatedProperties = schema.getValue(JsonSchemaConsts.Keys.PROPERTIES).jsonObject.toMutableMap()
+                        if (classDiscriminatorMode in listOf(
+                                ClassDiscriminatorMode.ALL_JSON_OBJECTS,
+                                ClassDiscriminatorMode.POLYMORPHIC
+                            )
+                        ) {
+                            val updatedProperties =
+                                schema.getValue(JsonSchemaConsts.Keys.PROPERTIES).jsonObject.toMutableMap()
 
-                            updatedProperties[classDiscriminator] = processClassDiscriminator(context.copy(descriptor = polymorphicDescriptor))
+                            updatedProperties[classDiscriminator] =
+                                processClassDiscriminator(context.copy(descriptor = polymorphicDescriptor))
 
                             schema[JsonSchemaConsts.Keys.PROPERTIES] = JsonObject(updatedProperties)
 

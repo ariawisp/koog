@@ -1,6 +1,7 @@
-package ai.koog.prompt.executor.clients.google.structure
+package ai.koog.prompt.executor.clients.google
 
 import kotlinx.serialization.json.JsonObject
+
 
 /**
  * Helper class to work with different response schema types in a more convenient way.

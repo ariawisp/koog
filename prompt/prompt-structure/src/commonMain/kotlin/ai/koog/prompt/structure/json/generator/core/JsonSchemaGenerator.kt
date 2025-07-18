@@ -1,4 +1,4 @@
-package ai.koog.prompt.structure.json.generator
+package ai.koog.prompt.structure.json.generator.core
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.prompt.params.LLMParams

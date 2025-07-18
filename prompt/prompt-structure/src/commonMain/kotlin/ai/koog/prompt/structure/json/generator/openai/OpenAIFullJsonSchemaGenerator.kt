@@ -1,9 +1,9 @@
-package ai.koog.prompt.executor.clients.openai.structure
+package ai.koog.prompt.structure.json.generator.openai
 
 import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.structure.json.generator.FullJsonSchemaGenerator
-import ai.koog.prompt.structure.json.generator.JsonSchemaConsts
-import ai.koog.prompt.structure.json.generator.countElements
+import ai.koog.prompt.structure.json.generator.default.FullJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.JsonSchemaConsts
+import ai.koog.prompt.structure.json.generator.core.countElements
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.*
 
