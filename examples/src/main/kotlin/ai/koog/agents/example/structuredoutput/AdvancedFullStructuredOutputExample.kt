@@ -1,4 +1,4 @@
-package ai.koog.agents.example.structureddata
+package ai.koog.agents.example.structuredoutput
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
@@ -20,7 +20,7 @@ import ai.koog.prompt.structure.StructureFixingParser
 import ai.koog.prompt.structure.StructuredOutput
 import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.json.JsonStructuredData
-import ai.koog.prompt.structure.json.generator.default.FullJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.FullJsonSchemaGenerator
 import ai.koog.prompt.structure.json.generator.google.GoogleFullJsonSchemaGenerator
 import ai.koog.prompt.structure.json.generator.openai.OpenAIFullJsonSchemaGenerator
 import ai.koog.prompt.text.text
@@ -30,6 +30,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
+ * This is a more advanced example showing how to configure various parameters of structured output manually, to fine-tune
+ * it for your needs when necessary.
+ *
  * Structured output that uses "full" JSON schema.
  * More advanced features are supported, e.g. polymorphism and recursive type references, and schemas can be more complex.
  */
@@ -221,7 +224,6 @@ fun main(): Unit = runBlocking {
      that would produce the schema these providers expect.
     */
     val genericWeatherStructure = JsonStructuredData.createJsonStructure<FullWeatherForecast>(
-        id = "FullWeatherForecast",
         // Some models might not work well with json schema, so you may try simple, but it has more limitations (no polymorphism!)
         schemaGenerator = FullJsonSchemaGenerator,
         examples = exampleForecasts,
@@ -234,18 +236,16 @@ fun main(): Unit = runBlocking {
     */
 
     val openAiWeatherStructure = JsonStructuredData.createJsonStructure<FullWeatherForecast>(
-        id = "FullWeatherForecast",
         schemaGenerator = OpenAIFullJsonSchemaGenerator,
         examples = exampleForecasts,
     )
 
     val googleWeatherStructure = JsonStructuredData.createJsonStructure<FullWeatherForecast>(
-        id = "FullWeatherForecast",
         schemaGenerator = GoogleFullJsonSchemaGenerator,
         examples = exampleForecasts,
     )
 
-    val agentStrategy = strategy<FullWeatherForecastRequest, FullWeatherForecast>("full-weather-forecast") {
+    val agentStrategy = strategy<FullWeatherForecastRequest, FullWeatherForecast>("advanced-full-weather-forecast") {
         val prepareRequest by node<FullWeatherForecastRequest, String> { request ->
             text {
                 +"Requesting forecast for"

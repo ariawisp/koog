@@ -1,8 +1,6 @@
-package ai.koog.prompt.structure.json.generator.default
+package ai.koog.prompt.structure.json.generator.core
 
 import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.structure.json.generator.core.GenericJsonSchemaGenerator
-import ai.koog.prompt.structure.json.generator.core.JsonSchemaConsts
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.json.Json
@@ -10,7 +8,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * Simple implementation of [ai.koog.prompt.structure.json.generator.core.GenericJsonSchemaGenerator] that produces [LLMParams.Schema.JSON.Simple].
+ * Simple implementation of [GenericJsonSchemaGenerator] that produces [LLMParams.Schema.JSON.Simple].
  * Generates LLM-agnostic schema not tied to any specific provider format.
  * For LLMs requiring custom formats when using native structured output, consider provider-specific generators instead.
  *
@@ -28,7 +26,7 @@ public open class SimpleJsonSchemaGenerator : GenericJsonSchemaGenerator() {
     public companion object Default : SimpleJsonSchemaGenerator()
 
     /**
-     * Generates generic [ai.koog.prompt.params.LLMParams.Schema.JSON.Simple]
+     * Generates generic [LLMParams.Schema.JSON.Simple]
      */
     override fun generate(
         json: Json,

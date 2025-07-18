@@ -96,13 +96,7 @@ fun main(args: Array<String>) = runBlocking {
                         }
                     }
 
-                    val response = requestLLMStructured(
-                        config = StructuredOutputConfig(
-                            default = StructuredOutput.Manual(
-                                structure = JsonStructuredData.createJsonStructure<JokeWinner>()
-                            )
-                        )
-                    )
+                    val response = requestLLMStructured<JokeWinner>()
                     val bestJoke = response.getOrNull()!!.structure
                     bestJoke.index
                 }

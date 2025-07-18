@@ -4,7 +4,7 @@ import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.structure.StructuredData
 import ai.koog.prompt.structure.json.generator.core.JsonSchemaGenerator
-import ai.koog.prompt.structure.json.generator.default.SimpleJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.SimpleJsonSchemaGenerator
 import ai.koog.prompt.structure.structure
 import ai.koog.prompt.text.TextContentBuilderBase
 import kotlinx.serialization.KSerializer
@@ -170,14 +170,14 @@ public class JsonStructuredData<TStruct>(
          * @param definitionPrompt Prompt with definition, explaining the structure to the LLM when the manual mode for
          * structured output is used. Default is [JsonStructuredData.defaultDefinitionPrompt]
          */
-        public inline fun <reified TStruct> createJsonStructure(
-            serializer: KSerializer<TStruct> = serializer<TStruct>(),
-            id: String = serializer.descriptor.serialName,
+        public fun <TStruct> createJsonStructure(
+            id: String,
+            serializer: KSerializer<TStruct>,
             json: Json = defaultJson,
             schemaGenerator: JsonSchemaGenerator = SimpleJsonSchemaGenerator.Default,
             descriptionOverrides: Map<String, String> = emptyMap(),
             examples: List<TStruct> = emptyList(),
-            noinline definitionPrompt: (
+            definitionPrompt: (
                 builder: TextContentBuilderBase<*>,
                 structuredData: JsonStructuredData<TStruct>
             ) -> TextContentBuilderBase<*> = ::defaultDefinitionPrompt
@@ -188,6 +188,44 @@ public class JsonStructuredData<TStruct>(
                 examples = examples,
                 serializer = serializer,
                 json = json,
+                definitionPrompt = definitionPrompt,
+            )
+        }
+
+        /**
+         *
+         * Factory method to create JSON structure with auto-generated JSON schema.
+         *
+         * This is a convenience inline overload that automatically deduces `id` and `serializer` from passed type.
+         * Check non-inline version of `createJsonStructure` for detailed information.
+         *
+         * @param json JSON configuration instance used for serialization.
+         * @param schemaGenerator JSON schema generator
+         * @param descriptionOverrides Optional map of serial class names and property names to descriptions.
+         * If a property/type is already described with [ai.koog.agents.core.tools.annotations.LLMDescription] annotation, value from the map will override this description.
+         * @param examples List of example data items that conform to the structure, used for demonstrating valid formats.
+         * @param definitionPrompt Prompt with definition, explaining the structure to the LLM when the manual mode for
+         * structured output is used. Default is [JsonStructuredData.defaultDefinitionPrompt]
+         */
+        public inline fun <reified TStruct> createJsonStructure(
+            json: Json = defaultJson,
+            schemaGenerator: JsonSchemaGenerator = SimpleJsonSchemaGenerator.Default,
+            descriptionOverrides: Map<String, String> = emptyMap(),
+            examples: List<TStruct> = emptyList(),
+            noinline definitionPrompt: (
+                builder: TextContentBuilderBase<*>,
+                structuredData: JsonStructuredData<TStruct>
+            ) -> TextContentBuilderBase<*> = ::defaultDefinitionPrompt
+        ): JsonStructuredData<TStruct> {
+            val serializer = serializer<TStruct>()
+
+            return createJsonStructure(
+                id = serializer.descriptor.serialName.substringAfterLast("."),
+                serializer = serializer,
+                json = json,
+                schemaGenerator = schemaGenerator,
+                descriptionOverrides = descriptionOverrides,
+                examples = examples,
                 definitionPrompt = definitionPrompt,
             )
         }

@@ -2,7 +2,7 @@ package ai.koog.prompt.structure.json.generator.openai
 
 import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.structure.json.generator.core.JsonSchemaConsts
-import ai.koog.prompt.structure.json.generator.default.SimpleJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.SimpleJsonSchemaGenerator
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

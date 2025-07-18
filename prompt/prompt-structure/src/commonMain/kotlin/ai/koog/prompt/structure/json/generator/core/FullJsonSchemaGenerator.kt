@@ -1,23 +1,10 @@
-package ai.koog.prompt.structure.json.generator.default
+package ai.koog.prompt.structure.json.generator.core
 
 import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.structure.json.generator.core.GenericJsonSchemaGenerator
-import ai.koog.prompt.structure.json.generator.core.JsonSchemaConsts
-import ai.koog.prompt.structure.json.generator.core.getPolymorphicDescriptors
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.StructureKind
-import kotlinx.serialization.json.ClassDiscriminatorMode
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.put
-import kotlin.collections.plus
+import kotlinx.serialization.json.*
 
 /**
  * Full implementation of [GenericJsonSchemaGenerator] to generate advanced generic [LLMParams.Schema.JSON.Full].

@@ -1,4 +1,4 @@
-package ai.koog.prompt.structure.json.generator.default
+package ai.koog.prompt.structure.json.generator.core
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.SerialName

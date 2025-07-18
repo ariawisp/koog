@@ -16,8 +16,8 @@ import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.structure.StructureFixingParser
 import ai.koog.prompt.structure.StructuredOutput
 import ai.koog.prompt.structure.StructuredOutputConfig
-import ai.koog.prompt.structure.json.generator.default.FullJsonSchemaGenerator
 import ai.koog.prompt.structure.json.JsonStructuredData
+import ai.koog.prompt.structure.json.generator.core.FullJsonSchemaGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KType

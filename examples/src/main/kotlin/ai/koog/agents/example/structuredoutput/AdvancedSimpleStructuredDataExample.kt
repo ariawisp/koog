@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package ai.koog.agents.example.structureddata
+package ai.koog.agents.example.structuredoutput
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
@@ -22,7 +22,7 @@ import ai.koog.prompt.structure.StructureFixingParser
 import ai.koog.prompt.structure.StructuredOutput
 import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.json.JsonStructuredData
-import ai.koog.prompt.structure.json.generator.default.SimpleJsonSchemaGenerator
+import ai.koog.prompt.structure.json.generator.core.SimpleJsonSchemaGenerator
 import ai.koog.prompt.structure.json.generator.google.GoogleSimpleJsonSchemaGenerator
 import ai.koog.prompt.structure.json.generator.openai.OpenAISimpleJsonSchemaGenerator
 import ai.koog.prompt.text.text
@@ -33,6 +33,9 @@ import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 
 /**
+ * This is a more advanced example showing how to configure various parameters of structured output manually, to fine-tune
+ * it for your needs when necessary.
+ *
  * Structured output that uses "simple" JSON schema.
  * Basic structure support.
  */
@@ -165,7 +168,6 @@ fun main(): Unit = runBlocking {
      that would produce the schema these providers expect.
     */
     val genericWeatherStructure = JsonStructuredData.createJsonStructure<SimpleWeatherForecast>(
-        id = "SimpleWeatherForecast",
         // Some models might not work well with json schema, so you may try simple, but it has more limitations (no polymorphism!)
         schemaGenerator = SimpleJsonSchemaGenerator,
         examples = exampleForecasts,
@@ -177,18 +179,16 @@ fun main(): Unit = runBlocking {
     */
 
     val openAiWeatherStructure = JsonStructuredData.createJsonStructure<SimpleWeatherForecast>(
-        id = "SimpleWeatherForecast",
         schemaGenerator = OpenAISimpleJsonSchemaGenerator,
         examples = exampleForecasts,
     )
 
     val googleWeatherStructure = JsonStructuredData.createJsonStructure<SimpleWeatherForecast>(
-        id = "SimpleWeatherForecast",
         schemaGenerator = GoogleSimpleJsonSchemaGenerator,
         examples = exampleForecasts,
     )
 
-    val agentStrategy = strategy<SimpleWeatherForecastRequest, SimpleWeatherForecast>("simple-weather-forecast") {
+    val agentStrategy = strategy<SimpleWeatherForecastRequest, SimpleWeatherForecast>("advanced-simple-weather-forecast") {
         val prepareRequest by node<SimpleWeatherForecastRequest, String> { request ->
             text {
                 +"Requesting forecast for"

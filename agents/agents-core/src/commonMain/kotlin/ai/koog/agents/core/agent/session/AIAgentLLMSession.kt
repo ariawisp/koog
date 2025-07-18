@@ -11,9 +11,12 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.structure.StructureFixingParser
 import ai.koog.prompt.structure.StructuredOutputConfig
 import ai.koog.prompt.structure.StructuredResponse
 import ai.koog.prompt.structure.executeStructured
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
 
 /**
  * Represents a session for an AI agent that interacts with an LLM (Language Learning Model).
@@ -47,9 +50,7 @@ public sealed class AIAgentLLMSession(
      * Typical usage includes providing input to LLM requests, such as:
      * - [requestLLMWithoutTools]
      * - [requestLLM]
-     * - [requestLLMMultiple]
-     * - [requestLLMStructured]
-     * - [requestLLMStructuredOneShot]
+     * etc.
      */
     public open val prompt: Prompt by ActiveProperty(prompt) { isActive }
 
@@ -257,6 +258,61 @@ public sealed class AIAgentLLMSession(
             config = config,
         )
     }
+
+    /**
+     * Sends a request to LLM and gets a structured response.
+     *
+     * This is a simple version of the full `requestLLMStructured`. Unlike the full version, it does not require specifying
+     * struct definitions and structured output modes manually. It attempts to find the best approach to provide a structured
+     * output based on the defined [model] capabilities.
+     *
+     * @param serializer Serializer for the requested structure type.
+     * @param examples Optional list of examples in case manual mode will be used. These examples might help the model to
+     * understand the format better.
+     * @param fixingParser Optional parser that handles malformed responses by using an auxiliary LLM to
+     * intelligently fix parsing errors. When specified, parsing errors trigger additional
+     * LLM calls with error context to attempt correction of the structure format.
+     */
+    public open suspend fun <T> requestLLMStructured(
+        serializer: KSerializer<T>,
+        examples: List<T> = emptyList(),
+        fixingParser: StructureFixingParser? = null
+    ): Result<StructuredResponse<T>> {
+        validateSession()
+
+        val preparedPrompt = preparePrompt(prompt, tools = emptyList())
+
+        return executor.executeStructured(
+            prompt = preparedPrompt,
+            model = model,
+            serializer = serializer,
+            examples = examples,
+            fixingParser = fixingParser,
+        )
+    }
+
+    /**
+     * Sends a request to LLM and gets a structured response.
+     *
+     * This is a simple version of the full `requestLLMStructured`. Unlike the full version, it does not require specifying
+     * struct definitions and structured output modes manually. It attempts to find the best approach to provide a structured
+     * output based on the defined [model] capabilities.
+     *
+     * @param T The structure to request.
+     * @param examples Optional list of examples in case manual mode will be used. These examples might help the model to
+     * understand the format better.
+     * @param fixingParser Optional parser that handles malformed responses by using an auxiliary LLM to
+     * intelligently fix parsing errors. When specified, parsing errors trigger additional
+     * LLM calls with error context to attempt correction of the structure format.
+    */
+    public suspend inline fun <reified T> requestLLMStructured(
+        examples: List<T> = emptyList(),
+        fixingParser: StructureFixingParser? = null
+    ): Result<StructuredResponse<T>> = requestLLMStructured(
+        serializer = serializer<T>(),
+        examples = examples,
+        fixingParser = fixingParser,
+    )
 
     /**
      * Sends a request to the language model, potentially receiving multiple choices,
