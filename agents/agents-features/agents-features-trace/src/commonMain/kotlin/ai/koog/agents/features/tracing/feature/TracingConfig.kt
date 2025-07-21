@@ -2,6 +2,7 @@ package ai.koog.agents.features.tracing.feature
 
 import ai.koog.agents.features.common.config.FeatureConfig
 import ai.koog.agents.features.common.message.FeatureMessage
+import ai.koog.agents.features.common.remote.server.config.DefaultServerConnectionConfig
 
 /**
  * Configuration for the tracing feature.
@@ -30,7 +31,7 @@ import ai.koog.agents.features.common.message.FeatureMessage
  * }
  * ```
  */
-public class TraceFeatureConfig() : FeatureConfig() {
+public class TracingConfig() : FeatureConfig() {
 
     /**
      * A filter for messages to be sent to the tracing message processors.
@@ -50,4 +51,14 @@ public class TraceFeatureConfig() : FeatureConfig() {
      * ```
      */
     public var messageFilter: (FeatureMessage) -> Boolean = { true }
+
+    /**
+     * TODO: SD -- fix
+     */
+    public var port: Int = DefaultServerConnectionConfig.DEFAULT_PORT
+
+    /**
+     * TODO: SD -- fix
+     */
+    public var awaitConnection: Boolean = false
 }

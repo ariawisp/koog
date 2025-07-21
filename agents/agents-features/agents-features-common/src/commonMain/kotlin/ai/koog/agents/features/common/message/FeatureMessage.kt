@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
  * information about various system events or updates, such as status changes or interaction events.
  */
 public interface FeatureMessage {
+
     /**
      * Represents the time, in milliseconds, when the feature message or event was created or occurred.
      *
@@ -17,8 +18,9 @@ public interface FeatureMessage {
      * facilitating temporal analysis, ordering, or correlation within the system.
      */
     public val timestamp: Long
+
     /**
-     * Specifies the type of a feature message or event.
+     * Specifies the type of feature message or event.
      *
      * This property is used to categorize messages into predefined types within the system,
      * such as `Message` or `Event`. The type determines how the message should be processed
@@ -27,7 +29,7 @@ public interface FeatureMessage {
     public val messageType: Type
 
     /**
-     * Represents the type of a feature message or event.
+     * Describe the type of feature message or event.
      *
      * This enum class is used to categorize and distinguish the kinds of messages
      * processed within the system. It contains predefined values for message and event types.

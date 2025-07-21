@@ -110,6 +110,9 @@ public class AIAgentPipeline {
         configure: Config.() -> Unit
     ) {
         val config = feature.createInitialConfig().apply { configure() }
+
+        logger.info { "Start installing feature: ${feature::class.simpleName}" }
+
         feature.install(
             config = config,
             pipeline = this,

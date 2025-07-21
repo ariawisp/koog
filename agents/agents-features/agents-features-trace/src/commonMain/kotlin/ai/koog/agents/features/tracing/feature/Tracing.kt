@@ -77,21 +77,19 @@ public class Tracing {
      * }
      * ```
      */
-    public companion object Feature : AIAgentFeature<TraceFeatureConfig, Tracing> {
+    public companion object Feature : AIAgentFeature<TracingConfig, Tracing> {
 
         private val logger = KotlinLogging.logger {  }
 
         override val key: AIAgentStorageKey<Tracing> =
             AIAgentStorageKey("agents-features-tracing")
 
-        override fun createInitialConfig(): TraceFeatureConfig = TraceFeatureConfig()
+        override fun createInitialConfig(): TracingConfig = TracingConfig()
 
         override fun install(
-            config: TraceFeatureConfig,
+            config: TracingConfig,
             pipeline: AIAgentPipeline,
         ) {
-            logger.info { "Start installing feature: ${Tracing::class.simpleName}" }
-
             if (config.messageProcessor.isEmpty()) {
                 logger.warn { "Tracing Feature. No feature out stream providers are defined. Trace streaming has no target." }
             }
@@ -255,7 +253,7 @@ public class Tracing {
 
         //region Private Methods
 
-        private suspend fun processMessage(config: TraceFeatureConfig, message: FeatureMessage) {
+        private suspend fun processMessage(config: TracingConfig, message: FeatureMessage) {
             if (!config.messageFilter(message)) {
                 return
             }

@@ -6,7 +6,6 @@ import ai.koog.agents.core.feature.AIAgentFeature
 import ai.koog.agents.core.feature.AIAgentPipeline
 import ai.koog.agents.core.feature.InterceptContext
 import ai.koog.agents.core.feature.handler.*
-import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
  * A feature that allows hooking into various events in the agent's lifecycle.
@@ -54,8 +53,6 @@ public class EventHandler {
      */
     public companion object Feature : AIAgentFeature<EventHandlerConfig, EventHandler> {
 
-        private val logger = KotlinLogging.logger {  }
-
         override val key: AIAgentStorageKey<EventHandler> =
             AIAgentStorageKey("agents-features-event-handler")
 
@@ -65,8 +62,6 @@ public class EventHandler {
             config: EventHandlerConfig,
             pipeline: AIAgentPipeline,
         ) {
-            logger.info { "Start installing feature: ${EventHandler::class.simpleName}" }
-
             val featureImpl = EventHandler()
             val interceptContext = InterceptContext(this, featureImpl)
 
