@@ -13,4 +13,5 @@ public abstract class ServerConnectionConfig(
     public val host: String,
     public val port: Int,
     public val wait: Boolean,
+    public val waitConnection: Boolean
 ) : ConnectionConfig()

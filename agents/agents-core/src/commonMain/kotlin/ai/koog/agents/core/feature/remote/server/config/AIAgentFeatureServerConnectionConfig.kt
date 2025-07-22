@@ -9,8 +9,12 @@ import ai.koog.agents.features.common.remote.server.config.ServerConnectionConfi
  * host - The host on which the server will listen to.
  * port - The port number on which the server will listen to.
  */
-public class AIAgentFeatureServerConnectionConfig(host: String, port: Int, wait: Boolean = false) :
-    ServerConnectionConfig(host = host, port = port, wait = wait) {
+public class AIAgentFeatureServerConnectionConfig(
+    host: String,
+    port: Int,
+    wait: Boolean = false,
+    waitConnection: Boolean = false
+) : ServerConnectionConfig(host = host, port = port, wait = wait, waitConnection = waitConnection) {
 
     init {
         appendSerializersModule(agentFeatureMessageSerializersModule)
