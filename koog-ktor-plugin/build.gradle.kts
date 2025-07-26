@@ -8,26 +8,30 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+
 kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":prompt:prompt-llm"))
-                api(project(":prompt:prompt-executor:prompt-executor-clients"))
-                api(project(":embeddings:embeddings-base"))
+                api(project(":koog-agents"))
                 api(libs.kotlinx.coroutines.core)
                 api(libs.kotlinx.serialization.json)
-                api(ktorLibs.client.contentNegotiation)
-                api(ktorLibs.serialization.kotlinx.json)
+                api(ktorLibs.server.core)
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                api(project(":agents:agents-mcp"))
             }
         }
 
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-                implementation(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-openai-client"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.coroutines.test)
+                implementation(ktorLibs.server.core)
             }
         }
 
