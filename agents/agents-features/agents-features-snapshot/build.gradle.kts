@@ -34,6 +34,16 @@ kotlin {
                 api(libs.lettuce.core)
                 api(libs.kotlinx.coroutines.reactive)
                 implementation(libs.commons.pool2)
+                api(libs.exposed.core)
+                api(libs.exposed.dao)
+                api(libs.exposed.jdbc)
+                api(libs.exposed.json)
+                api(libs.exposed.kotlin.datetime)
+                api(libs.postgresql)
+                api(libs.mysql)
+                api(libs.h2)
+                api(libs.sqlite)
+                implementation(libs.hikaricp)
             }
         }
 
@@ -43,6 +53,7 @@ kotlin {
                 implementation(project(":agents:agents-test"))
                 implementation(libs.mockk)
                 implementation(libs.testcontainers)
+                implementation(libs.testcontainers.postgresql)
             }
         }
     }
