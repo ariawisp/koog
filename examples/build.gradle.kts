@@ -24,6 +24,7 @@ dependencies {
     api(project(":agents:agents-features:agents-features-event-handler"))
     api(project(":agents:agents-features:agents-features-memory"))
     api(project(":agents:agents-features:agents-features-opentelemetry"))
+    api(project(":agents:agents-features:agents-features-pubsub"))
     api(project(":agents:agents-features:agents-features-snapshot"))
 
     api(project(":prompt:prompt-markdown"))
@@ -37,6 +38,10 @@ dependencies {
     api(project(":koog-ktor-plugin"))
 
     api(libs.kotlinx.datetime)
+
+    // Redis and GCP dependencies for PubSub examples
+    implementation(libs.lettuce.core)
+    implementation(libs.google.cloud.pubsub)
 
     implementation(libs.logback.classic)
     implementation(libs.opentelemetry.exporter.logging)
@@ -92,6 +97,9 @@ registerRunExampleTask("runExampleRedisPersistentAgent", "ai.koog.agents.example
 registerRunExampleTask("runExamplePooledRedisPersistentAgent", "ai.koog.agents.example.snapshot.redis.PooledRedisPersistentAgentExampleKt")
 registerRunExampleTask("runExampleSQLPersistentAgent", "ai.koog.agents.example.snapshot.sql.SQLPersistentAgentExample")
 registerRunExampleTask("runExamplePersistencyStrategy", "ai.koog.agents.example.persistency.PersistencyStrategyExampleKt")
+registerRunExampleTask("runExamplePubSub", "ai.koog.agents.example.features.pubsub.PubSubKt")
+registerRunExampleTask("runExampleGCPPubSub", "ai.koog.agents.example.features.pubsub.GCPPubSubExampleKt")
+registerRunExampleTask("runExampleRedisPubSub", "ai.koog.agents.example.features.pubsub.RedisPubSubExampleKt")
 
 dokka {
     dokkaSourceSets.named("main") {

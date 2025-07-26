@@ -1,0 +1,39 @@
+services:
+  gcp-pubsub-emulator:
+    image: google/cloud-sdk:emulators
+    container_name: koog-pubsub-gcp-emulator
+    ports:
+      - "8085:8085"
+    command: >
+      sh -c "gcloud beta emulators pubsub start 
+             --project=koog-pubsub-dev 
+             --host-port=0.0.0.0:8085 
+             --verbosity=info"
+    environment:
+      - PUBSUB_PROJECT_ID=koog-pubsub-dev
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8085 || nc -z localhost 8085"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # Optional: Info container that shows connection details
+  pubsub-info:
+    image: google/cloud-sdk:alpine
+    container_name: koog-pubsub-info
+    depends_on:
+      gcp-pubsub-emulator:
+        condition: service_healthy
+    environment:
+      - PUBSUB_EMULATOR_HOST=gcp-pubsub-emulator:8085
+      - PUBSUB_PROJECT_ID=koog-pubsub-dev
+    command: >
+      sh -c "echo '🚀 GCP Pub/Sub Emulator is running!' &&
+             echo '📍 Emulator endpoint: http://localhost:8085' &&
+             echo '🆔 Project ID: koog-pubsub-dev' &&
+             echo '🔧 Set environment variable:' &&
+             echo '   export PUBSUB_EMULATOR_HOST=localhost:8085' &&
+             echo '✅ Ready for Koog PubSub examples' &&
+             echo '💤 Keeping container alive for monitoring...' &&
+             tail -f /dev/null"
