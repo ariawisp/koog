@@ -88,13 +88,10 @@ registerRunExampleTask("runExampleFeatureOpenTelemetry", "ai.koog.agents.example
 registerRunExampleTask("runExampleBedrockAgent", "ai.koog.agents.example.client.BedrockAgentKt")
 registerRunExampleTask("runExampleJokesWithModeration", "ai.koog.agents.example.moderation.JokesWithModerationKt")
 registerRunExampleTask("runExampleFilePersistentAgent", "ai.koog.agents.example.snapshot.FilePersistentAgentExampleKt")
-<<<<<<< HEAD
 registerRunExampleTask("runExampleRedisPersistentAgent", "ai.koog.agents.example.snapshot.redis.RedisPersistentAgentExampleKt")
 registerRunExampleTask("runExamplePooledRedisPersistentAgent", "ai.koog.agents.example.snapshot.redis.PooledRedisPersistentAgentExampleKt")
-||||||| 362ea10b
-=======
 registerRunExampleTask("runExampleSQLPersistentAgent", "ai.koog.agents.example.snapshot.sql.SQLPersistentAgentExample")
->>>>>>> origin/ariawisp/postgres-persistence-provider
+registerRunExampleTask("runExamplePersistencyStrategy", "ai.koog.agents.example.persistency.PersistencyStrategyExampleKt")
 
 dokka {
     dokkaSourceSets.named("main") {
