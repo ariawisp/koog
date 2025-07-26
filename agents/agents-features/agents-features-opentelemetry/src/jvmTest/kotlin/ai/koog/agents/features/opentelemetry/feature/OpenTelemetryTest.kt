@@ -1,7 +1,7 @@
 package ai.koog.agents.features.opentelemetry.feature
 
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.features.opentelemetry.OpenTelemetryTestAPI.createAgent
@@ -116,7 +116,7 @@ class OpenTelemetryTest {
             val model = OpenAIModels.Chat.GPT4o
             val temperature = 0.4
 
-            val strategy = strategy("test-strategy") {
+            val strategy = graphStrategy("test-strategy") {
                 val nodeSendInput by nodeLLMRequest("test-llm-call")
 
                 edge(nodeStart forwardTo nodeSendInput)
@@ -249,7 +249,7 @@ class OpenTelemetryTest {
             val model = OpenAIModels.Chat.GPT4o
             val temperature = 0.4
 
-            val strategy = strategy("test-strategy") {
+            val strategy = graphStrategy("test-strategy") {
                 val nodeSendInput by nodeLLMRequest("test-llm-call")
 
                 edge(nodeStart forwardTo nodeSendInput)
@@ -429,7 +429,7 @@ class OpenTelemetryTest {
             val model = OpenAIModels.Chat.GPT4o
             val temperature = 0.4
 
-            val strategy = strategy("test-strategy") {
+            val strategy = graphStrategy("test-strategy") {
                 val nodeSendInput by nodeLLMRequest("test-llm-call")
                 val nodeExecuteTool by nodeExecuteTool("test-tool-call")
                 val nodeSendToolResult by nodeLLMSendToolResult("test-node-llm-send-tool-result")

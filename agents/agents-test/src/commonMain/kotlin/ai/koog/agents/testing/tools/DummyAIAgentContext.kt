@@ -8,6 +8,7 @@ import ai.koog.agents.core.agent.context.AIAgentLLMContext
 import ai.koog.agents.core.agent.entity.AIAgentStateManager
 import ai.koog.agents.core.agent.entity.AIAgentStorage
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
+import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.dsl.builder.BaseBuilder
 import ai.koog.agents.core.environment.AIAgentEnvironment
@@ -25,10 +26,10 @@ import kotlin.reflect.KType
  * @param builder A builder object used to initialize the mock properties of the context.
  */
 @TestOnly
-public class DummyAIAgentContext(
+public class DummyAIAgentContext<TStrategy: AIAgentStrategy<*, *>>(
     private val builder: AIAgentContextMockBuilder,
     override val id: String = "DummyAgentId",
-) : AIAgentContextBase {
+) : AIAgentContextBase<TStrategy> {
     /**
      * Indicates whether a Language Learning Model (LLM) is defined in the current context.
      *
@@ -58,7 +59,7 @@ public class DummyAIAgentContext(
     private var _strategyId: String? = builder.strategyId
 
     @OptIn(InternalAgentsApi::class)
-    private var _pipeline: AIAgentPipeline = AIAgentPipeline()
+    private var _pipeline: AIAgentPipeline<TStrategy> = AIAgentPipeline<TStrategy>()
 
     override val environment: AIAgentEnvironment
         get() = _environment ?: throw NotImplementedError("Environment is not mocked")
@@ -88,7 +89,7 @@ public class DummyAIAgentContext(
         get() = _strategyId ?: throw NotImplementedError("Strategy ID is not mocked")
 
     @OptIn(InternalAgentsApi::class)
-    override val pipeline: AIAgentPipeline
+    override val pipeline: AIAgentPipeline<TStrategy>
         get() = _pipeline
 
     override fun store(key: AIAgentStorageKey<*>, value: Any) {
@@ -106,7 +107,7 @@ public class DummyAIAgentContext(
     override fun <Feature : Any> feature(key: AIAgentStorageKey<Feature>): Feature? =
         throw NotImplementedError("feature() getting in runtime is not supported for mock")
 
-    override fun <Feature : Any> feature(feature: AIAgentFeature<*, Feature>): Feature? =
+    override fun <Feature : Any> feature(feature: AIAgentFeature<*, Feature, *>): Feature? =
         throw NotImplementedError("feature()  getting in runtime is not supported for mock")
 
     override suspend fun getHistory(): List<Message> = emptyList()
@@ -121,8 +122,8 @@ public class DummyAIAgentContext(
         storage: AIAgentStorage,
         runId: String,
         strategyId: String,
-        pipeline: AIAgentPipeline
-    ): AIAgentContextBase = DummyAIAgentContext(
+        pipeline: AIAgentPipeline<TStrategy>
+    ): AIAgentContextBase<TStrategy> = DummyAIAgentContext(
         builder.copy(
             environment = environment,
             agentInput = agentInput,
@@ -136,11 +137,11 @@ public class DummyAIAgentContext(
         ),
     )
 
-    override suspend fun fork(): AIAgentContextBase {
+    override suspend fun fork(): AIAgentContextBase<TStrategy> {
         throw NotImplementedError("fork() is not supported for mock")
     }
 
-    override suspend fun replace(context: AIAgentContextBase) {
+    override suspend fun replace(context: AIAgentContextBase<*>) {
         throw NotImplementedError("replace() is not supported for mock")
     }
 }
@@ -156,7 +157,7 @@ public class DummyAIAgentContext(
  * Extends the [BaseBuilder] interface for constructing instances of type [AIAgentContextBase].
  */
 @TestOnly
-public interface AIAgentContextMockBuilderBase : BaseBuilder<AIAgentContextBase> {
+public interface AIAgentContextMockBuilderBase : BaseBuilder<AIAgentContextBase<*>> {
     /**
      * Represents the environment used by the AI agent to interact with external systems.
      *
@@ -269,7 +270,7 @@ public interface AIAgentContextMockBuilderBase : BaseBuilder<AIAgentContextBase>
      *
      * @return A fully constructed [AIAgentContextBase] instance representing the configured agent context.
      */
-    override fun build(): AIAgentContextBase
+    override fun build(): AIAgentContextBase<*>
 }
 
 /**
@@ -409,8 +410,8 @@ public class AIAgentContextMockBuilder() : AIAgentContextMockBuilderBase {
      *
      * @return A `DummyAgentContext` instance initialized with the current state of the builder.
      */
-    override fun build(): DummyAIAgentContext {
-        return DummyAIAgentContext(this.copy())
+    override fun build(): DummyAIAgentContext<*> {
+        return DummyAIAgentContext<AIAgentStrategy<*, *>>(this.copy())
     }
 
     /**

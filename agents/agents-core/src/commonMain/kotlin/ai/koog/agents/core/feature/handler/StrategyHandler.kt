@@ -1,5 +1,6 @@
 package ai.koog.agents.core.feature.handler
 
+import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import ai.koog.agents.core.annotation.InternalAgentsApi
 
 /**
@@ -10,13 +11,13 @@ import ai.koog.agents.core.annotation.InternalAgentsApi
  * @param TFeature The type of feature associated with the strategy operations.
  * @property feature The specific feature instance associated with this handler.
  */
-public class StrategyHandler<TFeature : Any>(public val feature: TFeature) {
+public class StrategyHandler<TFeature : Any, TStrategy: AIAgentStrategy<*, *>>(public val feature: TFeature) {
 
     /**
      * Handler invoked when a strategy is started. This can be used to perform custom logic
      * related to strategy initiation for a specific feature.
      */
-    public var strategyStartedHandler: StrategyStartedHandler<TFeature> =
+    public var strategyStartedHandler: StrategyStartedHandler<TFeature, TStrategy> =
         StrategyStartedHandler { _ -> }
 
     /**
@@ -40,7 +41,7 @@ public class StrategyHandler<TFeature : Any>(public val feature: TFeature) {
      *
      * @param context The context for updating the agent with the feature
      */
-    public suspend fun handleStrategyStarted(context: StrategyStartContext<TFeature>) {
+    public suspend fun handleStrategyStarted(context: StrategyStartContext<TFeature, TStrategy>) {
         strategyStartedHandler.handle(context)
     }
 
@@ -51,8 +52,8 @@ public class StrategyHandler<TFeature : Any>(public val feature: TFeature) {
      */
     @Suppress("UNCHECKED_CAST")
     @InternalAgentsApi
-    public suspend fun handleStrategyStartedUnsafe(context: StrategyStartContext<*>) {
-        handleStrategyStarted(context as StrategyStartContext<TFeature>)
+    public suspend fun handleStrategyStartedUnsafe(context: StrategyStartContext<*, TStrategy>) {
+        handleStrategyStarted(context as StrategyStartContext<TFeature, TStrategy>)
     }
 
     /**
@@ -81,14 +82,14 @@ public class StrategyHandler<TFeature : Any>(public val feature: TFeature) {
  *
  * @param FeatureT The type of feature associated with the strategy.
  */
-public fun interface StrategyStartedHandler<FeatureT : Any> {
+public fun interface StrategyStartedHandler<FeatureT : Any, TStrategy : AIAgentStrategy<*, *>> {
     /**
      * Handles the processing of a strategy update within a specified context.
      *
      * @param context The context for the strategy update, encapsulating the strategy,
      *                run identifier, and feature associated with the handling process.
      */
-    public suspend fun handle(context: StrategyStartContext<FeatureT>)
+    public suspend fun handle(context: StrategyStartContext<FeatureT, TStrategy>)
 }
 
 /**

@@ -3,11 +3,11 @@ package ai.koog.agents.example.planner
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.AIAgentContextBase
-import ai.koog.agents.core.agent.entity.AIAgentNodeBase
+import ai.koog.agents.core.agent.entity.graph.AIAgentNodeBase
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeExecuteTool
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.dsl.extension.onIsInstance
@@ -62,17 +62,17 @@ class SequentialNode(override val children: List<PlannerNode>) : IntermediatePla
     class Builder(override val subtaskDescription: String) : IntermediatePlannerNode.Builder(mutableListOf())
 }
 
-class DelegateNode(val agent: AIAgent<String, String>, val input: String) : PlannerNode {
+class DelegateNode(val agent: AIAgent<String, String, *>, val input: String) : PlannerNode {
     override suspend fun execute(dispatcher: CoroutineDispatcher) {
         agent.run(input)
     }
 
-    class Builder(override val subtaskDescription: String, val agent: AIAgent<String, String>) : PlannerNode.Builder {
+    class Builder(override val subtaskDescription: String, val agent: AIAgent<String, String, *>) : PlannerNode.Builder {
         override fun build() = DelegateNode(agent, subtaskDescription)
     }
 }
 
-data class AgentDescriptor(val agent: AIAgent<String, String>, val description: String)
+data class AgentDescriptor(val agent: AIAgent<String, String, *>, val description: String)
 
 interface ParsedMessage
 
@@ -109,8 +109,8 @@ suspend fun planWork(
 
     val result = CompletableDeferred<PlannerNode>()
 
-    val planner = strategy<String, String>("planner") {
-        suspend fun AIAgentContextBase.defineTask(inputTask: String, prompt: String): Message.Response {
+    val planner = graphStrategy<String, String>("planner") {
+        suspend fun AIAgentContextBase<*>.defineTask(inputTask: String, prompt: String): Message.Response {
             return llm.writeSession {
                 updatePrompt {
                     system(prompt)

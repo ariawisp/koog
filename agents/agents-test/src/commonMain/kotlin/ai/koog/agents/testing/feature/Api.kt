@@ -1,6 +1,7 @@
 package ai.koog.agents.testing.feature
 
 import ai.koog.agents.core.agent.AIAgent.FeatureContext
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 
 /**
  * Configures the Testing feature for graph testing.
@@ -89,14 +90,16 @@ public fun Testing.Config.graph(test: Testing.Config.() -> Unit) {
  * }
  * ```
  */
-public fun <Input, Output> FeatureContext.testGraph(name: String, test: Testing.Config.SubgraphAssertionsBuilder<Input, Output>.() -> Unit): Unit =
-    withTesting {
-        graph {
-            verifyStrategy(name) {
-                test()
-            }
+public fun <Input, Output> FeatureContext<out AIAgentGraphStrategy<Input, Output>>.testGraph(
+    name: String,
+    test: Testing.Config.SubgraphAssertionsBuilder<Input, Output>.() -> Unit
+): Unit = withTesting {
+    graph {
+        verifyStrategy(name) {
+            test()
         }
     }
+}
 
 /**
  * Sample code demonstrating the usage of the [graph] function.

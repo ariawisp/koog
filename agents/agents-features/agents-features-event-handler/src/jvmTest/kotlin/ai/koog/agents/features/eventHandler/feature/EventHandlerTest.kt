@@ -3,7 +3,7 @@ package ai.koog.agents.features.eventHandler.feature
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.prompt.message.Message
 import kotlinx.coroutines.runBlocking
@@ -21,7 +21,7 @@ class EventHandlerTest {
         val strategyName = "tracing-test-strategy"
         val agentResult = "Done"
 
-        val strategy = strategy<String, String>(strategyName) {
+        val strategy = graphStrategy<String, String>(strategyName) {
             edge(nodeStart forwardTo nodeFinish transformed { agentResult })
         }
 
@@ -61,7 +61,7 @@ class EventHandlerTest {
         val strategyName = "tracing-test-strategy"
         val agentResult = "Done"
 
-        val strategy = strategy<String, String>(strategyName) {
+        val strategy = graphStrategy<String, String>(strategyName) {
             val llmCallNode by nodeLLMRequest("test LLM call")
 
             edge(nodeStart forwardTo llmCallNode transformed { "Test LLM call prompt" })
@@ -109,7 +109,7 @@ class EventHandlerTest {
         val strategyName = "tracing-test-strategy"
         val agentResult = "Done"
 
-        val strategy = strategy<String, String>(strategyName) {
+        val strategy = graphStrategy<String, String>(strategyName) {
             val llmCallNode by nodeLLMRequest("test LLM call")
 
             edge(nodeStart forwardTo llmCallNode transformed { "Test LLM call prompt" })
@@ -157,7 +157,7 @@ class EventHandlerTest {
         val strategyName = "tracing-test-strategy"
         val agentResult = "Done"
 
-        val strategy = strategy<String, String>(strategyName) {
+        val strategy = graphStrategy<String, String>(strategyName) {
             val llmCallNode by nodeLLMRequest("test LLM call")
             val llmCallWithToolsNode by nodeLLMRequest("test LLM call with tools")
 
@@ -210,7 +210,7 @@ class EventHandlerTest {
         val strategyName = "tracing-test-strategy"
         val agentResult = "Done"
 
-        val strategy = strategy<String, String>(strategyName) {
+        val strategy = graphStrategy<String, String>(strategyName) {
             edge(nodeStart forwardTo nodeFinish transformed { agentResult })
         }
 
@@ -256,7 +256,7 @@ class EventHandlerTest {
         val eventsCollector = TestEventsCollector()
         val strategyName = "tracing-test-strategy"
 
-        val strategy = strategy<String, String>(strategyName) {
+        val strategy = graphStrategy<String, String>(strategyName) {
             val llmCallNode by nodeLLMRequest("test LLM call")
             val llmCallWithToolsNode by nodeException("test LLM call with tools")
 

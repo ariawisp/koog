@@ -8,8 +8,9 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.AIAgentException
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.agentInput
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.tools.*
 import ai.koog.agents.features.eventHandler.feature.EventHandler
@@ -378,7 +379,7 @@ class AIAgentMultipleLLMIntegrationTest {
         maxAgentIterations: Int,
         prompt: Prompt = prompt("test") {},
         eventsChannel: Channel<Event>? = null,
-    ): AIAgent<String, String> {
+    ): AIAgent<String, String, AIAgentGraphStrategy<String, String>> {
         val openAIClient = if (eventsChannel != null) {
             OpenAILLMClient(openAIApiKey).reportingTo(eventsChannel)
         } else {
@@ -396,7 +397,7 @@ class AIAgentMultipleLLMIntegrationTest {
             LLMProvider.Anthropic to anthropicClient
         )
 
-        val strategy = strategy<String, String>("test") {
+        val strategy = graphStrategy<String, String>("test") {
             val anthropicSubgraph by subgraph<String, Unit>("anthropic") {
                 val definePromptAnthropic by node<Unit, Unit> {
                     llm.writeSession {
@@ -493,7 +494,7 @@ class AIAgentMultipleLLMIntegrationTest {
         eventHandlerConfig: EventHandlerConfig.() -> Unit,
         maxAgentIterations: Int,
         prompt: Prompt = prompt("test") {},
-    ): AIAgent<String, String> {
+    ): AIAgent<String, String, AIAgentGraphStrategy<String, String>> {
         val openAIClient = OpenAILLMClient(openAIApiKey)
 
         // Create the executor
@@ -502,7 +503,7 @@ class AIAgentMultipleLLMIntegrationTest {
         )
 
         // Create a simple agent strategy
-        val strategy = strategy<String, String>("test") {
+        val strategy = graphStrategy<String, String>("test") {
             val openaiSubgraphFirst by subgraph<String, Unit>("openai0") {
                 val definePromptOpenAI by node<Unit, Unit> {
                     llm.writeSession {

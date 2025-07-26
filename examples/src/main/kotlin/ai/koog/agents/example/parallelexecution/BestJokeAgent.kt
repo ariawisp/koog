@@ -2,7 +2,7 @@ package ai.koog.agents.example.parallelexecution
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.example.ApiKeyService
@@ -34,7 +34,7 @@ fun main(args: Array<String>) = runBlocking {
         "You are a comedian. Generate a funny joke about the given topic. Be creative and make it hilarious."
     val jokeCritiqueSystemPrompt = "You are a comedy critic. Give a critique for the given joke."
 
-    val strategy = strategy("best-joke") {
+    val strategy = graphStrategy("best-joke") {
         val nodeOpenAI by node<String, String> { topic ->
             llm.writeSession {
                 model = OpenAIModels.Chat.GPT4o

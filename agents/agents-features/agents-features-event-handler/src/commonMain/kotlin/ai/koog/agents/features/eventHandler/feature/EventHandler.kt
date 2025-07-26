@@ -2,6 +2,7 @@ package ai.koog.agents.features.eventHandler.feature
 
 import ai.koog.agents.core.agent.AIAgent.FeatureContext
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
+import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import ai.koog.agents.core.feature.AIAgentFeature
 import ai.koog.agents.core.feature.AIAgentPipeline
 import ai.koog.agents.core.feature.InterceptContext
@@ -10,18 +11,18 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
  * A feature that allows hooking into various events in the agent's lifecycle.
- * 
+ *
  * The EventHandler provides a way to register callbacks for different events that occur during
  * the execution of an agent, such as agent lifecycle events, strategy events, node events,
  * LLM call events, and tool call events.
- * 
+ *
  * Example usage:
  * ```
  * handleEvents {
  *     onToolCall { stage, tool, toolArgs ->
  *         println("Tool called: ${tool.name} with args $toolArgs")
  *     }
- *     
+ *
  *     onAgentFinished { strategyName, result ->
  *         println("Agent finished with result: $result")
  *     }
@@ -31,7 +32,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 public class EventHandler {
     /**
      * Implementation of the [AIAgentFeature] interface for the [EventHandler] feature.
-     * 
+     *
      * This companion object provides the necessary functionality to install the [EventHandler]
      * feature into an agent's pipeline. It intercepts various events in the agent's lifecycle
      * and forwards them to the appropriate handlers defined in the [EventHandlerConfig].
@@ -52,9 +53,9 @@ public class EventHandler {
      *     }
      * }
      */
-    public companion object Feature : AIAgentFeature<EventHandlerConfig, EventHandler> {
+    public companion object Feature : AIAgentFeature<EventHandlerConfig, EventHandler, AIAgentStrategy<*, *>> {
 
-        private val logger = KotlinLogging.logger {  }
+        private val logger = KotlinLogging.logger { }
 
         override val key: AIAgentStorageKey<EventHandler> =
             AIAgentStorageKey("agents-features-event-handler")
@@ -63,7 +64,7 @@ public class EventHandler {
 
         override fun install(
             config: EventHandlerConfig,
-            pipeline: AIAgentPipeline,
+            pipeline: AIAgentPipeline<out AIAgentStrategy<*, *>>,
         ) {
             logger.info { "Start installing feature: ${EventHandler::class.simpleName}" }
 
@@ -166,7 +167,7 @@ public class EventHandler {
  *     onToolCall { stage, tool, toolArgs ->
  *         println("Tool called: ${tool.name}")
  *     }
- *     
+ *
  *     // Handle errors
  *     onAgentRunError { strategyName, throwable ->
  *         logger.error("Agent error: ${throwable.message}")
@@ -174,7 +175,7 @@ public class EventHandler {
  * }
  * ```
  */
-public fun FeatureContext.handleEvents(configure: EventHandlerConfig.() -> Unit) {
+public fun FeatureContext<out AIAgentStrategy<*, *>>.handleEvents(configure: EventHandlerConfig.() -> Unit) {
     install(EventHandler) {
         configure()
     }

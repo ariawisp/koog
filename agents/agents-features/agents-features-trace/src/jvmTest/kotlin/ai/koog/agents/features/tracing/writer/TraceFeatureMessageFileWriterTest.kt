@@ -1,7 +1,7 @@
 package ai.koog.agents.features.tracing.writer
 
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.feature.model.*
 import ai.koog.agents.features.common.message.FeatureEvent
@@ -51,7 +51,7 @@ class TraceFeatureMessageFileWriterTest {
             val assistantPrompt = "Test assistant prompt"
             val promptId = "Test prompt id"
 
-            val strategy = strategy<String, String>(strategyName) {
+            val strategy = graphStrategy<String, String>(strategyName) {
                 val llmCallNode by nodeLLMRequest("test LLM call")
                 val llmCallWithToolsNode by nodeLLMRequest("test LLM call with tools")
 
@@ -225,7 +225,7 @@ class TraceFeatureMessageFileWriterTest {
         ).use { writer ->
             val strategyName = "tracing-test-strategy"
 
-            val strategy = strategy<String, String>(strategyName) {
+            val strategy = graphStrategy<String, String>(strategyName) {
                 val llmCallNode by nodeLLMRequest("test LLM call")
                 val llmCallWithToolsNode by nodeLLMRequest("test LLM call with tools")
 
@@ -259,7 +259,7 @@ class TraceFeatureMessageFileWriterTest {
 
             val strategyName = "tracing-test-strategy"
 
-            val strategy = strategy<String, String>(strategyName) {
+            val strategy = graphStrategy<String, String>(strategyName) {
                 val llmCallNode by nodeLLMRequest("test LLM call")
                 val llmCallWithToolsNode by nodeLLMRequest("test LLM call with tools")
 
@@ -299,7 +299,7 @@ class TraceFeatureMessageFileWriterTest {
             val assistantPrompt = "Test assistant prompt"
             val promptId = "Test prompt id"
 
-            val strategy = strategy<String, String>(strategyName) {
+            val strategy = graphStrategy<String, String>(strategyName) {
                 val llmCallNode by nodeLLMRequest("test LLM call")
                 val llmCallWithToolsNode by nodeLLMRequest("test LLM call with tools")
 

@@ -8,6 +8,10 @@ import ai.koog.agents.core.agent.config.AIAgentConfigBase
 import ai.koog.agents.core.agent.context.AIAgentContextBase
 import ai.koog.agents.core.agent.context.AIAgentLLMContext
 import ai.koog.agents.core.agent.entity.*
+import ai.koog.agents.core.agent.entity.graph.AIAgentNodeBase
+import ai.koog.agents.core.agent.entity.graph.AIAgentSubgraph
+import ai.koog.agents.core.agent.entity.graph.FinishNode
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.environment.ReceivedToolResult
@@ -46,9 +50,9 @@ public sealed class NodeReference<Input, Output> {
     /**
      * Resolves the current node reference within the context of the provided AI agent subgraph.
      *
-     * @param subgraph An instance of [AIAgentSubgraph], representing the structured subgraph within the AI agent workflow.
+     * @param subgraph An instance of [ai.koog.agents.core.agent.entity.graph.AIAgentSubgraph], representing the structured subgraph within the AI agent workflow.
      *                 It contains the logical segment of processing, including the starting and finishing nodes.
-     * @return An instance of [AIAgentNodeBase], representing the resolved node within the subgraph that corresponds
+     * @return An instance of [ai.koog.agents.core.agent.entity.graph.AIAgentNodeBase], representing the resolved node within the subgraph that corresponds
      *         to the current node reference.
      */
     public abstract fun resolve(subgraph: AIAgentSubgraph<*, *>): AIAgentNodeBase<Input, Output>
@@ -179,16 +183,16 @@ public sealed class NodeReference<Input, Output> {
          * @throws IllegalStateException If the subgraph is not of type `AIAgentStrategy`.
          */
         @Suppress("UNCHECKED_CAST")
-        override fun resolve(subgraph: AIAgentSubgraph<*, *>): AIAgentStrategy<Input, Output> {
+        override fun resolve(subgraph: AIAgentSubgraph<*, *>): AIAgentGraphStrategy<Input, Output> {
             if (subgraph.name != name) {
                 throw IllegalArgumentException("Strategy with name '$name' was expected")
             }
 
-            if (subgraph !is AIAgentStrategy) {
+            if (subgraph !is AIAgentGraphStrategy) {
                 throw IllegalStateException("Resolving a strategy is not possible from a subgraph")
             }
 
-            return subgraph as AIAgentStrategy<Input, Output>
+            return subgraph as AIAgentGraphStrategy<Input, Output>
         }
     }
 }
@@ -236,7 +240,7 @@ public data class GraphAssertions(
 @TestOnly
 public data class NodeOutputAssertion<Input, Output>(
     val node: NodeReference<Input, Output>,
-    val context: DummyAIAgentContext,
+    val context: DummyAIAgentContext<*>,
     val input: Input,
     val expectedOutput: Output
 )
@@ -254,7 +258,7 @@ public data class NodeOutputAssertion<Input, Output>(
 @TestOnly
 public data class EdgeAssertion<Input, Output>(
     val node: NodeReference<Input, Output>,
-    val context: AIAgentContextBase,
+    val context: AIAgentContextBase<*>,
     val output: Output,
     val expectedNode: NodeReference<*, *>
 )
@@ -506,9 +510,14 @@ public class Testing {
          * @param name The name of the strategy to be verified.
          * @param buildAssertions A lambda defining the assertions to be built for the strategy.
          */
-        public fun <Input, Output> verifyStrategy(name: String, buildAssertions: SubgraphAssertionsBuilder<Input, Output>.() -> Unit) {
+        public fun <Input, Output> verifyStrategy(
+            name: String,
+            buildAssertions: SubgraphAssertionsBuilder<Input, Output>.() -> Unit
+        ) {
             assertions =
-                SubgraphAssertionsBuilder(NodeReference.Strategy<Input, Output>(name), clock, tokenizer).apply(buildAssertions).build()
+                SubgraphAssertionsBuilder(NodeReference.Strategy<Input, Output>(name), clock, tokenizer).apply(
+                    buildAssertions
+                ).build()
         }
 
         /**
@@ -915,7 +924,7 @@ public class Testing {
      * reachability, outputs, and edges within an AI agent pipeline.
      */
     @TestOnly
-    public companion object Feature : AIAgentFeature<Config, Testing> {
+    public companion object Feature : AIAgentFeature<Config, Testing, AIAgentGraphStrategy<*, *>> {
         /**
          * A storage key uniquely identifying the `Testing` feature within the local agent's storage.
          * The key is generated using the `createStorageKey` function and associates the
@@ -939,7 +948,7 @@ public class Testing {
          */
         override fun install(
             config: Config,
-            pipeline: AIAgentPipeline
+            pipeline: AIAgentPipeline<out AIAgentGraphStrategy<*, *>>
         ) {
             val feature = Testing()
             val interceptContext = InterceptContext(this, feature)
@@ -964,10 +973,10 @@ public class Testing {
         }
 
         private suspend fun <Input, Output> verifyGraph(
-            agent: AIAgent<Input, Output>,
+            agent: AIAgent<Input, Output, *>,
             graphAssertions: GraphAssertions,
             graph: AIAgentSubgraph<*, *>,
-            pipeline: AIAgentPipeline,
+            pipeline: AIAgentPipeline<*>,
             config: Config
         ) {
             // Verify nodes exist
@@ -1280,7 +1289,7 @@ public fun toolResult(tool: SimpleTool<*>, result: String): ReceivedToolResult =
  * @see Testing
  * @see Testing.Config
  */
-public fun FeatureContext.withTesting(config: Testing.Config.() -> Unit = {}) {
+public fun FeatureContext<out AIAgentGraphStrategy<*, *>>.withTesting(config: Testing.Config.() -> Unit = {}) {
     install(Testing) {
         config()
     }

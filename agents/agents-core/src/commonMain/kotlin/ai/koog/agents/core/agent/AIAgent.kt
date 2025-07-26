@@ -2,7 +2,6 @@
 
 package ai.koog.agents.core.agent
 
-import ai.koog.agents.core.agent.AIAgent.FeatureContext
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.config.AIAgentConfigBase
 import ai.koog.agents.core.agent.context.AIAgentContext
@@ -10,10 +9,10 @@ import ai.koog.agents.core.agent.context.AIAgentLLMContext
 import ai.koog.agents.core.agent.context.element.AgentRunInfoContextElement
 import ai.koog.agents.core.agent.context.element.getAgentRunInfoElementOrThrow
 import ai.koog.agents.core.agent.context.getAgentContextData
-import ai.koog.agents.core.agent.context.removeAgentContextData
 import ai.koog.agents.core.agent.entity.AIAgentStateManager
 import ai.koog.agents.core.agent.entity.AIAgentStorage
 import ai.koog.agents.core.agent.entity.AIAgentStrategy
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.environment.AIAgentEnvironmentUtils.mapToToolResult
@@ -39,8 +38,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -62,11 +59,6 @@ private suspend inline fun <T> allowToolCalls(block: suspend AllowDirectToolCall
  * to enable dynamic additions or configurations during its lifecycle. Its behavior is driven
  * by a local agent strategy and executed via a prompt executor.
  *
- * @param Input Type of agent input.
- * @param Output Type of agent output.
- *
- * @property inputType [KType] representing [Input] - agent input.
- * @property outputType [KType] representing [Output] - agent output.
  * @property promptExecutor Executor used to manage and execute prompt strings.
  * @property strategy Strategy defining the local behavior of the agent.
  * @property agentConfig Configuration details for the local agent that define its operational parameters.
@@ -76,16 +68,14 @@ private suspend inline fun <T> allowToolCalls(block: suspend AllowDirectToolCall
  * @constructor Initializes the AI agent instance and prepares the feature context and pipeline for use.
  */
 @OptIn(ExperimentalUuidApi::class)
-public open class AIAgent<Input, Output>(
-    public val inputType: KType,
-    public val outputType: KType,
+public open class AIAgent<Input, Output, TStrategy : AIAgentStrategy<Input, Output>>(
     public val promptExecutor: PromptExecutor,
-    private val strategy: AIAgentStrategy<Input, Output>,
+    private val strategy: TStrategy,
     public val agentConfig: AIAgentConfigBase,
     override val id: String = Uuid.random().toString(),
     public val toolRegistry: ToolRegistry = ToolRegistry.EMPTY,
     public val clock: Clock = Clock.System,
-    private val installFeatures: FeatureContext.() -> Unit = {},
+    private val installFeatures: FeatureContext<TStrategy>.() -> Unit = {},
 ) : AIAgentBase<Input, Output>, AIAgentEnvironment, Closeable {
 
     private companion object {
@@ -99,7 +89,7 @@ public open class AIAgent<Input, Output>(
      *       calls in an [AIAgent] instance, like `agent.install(MyFeature) { ... }`.
      *       This makes the API a bit stricter and clear.
      */
-    public class FeatureContext internal constructor(private val agent: AIAgent<*, *>) {
+    public class FeatureContext<TStrategy : AIAgentStrategy<*, *>> internal constructor(private val agent: AIAgent<*, *, TStrategy>) {
         /**
          * Installs and configures a feature into the current AI agent context.
          *
@@ -107,7 +97,7 @@ public open class AIAgent<Input, Output>(
          * @param configure an optional lambda to customize the configuration of the feature, where the provided [Config] can be modified
          */
         public fun <Config : FeatureConfig, Feature : Any> install(
-            feature: AIAgentFeature<Config, Feature>,
+            feature: AIAgentFeature<Config, Feature, in TStrategy>,
             configure: Config.() -> Unit = {}
         ) {
             agent.install(feature, configure)
@@ -118,7 +108,7 @@ public open class AIAgent<Input, Output>(
 
     private val runningMutex = Mutex()
 
-    private val pipeline = AIAgentPipeline()
+    private val pipeline = AIAgentPipeline<TStrategy>()
 
     init {
         FeatureContext(this).installFeatures()
@@ -157,7 +147,6 @@ public open class AIAgent<Input, Output>(
             val agentContext = AIAgentContext(
                 environment = preparedEnvironment,
                 agentInput = agentInput,
-                agentInputType = inputType,
                 config = agentConfig,
                 llm = AIAgentLLMContext(
                     tools = toolRegistry.tools.map { it.descriptor },
@@ -189,43 +178,21 @@ public open class AIAgent<Input, Output>(
                 context = agentContext
             )
 
-            setExecutionPointIfNeeded(agentContext)
-
-            var result = strategy.execute(context = agentContext, input = agentInput)
-            while (result == null && agentContext.getAgentContextData() != null) {
-                setExecutionPointIfNeeded(agentContext)
-                result = strategy.execute(context = agentContext, input = agentInput)
+            var strategyResult = strategy.execute(context = agentContext, input = agentInput)
+            while (strategyResult == null && agentContext.getAgentContextData() != null) {
+                pipeline.onBeforeStrategyStarted(strategy, agentContext)
+                strategyResult = strategy.execute(context = agentContext, input = agentInput)
             }
 
             logger.debug { formatLog(agentId = id, runId = runId, message = "Finished agent execution") }
-            pipeline.onAgentFinished(agentId = id, runId = runId, result = result, resultType = outputType)
+            pipeline.onAgentFinished(agentId = id, runId = runId, result = strategyResult)
 
             runningMutex.withLock {
                 isRunning = false
             }
 
-            return@withContext result ?: error("result is null")
+            return@withContext strategyResult ?: error("result is null")
         }
-    }
-
-    private suspend fun setExecutionPointIfNeeded(
-        agentContext: AIAgentContext
-    ) {
-        val additionalContextData = agentContext.getAgentContextData()
-        if (additionalContextData == null) {
-            return
-        }
-
-        additionalContextData.let { contextData ->
-            val nodeId = contextData.nodeId
-            strategy.setExecutionPoint(nodeId, contextData.lastInput ?: error("lastInput is null"))
-            val messages = contextData.messageHistory
-            agentContext.llm.withPrompt {
-                this.withMessages { (messages).sortedBy { m -> m.metaInfo.timestamp } }
-            }
-        }
-
-        agentContext.removeAgentContextData()
     }
 
     override suspend fun executeTools(toolCalls: List<Message.Tool.Call>): List<ReceivedToolResult> {
@@ -287,7 +254,7 @@ public open class AIAgent<Input, Output>(
     //region Private Methods
 
     private fun <Config : FeatureConfig, Feature : Any> install(
-        feature: AIAgentFeature<Config, Feature>,
+        feature: AIAgentFeature<Config, Feature, in TStrategy>,
         configure: Config.() -> Unit
     ) {
         pipeline.install(feature, configure)
@@ -425,40 +392,6 @@ public open class AIAgent<Input, Output>(
 }
 
 /**
- * Convenience builder that creates an instance of [AIAgent], automatically deducing [AIAgent.inputType] and [AIAgent.outputType]
- * from [Input] and [Output]
- *
- * @property promptExecutor Executor used to manage and execute prompt strings.
- * @property strategy Strategy defining the local behavior of the agent.
- * @property agentConfig Configuration details for the local agent that define its operational parameters.
- * @property toolRegistry Registry of tools the agent can interact with, defaulting to an empty registry.
- * @property installFeatures Lambda for installing additional features within the agent environment.
- * @property clock The clock used to calculate message timestamps
- *
- * @see [AIAgent] class
- */
-@OptIn(ExperimentalUuidApi::class)
-public inline fun <reified Input, reified Output> AIAgent(
-    promptExecutor: PromptExecutor,
-    strategy: AIAgentStrategy<Input, Output>,
-    agentConfig: AIAgentConfigBase,
-    id: String = Uuid.random().toString(),
-    toolRegistry: ToolRegistry = ToolRegistry.EMPTY,
-    clock: Clock = Clock.System,
-    noinline installFeatures: FeatureContext.() -> Unit = {},
-): AIAgent<Input, Output> = AIAgent(
-    inputType = typeOf<Input>(),
-    outputType = typeOf<Output>(),
-    promptExecutor = promptExecutor,
-    strategy = strategy,
-    agentConfig = agentConfig,
-    id = id,
-    toolRegistry = toolRegistry,
-    clock = clock,
-    installFeatures = installFeatures,
-)
-
-/**
  * Convenience builder that creates an instance of an [AIAgent] with string input and output and the specified parameters.
  *
  * @param executor The [PromptExecutor] responsible for executing prompts.
@@ -469,25 +402,66 @@ public inline fun <reified Input, reified Output> AIAgent(
  * @param toolRegistry The [ToolRegistry] containing tools available to the agent. Default is an empty registry.
  * @param maxIterations Maximum number of iterations for the agent's execution. Default is 50.
  * @param installFeatures A suspending lambda to install additional features for the agent's functionality. Default is an empty lambda.
+ */
+@OptIn(ExperimentalUuidApi::class)
+public fun <TStrategy : AIAgentStrategy<String, String>> AIAgent(
+    executor: PromptExecutor,
+    llmModel: LLModel,
+    id: String = Uuid.random().toString(),
+    strategy: TStrategy,
+    systemPrompt: String = "",
+    temperature: Double = 1.0,
+    numberOfChoices: Int = 1,
+    toolRegistry: ToolRegistry = ToolRegistry.EMPTY,
+    maxIterations: Int = 50,
+    installFeatures: AIAgent.FeatureContext<TStrategy>.() -> Unit = {}
+): AIAgent<String, String, TStrategy> = AIAgent(
+    id = id,
+    promptExecutor = executor,
+    strategy = strategy,
+    agentConfig = AIAgentConfig(
+        prompt = prompt(
+            id = "chat",
+            params = LLMParams(
+                temperature = temperature,
+                numberOfChoices = numberOfChoices
+            )
+        ) {
+            system(systemPrompt)
+        },
+        model = llmModel,
+        maxAgentIterations = maxIterations,
+    ),
+    toolRegistry = toolRegistry,
+    installFeatures = installFeatures
+)
+
+/**
+ * Convenience builder that creates an instance of an [AIAgent] with string input and output, [singleRunStrategy], and the specified parameters.
  *
- * @see [AIAgent] class
+ * @param executor The [PromptExecutor] responsible for executing prompts.
+ * @param systemPrompt The system-level prompt context for the agent. Default is an empty string.
+ * @param llmModel The language model to be used by the agent.
+ * @param temperature The sampling temperature for the language model, controlling randomness. Default is 1.0.
+ * @param toolRegistry The [ToolRegistry] containing tools available to the agent. Default is an empty registry.
+ * @param maxIterations Maximum number of iterations for the agent's execution. Default is 50.
+ * @param installFeatures A suspending lambda to install additional features for the agent's functionality. Default is an empty lambda.
  */
 @OptIn(ExperimentalUuidApi::class)
 public fun AIAgent(
     executor: PromptExecutor,
     llmModel: LLModel,
     id: String = Uuid.random().toString(),
-    strategy: AIAgentStrategy<String, String> = singleRunStrategy(),
     systemPrompt: String = "",
     temperature: Double = 1.0,
     numberOfChoices: Int = 1,
     toolRegistry: ToolRegistry = ToolRegistry.EMPTY,
     maxIterations: Int = 50,
-    installFeatures: FeatureContext.() -> Unit = {}
-): AIAgent<String, String> = AIAgent(
+    installFeatures: AIAgent.FeatureContext<AIAgentGraphStrategy<String, String>>.() -> Unit = {}
+): AIAgent<String, String, AIAgentGraphStrategy<String, String>> = AIAgent(
     id = id,
     promptExecutor = executor,
-    strategy = strategy,
+    strategy = singleRunStrategy(),
     agentConfig = AIAgentConfig(
         prompt = prompt(
             id = "chat",

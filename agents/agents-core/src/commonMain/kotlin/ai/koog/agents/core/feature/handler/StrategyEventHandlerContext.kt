@@ -1,5 +1,7 @@
 package ai.koog.agents.core.feature.handler
 
+import ai.koog.agents.core.agent.context.AIAgentContext
+import ai.koog.agents.core.agent.context.AIAgentContextBase
 import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import kotlin.reflect.KType
 
@@ -18,9 +20,10 @@ public interface StrategyEventHandlerContext : EventHandlerContext
  * @property strategy The strategy being updated, encapsulating the AI agent's workflow logic.
  * @property feature The feature bound to the strategy update, providing additional contextual information.
  */
-public class StrategyStartContext<TFeature>(
+public class StrategyStartContext<TFeature, TStrategy: AIAgentStrategy<*, *>>(
     public val runId: String,
-    public val strategy: AIAgentStrategy<*, *>,
+    public val strategy: TStrategy,
+    public val agentContext: AIAgentContextBase<*>,
     public val feature: TFeature
 ) : StrategyEventHandlerContext
 

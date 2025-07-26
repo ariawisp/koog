@@ -3,7 +3,7 @@ package ai.koog.agents.example.structureddata
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeLLMRequestStructured
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.example.ApiKeyService
@@ -208,7 +208,7 @@ fun main(): Unit = runBlocking {
         examples = exampleForecasts,
     )
 
-    val agentStrategy = strategy<WeatherForecastRequest, WeatherForecast>("weather-forecast") {
+    val agentStrategy = graphStrategy<WeatherForecastRequest, WeatherForecast>("weather-forecast") {
         val prepareRequest by node<WeatherForecastRequest, String> { request ->
             text {
                 +"Requesting forecast for"
@@ -241,7 +241,7 @@ fun main(): Unit = runBlocking {
         maxAgentIterations = 5
     )
 
-    val runner = AIAgent<WeatherForecastRequest, WeatherForecast>(
+    val runner = AIAgent(
         promptExecutor = MultiLLMPromptExecutor(
             LLMProvider.OpenAI to OpenAILLMClient(ApiKeyService.openAIApiKey),
             LLMProvider.Anthropic to AnthropicLLMClient(ApiKeyService.anthropicApiKey),

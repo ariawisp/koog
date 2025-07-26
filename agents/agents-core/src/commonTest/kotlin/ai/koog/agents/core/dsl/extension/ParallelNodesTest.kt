@@ -5,7 +5,7 @@ import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.dsl.builder.ParallelNodeExecutionResult
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.testing.tools.DummyTool
 import ai.koog.agents.testing.tools.getMockExecutor
@@ -29,7 +29,7 @@ class ParallelNodesTest {
             user("Base prompt content")
         }
 
-        val agentStrategy = strategy<String, String>("test-isolation") {
+        val agentStrategy = graphStrategy<String, String>("test-isolation") {
             // Create three nodes that modify different aspects of the context
             val node1 by node<Unit, String>("node1") {
                 // Modify storage

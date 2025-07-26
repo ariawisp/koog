@@ -3,7 +3,7 @@ package ai.koog.agents.example.mcp
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.dsl.extension.onAssistantMessage
 import ai.koog.agents.core.tools.ToolRegistry
@@ -80,7 +80,7 @@ fun main() {
             val executor = simpleOpenAIExecutor(token)
 
 
-            val strategy = strategy<String, String>("unity_interaction") {
+            val strategy = graphStrategy<String, String>("unity_interaction") {
                 val nodePlanIngredients by nodeLLMRequest(allowToolCalls = false)
                 val interactionWithUnity by subgraphWithTask<String>(
                     //work with plan 

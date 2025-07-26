@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.Flow
  */
 public class PromptExecutorProxy(
     private val executor: PromptExecutor,
-    private val pipeline: AIAgentPipeline,
+    private val pipeline: AIAgentPipeline<*>,
     private val runId: String,
 ) : PromptExecutor {
 

@@ -1,4 +1,4 @@
-package ai.koog.agents.core.agent.entity
+package ai.koog.agents.core.agent.entity.graph
 
 
 /**

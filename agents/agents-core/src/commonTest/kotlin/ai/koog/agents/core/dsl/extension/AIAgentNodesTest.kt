@@ -4,7 +4,7 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.features.eventHandler.feature.EventHandler
 import ai.koog.agents.testing.tools.DummyTool
 import ai.koog.agents.testing.tools.getMockExecutor
@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 class AIAgentNodesTest {
     @Test
     fun testNodeLLMCompressHistory() = runTest {
-        val agentStrategy = strategy<String, String>("test") {
+        val agentStrategy = graphStrategy<String, String>("test") {
             val compress by nodeLLMCompressHistory<Unit>()
 
             edge(nodeStart forwardTo compress transformed { })

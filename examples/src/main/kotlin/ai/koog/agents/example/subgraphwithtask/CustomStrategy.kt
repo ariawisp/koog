@@ -1,7 +1,7 @@
 package ai.koog.agents.example.subgraphwithtask
 
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.ext.agent.ProvideVerifiedSubgraphResult
 import ai.koog.agents.ext.agent.VerifiedSubgraphResult
 import ai.koog.agents.ext.agent.subgraphWithTask
@@ -14,7 +14,7 @@ fun customWizardStrategy(
     generateTools: List<Tool<*, *>>,
     verifyTools: List<Tool<*, *>>,
     fixTools: List<Tool<*, *>>
-) = strategy<String, String>("wizard-with-checkstyle") {
+) = graphStrategy<String, String>("wizard-with-checkstyle") {
     val generate by subgraphWithTask<Unit>(
         generateTools,
         llmModel = OpenAIModels.Chat.GPT4o,

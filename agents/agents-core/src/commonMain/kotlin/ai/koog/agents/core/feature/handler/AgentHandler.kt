@@ -81,7 +81,10 @@ public class AgentHandler<TFeature : Any>(public val feature: TFeature) {
      * @param environment The AgentEnvironment to be transformed
      */
     @Suppress("UNCHECKED_CAST")
-    internal fun transformEnvironmentUnsafe(context: AgentTransformEnvironmentContext<*>, environment: AIAgentEnvironment) =
+    internal fun transformEnvironmentUnsafe(
+        context: AgentTransformEnvironmentContext<*>,
+        environment: AIAgentEnvironment
+    ) =
         transformEnvironment(context as AgentTransformEnvironmentContext<TFeature>, environment)
 
     /**
@@ -90,7 +93,7 @@ public class AgentHandler<TFeature : Any>(public val feature: TFeature) {
      * @param context The context containing necessary information about the agent,
      *                strategy, and feature to be processed before the agent starts.
      */
-    public suspend fun handleBeforeAgentStarted(context: AgentStartContext<TFeature>) {
+    public suspend fun handleBeforeAgentStarted(context: AgentStartContext<TFeature, AIAgentStrategy<*, *>>) {
         beforeAgentStartedHandler.handle(context)
     }
 
@@ -103,8 +106,8 @@ public class AgentHandler<TFeature : Any>(public val feature: TFeature) {
      */
     @Suppress("UNCHECKED_CAST")
     @InternalAgentsApi
-    public suspend fun handleBeforeAgentStartedUnsafe(eventContext: AgentStartContext<*>) {
-        handleBeforeAgentStarted(eventContext as AgentStartContext<TFeature>)
+    public suspend fun handleBeforeAgentStartedUnsafe(eventContext: AgentStartContext<*, *>) {
+        handleBeforeAgentStarted(eventContext as AgentStartContext<TFeature, AIAgentStrategy<*, *>>)
     }
 }
 
@@ -123,7 +126,10 @@ public fun interface AgentEnvironmentTransformer<TFeature : Any> {
      * @param environment The current agent environment to be transformed
      * @return The transformed agent environment
      */
-    public fun transform(context: AgentTransformEnvironmentContext<TFeature>, environment: AIAgentEnvironment): AIAgentEnvironment
+    public fun transform(
+        context: AgentTransformEnvironmentContext<TFeature>,
+        environment: AIAgentEnvironment
+    ): AIAgentEnvironment
 }
 
 /**
@@ -138,7 +144,7 @@ public fun interface AgentContextHandler<FeatureT : Any> {
      * @param context The stage context where the feature will be used
      * @return A new instance of the feature
      */
-    public fun handle(context: AIAgentContextBase): FeatureT
+    public fun handle(context: AIAgentContextBase<*>): FeatureT
 }
 
 /**
@@ -148,14 +154,14 @@ public fun interface AgentContextHandler<FeatureT : Any> {
  *
  * @param TFeature The type of the feature associated with the agent.
  */
-public fun interface BeforeAgentStartedHandler<TFeature: Any> {
+public fun interface BeforeAgentStartedHandler<TFeature : Any> {
     /**
      * Handles operations to be performed before an agent is started.
      * Provides access to the context containing information about the agent's strategy, feature, and related configurations.
      *
      * @param context The context that encapsulates the agent, its strategy, and the associated feature
      */
-    public suspend fun handle(context: AgentStartContext<TFeature>)
+    public suspend fun handle(context: AgentStartContext<TFeature, AIAgentStrategy<*, *>>)
 }
 
 /**
@@ -197,7 +203,7 @@ public fun interface AgentRunErrorHandler {
  */
 public class AgentCreateContext<FeatureT>(
     public val strategy: AIAgentStrategy<*, *>,
-    public val agent: AIAgent<*, *>,
+    public val agent: AIAgent<*, *, *>,
     public val feature: FeatureT
 ) {
     /**

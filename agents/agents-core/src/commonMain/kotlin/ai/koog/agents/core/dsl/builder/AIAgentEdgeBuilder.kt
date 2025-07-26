@@ -2,8 +2,8 @@ package ai.koog.agents.core.dsl.builder
 
 import ai.koog.agents.core.agent.context.AIAgentContextBase
 import ai.koog.agents.core.utils.Option
-import ai.koog.agents.core.agent.entity.AIAgentEdge
-import ai.koog.agents.core.agent.entity.AIAgentNodeBase
+import ai.koog.agents.core.agent.entity.graph.AIAgentEdge
+import ai.koog.agents.core.agent.entity.graph.AIAgentNodeBase
 
 /**
  * Marks a function as a transformation specific to edges within the AI agent's DSL
@@ -57,10 +57,10 @@ public class AIAgentEdgeBuilder<IncomingOutput, OutgoingInput, CompatibleOutput:
 public class AIAgentEdgeBuilderIntermediate<IncomingOutput, IntermediateOutput, OutgoingInput> internal constructor(
     internal val fromNode: AIAgentNodeBase<*, IncomingOutput>,
     internal val toNode: AIAgentNodeBase<OutgoingInput, *>,
-    internal val forwardOutputComposition: suspend (AIAgentContextBase, IncomingOutput) -> Option<IntermediateOutput>
+    internal val forwardOutputComposition: suspend (AIAgentContextBase<*>, IncomingOutput) -> Option<IntermediateOutput>
 ) {
     /**
-     * Filters the intermediate outputs of the [ai.koog.agents.core.agent.entity.AIAgentNode] based on a specified condition.
+     * Filters the intermediate outputs of the [ai.koog.agents.core.agent.entity.graph.AIAgentNode] based on a specified condition.
      *
      * @param block A suspending lambda function that takes the AI agent's context and an intermediate output as parameters.
      *              It returns `true` if the given intermediate output satisfies the condition, and `false` otherwise.
@@ -69,7 +69,7 @@ public class AIAgentEdgeBuilderIntermediate<IncomingOutput, IntermediateOutput, 
      */
     @EdgeTransformationDslMarker
     public infix fun onCondition(
-        block: suspend AIAgentContextBase.(output: IntermediateOutput) -> Boolean
+        block: suspend AIAgentContextBase<*>.(output: IntermediateOutput) -> Boolean
     ): AIAgentEdgeBuilderIntermediate<IncomingOutput, IntermediateOutput, OutgoingInput> {
         return AIAgentEdgeBuilderIntermediate(
             fromNode = fromNode,
@@ -82,7 +82,7 @@ public class AIAgentEdgeBuilderIntermediate<IncomingOutput, IntermediateOutput, 
     }
 
     /**
-     * Transforms the intermediate output of the [ai.koog.agents.core.agent.entity.AIAgentNode] by applying a given transformation block.
+     * Transforms the intermediate output of the [ai.koog.agents.core.agent.entity.graph.AIAgentNode] by applying a given transformation block.
      *
      * @param block A suspending lambda that defines the transformation to be applied to the intermediate output.
      *              It takes the AI agent's context and the intermediate output as parameters and returns a new intermediate output.
@@ -90,7 +90,7 @@ public class AIAgentEdgeBuilderIntermediate<IncomingOutput, IntermediateOutput, 
      */
     @EdgeTransformationDslMarker
     public infix fun <NewIntermediateOutput> transformed(
-        block: suspend AIAgentContextBase.(IntermediateOutput) -> NewIntermediateOutput
+        block: suspend AIAgentContextBase<*>.(IntermediateOutput) -> NewIntermediateOutput
     ): AIAgentEdgeBuilderIntermediate<IncomingOutput, NewIntermediateOutput, OutgoingInput> {
         return AIAgentEdgeBuilderIntermediate(
             fromNode = fromNode,

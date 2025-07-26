@@ -5,9 +5,9 @@ import ai.koog.agents.core.CalculatorTools
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.AIAgent.FeatureContext
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.agent.entity.AIAgentStrategy
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeDoNothing
 import ai.koog.agents.core.dsl.extension.nodeExecuteTool
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
@@ -37,7 +37,7 @@ class AIAgentPipelineTest {
         val interceptedEvents = mutableListOf<String>()
 
         val dummyNodeName = "dummy node"
-        val strategy = strategy<String, String>("test-interceptors-strategy") {
+        val strategy = graphStrategy<String, String>("test-interceptors-strategy") {
             val dummyNode by nodeDoNothing<Unit>(dummyNodeName)
 
             edge(nodeStart forwardTo dummyNode transformed { })
@@ -67,12 +67,13 @@ class AIAgentPipelineTest {
         assertContentEquals(expectedEvents, actualEvents)
     }
 
-    @Test @JsName("testPipelineInterceptorsForLLmCallEvents")
+    @Test
+    @JsName("testPipelineInterceptorsForLLmCallEvents")
     fun `test pipeline interceptors for llm call events`() = runTest {
 
         val interceptedEvents = mutableListOf<String>()
 
-        val strategy = strategy<String, String>("test-interceptors-strategy") {
+        val strategy = graphStrategy<String, String>("test-interceptors-strategy") {
             val llmCallWithoutTools by nodeLLMRequest("test LLM call", allowToolCalls = false)
             val llmCall by nodeLLMRequest("test LLM call with tools")
 
@@ -111,7 +112,7 @@ class AIAgentPipelineTest {
 
         val interceptedEvents = mutableListOf<String>()
 
-        val strategy = strategy("test-interceptors-strategy") {
+        val strategy = graphStrategy("test-interceptors-strategy") {
             val nodeSendInput by nodeLLMRequest()
             val toolCallNode by nodeExecuteTool("tool call node")
 
@@ -157,7 +158,7 @@ class AIAgentPipelineTest {
 
         val interceptedEvents = mutableListOf<String>()
 
-        val strategy = strategy<String, String>("test-interceptors-strategy") {
+        val strategy = graphStrategy<String, String>("test-interceptors-strategy") {
             edge(nodeStart forwardTo nodeFinish transformed { "Done" })
         }
 
@@ -186,7 +187,7 @@ class AIAgentPipelineTest {
 
         val interceptedEvents = mutableListOf<String>()
 
-        val strategy = strategy<String, String>("test-interceptors-strategy") {
+        val strategy = graphStrategy<String, String>("test-interceptors-strategy") {
             edge(nodeStart forwardTo nodeFinish transformed { "Done" })
         }
 
@@ -214,7 +215,7 @@ class AIAgentPipelineTest {
     fun `test pipeline interceptors for stage context events`() = runTest {
 
         val interceptedEvents = mutableListOf<String>()
-        val strategy = strategy<String, String>("test-interceptors-strategy") {
+        val strategy = graphStrategy<String, String>("test-interceptors-strategy") {
             edge(nodeStart forwardTo nodeFinish transformed { "Done" })
         }
 
@@ -246,14 +247,14 @@ class AIAgentPipelineTest {
         val interceptedEvents = mutableListOf<String>()
 
         createAgent(
-            strategy = strategy("test-interceptors-strategy-1") {
+            strategy = graphStrategy("test-interceptors-strategy-1") {
                 edge(nodeStart forwardTo nodeFinish transformed { "Done" })
             }) {
             install(TestFeature) { events = interceptedEvents }
         }.use { agent1 ->
 
             createAgent(
-                strategy = strategy("test-interceptors-strategy-2") {
+                strategy = graphStrategy("test-interceptors-strategy-2") {
                     edge(nodeStart forwardTo nodeFinish transformed { "Done" })
                 }) {
                 install(TestFeature) { events = interceptedEvents }
@@ -285,14 +286,14 @@ class AIAgentPipelineTest {
     }
 
     private fun createAgent(
-        strategy: AIAgentStrategy<String, String>,
+        strategy: AIAgentGraphStrategy<String, String>,
         userPrompt: String? = null,
         systemPrompt: String? = null,
         assistantPrompt: String? = null,
         toolRegistry: ToolRegistry? = null,
         promptExecutor: PromptExecutor? = null,
-        installFeatures: FeatureContext.() -> Unit = {}
-    ): AIAgent<String, String> {
+        installFeatures: FeatureContext<AIAgentGraphStrategy<String, String>>.() -> Unit = {}
+    ): AIAgent<String, String, AIAgentGraphStrategy<String, String>> {
 
         val agentConfig = AIAgentConfig(
             prompt = prompt("test", clock = testClock) {

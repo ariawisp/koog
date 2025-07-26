@@ -1,4 +1,4 @@
-package ai.koog.agents.core.agent.entity
+package ai.koog.agents.core.agent.entity.graph
 
 /**
  * Represents metadata associated with a subgraph in an AI agent strategy graph.

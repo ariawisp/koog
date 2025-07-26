@@ -1,8 +1,8 @@
 package ai.koog.agents.core.agent
 
-import ai.koog.agents.core.agent.entity.AIAgentStrategy
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeExecuteMultipleTools
 import ai.koog.agents.core.dsl.extension.nodeExecuteTool
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
@@ -30,7 +30,7 @@ import ai.koog.agents.core.dsl.extension.onToolCall
  *                - SingleRunMode.PARALLEL: Executes multiple tool calls in parallel.
  * @return An instance of AIAgentStrategy configured according to the specified single-run mode.
  */
-public fun singleRunStrategy(runMode: ToolCalls = ToolCalls.SINGLE_RUN_SEQUENTIAL): AIAgentStrategy<String, String> =
+public fun singleRunStrategy(runMode: ToolCalls = ToolCalls.SINGLE_RUN_SEQUENTIAL): AIAgentGraphStrategy<String, String> =
     when (runMode) {
         ToolCalls.SEQUENTIAL -> singleRunWithParallelAbility(false)
         ToolCalls.PARALLEL   -> singleRunWithParallelAbility(true)
@@ -38,7 +38,7 @@ public fun singleRunStrategy(runMode: ToolCalls = ToolCalls.SINGLE_RUN_SEQUENTIA
     }
 
 
-private fun singleRunWithParallelAbility(parallelTools: Boolean) = strategy("single_run_sequential") {
+private fun singleRunWithParallelAbility(parallelTools: Boolean) = graphStrategy("single_run_sequential") {
     val nodeCallLLM by nodeLLMRequestMultiple()
     val nodeExecuteTool by nodeExecuteMultipleTools(parallelTools = parallelTools)
     val nodeSendToolResult by nodeLLMSendMultipleToolResults()
@@ -58,7 +58,7 @@ private fun singleRunWithParallelAbility(parallelTools: Boolean) = strategy("sin
     edge(nodeSendToolResult forwardTo nodeExecuteTool onMultipleToolCalls { true })
 }
 
-private fun singleRunModeStrategy() = strategy("single_run") {
+private fun singleRunModeStrategy() = graphStrategy("single_run") {
     val nodeCallLLM by nodeLLMRequest()
     val nodeExecuteTool by nodeExecuteTool()
     val nodeSendToolResult by nodeLLMSendToolResult()

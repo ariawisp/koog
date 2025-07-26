@@ -2,7 +2,7 @@ package ai.koog.agents.example.chess.choice
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeExecuteTool
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResult
@@ -27,7 +27,7 @@ fun main(): Unit = runBlocking {
         tools(listOf(Move(game)))
     }
 
-    val strategy = strategy<String, String>("chess_strategy") {
+    val strategy = graphStrategy<String, String>("chess_strategy") {
         val nodeCallLLM by nodeLLMRequest("sendInput")
         val nodeExecuteTool by nodeExecuteTool("nodeExecuteTool")
         val nodeSendToolResult by nodeLLMSendToolResult("nodeSendToolResult")

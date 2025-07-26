@@ -2,6 +2,7 @@ package ai.koog.agents.core.feature
 
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
+import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import ai.koog.agents.features.common.config.FeatureConfig
 
 /**
@@ -11,7 +12,7 @@ import ai.koog.agents.features.common.config.FeatureConfig
  * @param Config The type representing the configuration for this feature.
  * @param TFeature The type of the feature implementation.
  */
-public interface AIAgentFeature<Config : FeatureConfig, TFeature : Any> {
+public interface AIAgentFeature<Config : FeatureConfig, TFeature : Any, TStrategy : AIAgentStrategy<*, *>> {
 
     /**
      * A key used to uniquely identify a feature of type [TFeature] within the local agent storage.
@@ -26,7 +27,7 @@ public interface AIAgentFeature<Config : FeatureConfig, TFeature : Any> {
     /**
      * Installs the feature into the specified [AIAgentPipeline].
      */
-    public fun install(config: Config, pipeline: AIAgentPipeline)
+    public fun install(config: Config, pipeline: AIAgentPipeline<out TStrategy>)
 
     /**
      * Installs the feature into the specified [AIAgentPipeline] using an unsafe configuration type cast.
@@ -35,5 +36,6 @@ public interface AIAgentFeature<Config : FeatureConfig, TFeature : Any> {
      */
     @Suppress("UNCHECKED_CAST")
     @InternalAgentsApi
-    public fun installUnsafe(config: Any?, pipeline: AIAgentPipeline): Unit = install(config as Config, pipeline)
+    public fun installUnsafe(config: Any?, pipeline: AIAgentPipeline<TStrategy>): Unit =
+        install(config as Config, pipeline)
 }

@@ -3,9 +3,9 @@ package ai.koog.integration.tests
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.context.agentInput
-import ai.koog.agents.core.agent.entity.AIAgentStrategy
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.features.eventHandler.feature.EventHandler
@@ -36,7 +36,7 @@ class OllamaAgentIntegrationTest {
         private val model get() = fixture.model
     }
 
-    private fun createTestStrategy() = strategy<String, String>("test-ollama") {
+    private fun createTestStrategy() = graphStrategy<String, String>("test-ollama") {
         val askCapitalSubgraph by subgraph<String, String>("ask-capital") {
             val definePrompt by node<Unit, Unit> {
                 llm.writeSession {
@@ -131,8 +131,8 @@ class OllamaAgentIntegrationTest {
     }
 
     private fun createAgent(
-        executor: PromptExecutor, strategy: AIAgentStrategy<String, String>, toolRegistry: ToolRegistry
-    ): AIAgent<String, String> {
+        executor: PromptExecutor, strategy: AIAgentGraphStrategy<String, String>, toolRegistry: ToolRegistry
+    ): AIAgent<String, String, AIAgentGraphStrategy<String, String>> {
         val promptsAndResponses = mutableListOf<String>()
 
         return AIAgent(

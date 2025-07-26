@@ -1,6 +1,6 @@
 package ai.koog.agents.core.agent
 
-import ai.koog.agents.core.agent.entity.AIAgentNodeBase
+import ai.koog.agents.core.agent.entity.graph.AIAgentNodeBase
 
 // TODO: how it differs from AgentRuntimeException?
 /**

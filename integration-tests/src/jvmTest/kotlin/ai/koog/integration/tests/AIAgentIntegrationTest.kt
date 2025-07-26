@@ -37,6 +37,14 @@ import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.ResponseMetaInfo
 import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.params.LLMParams.ToolChoice
+import ai.koog.prompt.dsl.prompt
+import ai.koog.agents.core.agent.config.AIAgentConfig
+import ai.koog.agents.core.dsl.builder.forwardTo
+import ai.koog.agents.core.dsl.builder.graphStrategy
+import ai.koog.agents.core.dsl.extension.nodeLLMRequest
+import ai.koog.agents.core.dsl.extension.onAssistantMessage
+import ai.koog.prompt.executor.clients.anthropic.AnthropicModels
+import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
@@ -465,7 +473,7 @@ class AIAgentIntegrationTest {
             tool(CalculatorTool)
         }
 
-        val customStrategy = strategy("test-without-tools") {
+        val customStrategy = graphStrategy("test-without-tools") {
             val callLLM by nodeLLMRequest(name = "callLLM", allowToolCalls = false)
             edge(nodeStart forwardTo callLLM)
             edge(callLLM forwardTo nodeFinish onAssistantMessage { true })

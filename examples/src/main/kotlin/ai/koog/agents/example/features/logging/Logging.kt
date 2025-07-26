@@ -2,6 +2,7 @@ package ai.koog.agents.example.features.logging
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
+import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.feature.AIAgentFeature
 import ai.koog.agents.core.feature.AIAgentPipeline
@@ -34,7 +35,7 @@ class Logging(val logger: Logger) {
      * This feature supports configuration via the [Config] class,
      * which allows specifying custom logger names.
      */
-    companion object Feature : AIAgentFeature<Config, Logging> {
+    companion object Feature : AIAgentFeature<Config, Logging, AIAgentStrategy<*, *>> {
         override val key: AIAgentStorageKey<Logging> = createStorageKey("logging-feature")
 
         override fun createInitialConfig(): Config = Config()
@@ -51,7 +52,7 @@ class Logging(val logger: Logger) {
          */
         override fun install(
             config: Config,
-            pipeline: AIAgentPipeline
+            pipeline: AIAgentPipeline<out AIAgentStrategy<*, *>>
         ) {
             val logging = Logging(LoggerFactory.getLogger(config.loggerName))
             val interceptContext = InterceptContext(this, logging)

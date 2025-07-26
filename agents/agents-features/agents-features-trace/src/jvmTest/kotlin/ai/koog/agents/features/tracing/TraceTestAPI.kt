@@ -2,7 +2,7 @@ package ai.koog.agents.features.tracing
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.agent.entity.AIAgentStrategy
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.testing.tools.DummyTool
 import ai.koog.prompt.dsl.AttachmentBuilder
@@ -70,14 +70,14 @@ fun systemMessage(content: String): Message.System =
  */
 internal fun createAgent(
     agentId: String = "test-agent-id",
-    strategy: AIAgentStrategy<String, String>,
+    strategy: AIAgentGraphStrategy<String, String>,
     promptId: String? = null,
     model: LLModel? = null,
     systemPrompt: String? = null,
     userPrompt: String? = null,
     assistantPrompt: String? = null,
-    installFeatures: AIAgent.FeatureContext.() -> Unit = { }
-): AIAgent<String, String> {
+    installFeatures: AIAgent.FeatureContext<*>.() -> Unit = { }
+): AIAgent<String, String, AIAgentGraphStrategy<String, String>> {
     val agentConfig = AIAgentConfig(
         prompt = prompt(promptId ?: "Test prompt", clock = testClock) {
             system(systemPrompt ?: "Test system message")

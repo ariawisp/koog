@@ -2,7 +2,7 @@ package ai.koog.agents.features.eventHandler.feature
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.agent.entity.AIAgentStrategy
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.ToolRegistry.Builder
 import ai.koog.prompt.dsl.prompt
@@ -17,11 +17,11 @@ val testClock: Clock = object : Clock {
 }
 
 fun createAgent(
-    strategy: AIAgentStrategy<String, String>,
+    strategy: AIAgentGraphStrategy<String, String>,
     agentId: String = "test-agent-id",
     configureTools: Builder.() -> Unit = { },
-    installFeatures: AIAgent.FeatureContext.() -> Unit = { }
-): AIAgent<String, String> {
+    installFeatures: AIAgent.FeatureContext<*>.() -> Unit = { }
+): AIAgent<String, String, AIAgentGraphStrategy<String, String>> {
     val agentConfig = AIAgentConfig(
         prompt = prompt("test", clock = testClock) {
             system("Test system message")

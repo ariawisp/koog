@@ -3,7 +3,7 @@ package ai.koog.agents.testing.feature
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.environment.ReceivedToolResult
 import ai.koog.agents.core.tools.ToolRegistry
@@ -23,7 +23,7 @@ class GraphTestingFeatureTest {
 
     @Test
     fun testMultiSubgraphAgentStructure() = runTest {
-        val strategy = strategy("test") {
+        val strategy = graphStrategy("test") {
             val firstSubgraph by subgraph(
                 "first",
                 tools = listOf(DummyTool, CreateTool, SolveTool)
@@ -76,7 +76,7 @@ class GraphTestingFeatureTest {
             agentConfig = AIAgentConfig(prompt = basePrompt, model = OpenAIModels.Chat.GPT4o, maxAgentIterations = 100),
             toolRegistry = toolRegistry
         ) {
-            testGraph<String, String>("test") {
+            testGraph("test") {
                 val firstSubgraph = assertSubgraphByName<Unit, String>("first")
                 val secondSubgraph = assertSubgraphByName<Unit, String>("second")
 

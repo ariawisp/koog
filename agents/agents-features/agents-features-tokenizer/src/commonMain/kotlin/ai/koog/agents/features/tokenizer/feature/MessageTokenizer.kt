@@ -2,6 +2,7 @@ package ai.koog.agents.features.tokenizer.feature
 
 import ai.koog.agents.core.agent.context.AIAgentContextBase
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
+import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import ai.koog.agents.core.feature.AIAgentFeature
 import ai.koog.agents.core.feature.AIAgentPipeline
 import ai.koog.agents.features.common.config.FeatureConfig
@@ -164,7 +165,7 @@ public class MessageTokenizer(public val promptTokenizer: PromptTokenizer) {
      * This feature integrates a message tokenizer into the agent pipeline, allowing for tokenization
      * of input messages. It supports both caching and non-caching tokenization strategies based on the configuration.
      */
-    public companion object Feature : AIAgentFeature<MessageTokenizerConfig, MessageTokenizer> {
+    public companion object Feature : AIAgentFeature<MessageTokenizerConfig, MessageTokenizer, AIAgentStrategy<*, *>> {
 
         /**
          * A unique storage key used to identify the `MessageTokenizer` feature within the agent's feature storage.
@@ -193,7 +194,7 @@ public class MessageTokenizer(public val promptTokenizer: PromptTokenizer) {
          */
         override fun install(
             config: MessageTokenizerConfig,
-            pipeline: AIAgentPipeline,
+            pipeline: AIAgentPipeline<out AIAgentStrategy<*, *>>,
         ) {
             val promptTokenizer = if (config.enableCaching)
                 CachingTokenizer(config.tokenizer)
@@ -219,4 +220,4 @@ public class MessageTokenizer(public val promptTokenizer: PromptTokenizer) {
  *
  * Throws an exception if the `MessageTokenizer.Feature` is not available in the context.
  */
-public val AIAgentContextBase.tokenizer: PromptTokenizer get() = featureOrThrow(MessageTokenizer.Feature).promptTokenizer
+public val AIAgentContextBase<*>.tokenizer: PromptTokenizer get() = featureOrThrow(MessageTokenizer.Feature).promptTokenizer

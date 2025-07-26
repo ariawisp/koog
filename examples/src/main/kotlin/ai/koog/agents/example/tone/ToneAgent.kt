@@ -55,7 +55,7 @@ fun main() {
         val strategy = toneStrategy("tone_analysis")
 
         // Create the agent
-        val agent = AIAgent<String, String>(
+        val agent = AIAgent(
             promptExecutor = executor,
             strategy = strategy,
             agentConfig = agentConfig,

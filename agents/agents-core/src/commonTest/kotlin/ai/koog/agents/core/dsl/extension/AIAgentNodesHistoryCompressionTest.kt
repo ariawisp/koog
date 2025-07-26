@@ -4,7 +4,7 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.features.eventHandler.feature.EventHandler
 import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.agents.testing.tools.DummyTool
@@ -37,7 +37,7 @@ class AIAgentNodesHistoryCompressionTest {
         val testExecutor = TestLLMExecutor()
         testExecutor.reset()
 
-        val agentStrategy = strategy<String, String>("test") {
+        val agentStrategy = graphStrategy<String, String>("test") {
             val compress by nodeLLMCompressHistory<Unit>(
                 strategy = HistoryCompressionStrategy.WholeHistory
             )
@@ -89,7 +89,7 @@ class AIAgentNodesHistoryCompressionTest {
         val testExecutor = TestLLMExecutor()
         testExecutor.reset()
 
-        val agentStrategy = strategy<String, String>("test") {
+        val agentStrategy = graphStrategy<String, String>("test") {
             val compress by nodeLLMCompressHistory<Unit>(
                 strategy = HistoryCompressionStrategy.FromLastNMessages(4)
             )
@@ -143,7 +143,7 @@ class AIAgentNodesHistoryCompressionTest {
 
         // Use a chunk size of 4 (each chunk will have 4 messages)
         val chunkSize = 4
-        val agentStrategy = strategy<String, String>("test") {
+        val agentStrategy = graphStrategy<String, String>("test") {
             val compress by nodeLLMCompressHistory<Unit>(
                 strategy = HistoryCompressionStrategy.Chunked(chunkSize)
             )

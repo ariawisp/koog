@@ -3,7 +3,7 @@ package ai.koog.agents.example.banking.routing
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.asTools
@@ -33,7 +33,7 @@ fun main() = runBlocking {
         tool(ProvideStringSubgraphResult)
     }
 
-    val strategy = strategy<String, String>("banking assistant") {
+    val strategy = graphStrategy<String, String>("banking assistant") {
         val classifyRequest by subgraph<String, ClassifiedBankRequest>(
             tools = listOf(AskUser)
         ) {
@@ -117,7 +117,7 @@ fun main() = runBlocking {
         maxAgentIterations = 50
     )
 
-    val agent = AIAgent<String, String>(
+    val agent = AIAgent(
         promptExecutor = simpleOpenAIExecutor(apiKey),
         strategy = strategy,
         agentConfig = agentConfig,

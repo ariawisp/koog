@@ -4,7 +4,7 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.memory.feature.AgentMemory
 import ai.koog.agents.memory.feature.nodes.nodeSaveToMemoryAutoDetectFacts
@@ -150,7 +150,7 @@ class MemoryNodesTest {
 
         val result = mutableListOf<Fact>()
 
-        val strategy = strategy<String, String>("test-agent") {
+        val strategy = graphStrategy<String, String>("test-agent") {
             val saveAutoDetect by nodeSaveToMemoryAutoDetectFacts<Unit>(
                 subjects = listOf(MemorySubjects.User)
             )
@@ -214,7 +214,7 @@ class MemoryNodesTest {
 
     @Test
     fun testAutoDetectFacts() = runTest {
-        val strategy = strategy<String, String>("test-agent") {
+        val strategy = graphStrategy<String, String>("test-agent") {
             val detect by nodeSaveToMemoryAutoDetectFacts<Unit>(
                 subjects = listOf(MemorySubjects.User, MemorySubjects.Project)
             )

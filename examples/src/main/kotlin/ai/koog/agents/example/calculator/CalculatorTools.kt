@@ -1,7 +1,7 @@
 package ai.koog.agents.example.calculator
 
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.environment.ReceivedToolResult
 import ai.koog.agents.core.tools.annotations.LLMDescription
@@ -64,7 +64,7 @@ class CalculatorTools : ToolSet {
 object CalculatorStrategy {
     private const val MAX_TOKENS_THRESHOLD = 1000
 
-    val strategy = strategy<String, String>("test") {
+    val strategy = graphStrategy<String, String>("test") {
         val nodeCallLLM by nodeLLMRequestMultiple()
         val nodeExecuteToolMultiple by nodeExecuteMultipleTools(parallelTools = true)
         val nodeSendToolResultMultiple by nodeLLMSendMultipleToolResults()

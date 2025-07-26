@@ -6,6 +6,7 @@ import ai.koog.agents.core.agent.context.AIAgentLLMContext
 import ai.koog.agents.core.agent.entity.AIAgentStateManager
 import ai.koog.agents.core.agent.entity.AIAgentStorage
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
+import ai.koog.agents.core.agent.entity.graph.AIAgentGraphStrategy
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.feature.AIAgentFeature
@@ -26,9 +27,9 @@ import kotlin.reflect.KType
  */
 @OptIn(InternalAgentsApi::class)
 public class AIAgentParallelNodesMergeContext<Input, Output>(
-    private val underlyingContextBase: AIAgentContextBase,
+    private val underlyingContextBase: AIAgentContextBase<AIAgentGraphStrategy<Input, Output>>,
     public val results: List<ParallelResult<Input, Output>>,
-) : AIAgentContextBase {
+) : AIAgentContextBase<AIAgentGraphStrategy<Input, Output>> {
     // Delegate all properties to the underlying context
     override val environment: AIAgentEnvironment get() = underlyingContextBase.environment
     override val id: String get() = underlyingContextBase.id
@@ -40,7 +41,7 @@ public class AIAgentParallelNodesMergeContext<Input, Output>(
     override val storage: AIAgentStorage get() = underlyingContextBase.storage
     override val runId: String get() = underlyingContextBase.runId
     override val strategyName: String get() = underlyingContextBase.strategyName
-    override val pipeline: AIAgentPipeline get() = underlyingContextBase.pipeline
+    override val pipeline: AIAgentPipeline<AIAgentGraphStrategy<Input, Output>> get() = underlyingContextBase.pipeline
 
     override fun store(key: AIAgentStorageKey<*>, value: Any) {
         underlyingContextBase.store(key, value)
@@ -59,10 +60,10 @@ public class AIAgentParallelNodesMergeContext<Input, Output>(
         underlyingContextBase.feature(key)
 
 
-    override fun <Feature : Any> feature(feature: AIAgentFeature<*, Feature>): Feature? =
+    override fun <Feature : Any> feature(feature: AIAgentFeature<*, Feature, *>): Feature? =
         underlyingContextBase.feature(feature)
 
-    override fun <Feature : Any> featureOrThrow(feature: AIAgentFeature<*, Feature>): Feature =
+    override fun <Feature : Any> featureOrThrow(feature: AIAgentFeature<*, Feature, *>): Feature =
         underlyingContextBase.featureOrThrow(feature)
 
     override suspend fun getHistory(): List<Message> = underlyingContextBase.getHistory()
@@ -77,8 +78,8 @@ public class AIAgentParallelNodesMergeContext<Input, Output>(
         storage: AIAgentStorage,
         runId: String,
         strategyId: String,
-        pipeline: AIAgentPipeline
-    ): AIAgentContextBase = underlyingContextBase.copy(
+        pipeline: AIAgentPipeline<AIAgentGraphStrategy<Input, Output>>
+    ): AIAgentContextBase<AIAgentGraphStrategy<Input, Output>> = underlyingContextBase.copy(
         environment = environment,
         agentInput = agentInput,
         agentInputType = agentInputType,
@@ -91,9 +92,9 @@ public class AIAgentParallelNodesMergeContext<Input, Output>(
         pipeline = pipeline
     )
 
-    override suspend fun fork(): AIAgentContextBase = underlyingContextBase.fork()
+    override suspend fun fork(): AIAgentContextBase<AIAgentGraphStrategy<Input, Output>> = underlyingContextBase.fork()
 
-    override suspend fun replace(context: AIAgentContextBase): Unit = underlyingContextBase.replace(context)
+    override suspend fun replace(context: AIAgentContextBase<*>): Unit = underlyingContextBase.replace(context)
 
     /**
      * Selects a result based on a predicate.

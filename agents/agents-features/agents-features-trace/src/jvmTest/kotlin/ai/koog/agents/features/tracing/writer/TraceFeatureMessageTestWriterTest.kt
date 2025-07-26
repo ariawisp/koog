@@ -1,7 +1,7 @@
 package ai.koog.agents.features.tracing.writer
 
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.nodeExecuteTool
 import ai.koog.agents.core.dsl.extension.nodeLLMRequest
 import ai.koog.agents.core.dsl.extension.nodeUpdatePrompt
@@ -39,7 +39,7 @@ class TraceFeatureMessageTestWriterTest {
     @Test
     fun `test subsequent LLM calls`() = runTest {
 
-        val strategy = strategy("tracing-test-strategy") {
+        val strategy = graphStrategy("tracing-test-strategy") {
 
             val setPrompt by nodeUpdatePrompt<String>("Set prompt") {
                 system("System 1")
@@ -90,7 +90,7 @@ class TraceFeatureMessageTestWriterTest {
     @Test
     fun `test nonexistent tool call`() = runTest {
 
-        val strategy = strategy<String, String>("tracing-tool-call-test") {
+        val strategy = graphStrategy<String, String>("tracing-tool-call-test") {
             val callTool by nodeExecuteTool("Tool call")
             edge(nodeStart forwardTo callTool transformed { _ ->
                 Message.Tool.Call(
@@ -123,7 +123,7 @@ class TraceFeatureMessageTestWriterTest {
     @Test
     fun `test existing tool call`() = runTest {
 
-        val strategy = strategy<String, String>("tracing-tool-call-test") {
+        val strategy = graphStrategy<String, String>("tracing-tool-call-test") {
             val callTool by nodeExecuteTool("Tool call")
             edge(nodeStart forwardTo callTool transformed { _ ->
                 Message.Tool.Call(
@@ -158,7 +158,7 @@ class TraceFeatureMessageTestWriterTest {
     @Test
     fun `test recursive tool call`() = runTest {
 
-        val strategy = strategy<String, String>("recursive-tool-call-test") {
+        val strategy = graphStrategy<String, String>("recursive-tool-call-test") {
             val callTool by nodeExecuteTool("Tool call")
             edge(nodeStart forwardTo callTool transformed { _ ->
                 Message.Tool.Call(
@@ -192,7 +192,7 @@ class TraceFeatureMessageTestWriterTest {
     @Test
     fun `test llm tool call`() = runTest {
 
-        val strategy = strategy<String, String>("llm-tool-call-test") {
+        val strategy = graphStrategy<String, String>("llm-tool-call-test") {
             val callTool by nodeExecuteTool("Tool call")
             edge(nodeStart forwardTo callTool transformed { _ ->
                 Message.Tool.Call(

@@ -4,6 +4,7 @@ import ai.koog.agents.core.agent.config.AIAgentConfigBase
 import ai.koog.agents.core.agent.entity.AIAgentStateManager
 import ai.koog.agents.core.agent.entity.AIAgentStorage
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
+import ai.koog.agents.core.agent.entity.AIAgentStrategy
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.feature.AIAgentFeature
@@ -18,7 +19,7 @@ import kotlin.reflect.KType
  * metadata necessary for the operation of the agent.
  * Additionally, it supports features for custom workflows and extensibility.
  */
-public interface AIAgentContextBase {
+public interface AIAgentContextBase<TStrategy : AIAgentStrategy<*, *>> {
     /**
      * Represents the environment in which the agent operates.
      *
@@ -114,7 +115,7 @@ public interface AIAgentContextBase {
      * @suppress
      */
     @InternalAgentsApi
-    public val pipeline: AIAgentPipeline
+    public val pipeline: AIAgentPipeline<TStrategy>
 
     /**
      * Stores a feature in the agent's storage using the specified key.
@@ -130,7 +131,7 @@ public interface AIAgentContextBase {
      * @param key A uniquely identifying key of type `AIAgentStorageKey` used to fetch the corresponding data.
      * @return The data associated with the provided key, or null if no matching data is found.
      */
-    public fun<T> get(key: AIAgentStorageKey<*>): T?
+    public fun <T> get(key: AIAgentStorageKey<*>): T?
 
     /**
      * Removes a feature or data associated with the specified key from the agent's storage.
@@ -155,7 +156,7 @@ public interface AIAgentContextBase {
      *                This parameter defines the configuration and unique identity of the feature.
      * @return The feature instance of type [Feature], or null if the feature is not available in the context.
      */
-    public fun <Feature : Any> feature(feature: AIAgentFeature<*, Feature>): Feature?
+    public fun <Feature : Any> feature(feature: AIAgentFeature<*, Feature, *>): Feature?
 
     /**
      * Retrieves a feature of the specified type from the context or throws an exception if it is not available.
@@ -165,7 +166,7 @@ public interface AIAgentContextBase {
      * @return The instance of the requested feature of type [Feature].
      * @throws IllegalStateException if the requested feature is not installed in the agent.
      */
-    public fun <Feature : Any> featureOrThrow(feature: AIAgentFeature<*, Feature>): Feature =
+    public fun <Feature : Any> featureOrThrow(feature: AIAgentFeature<*, Feature, *>): Feature =
         feature(feature)
             ?: throw IllegalStateException("Feature `${feature::class.simpleName}` is not installed to the agent")
 
@@ -184,7 +185,7 @@ public interface AIAgentContextBase {
      * @suppress
      */
     @InternalAgentsApi
-    public fun copyWithTools(tools: List<ToolDescriptor>): AIAgentContextBase {
+    public fun copyWithTools(tools: List<ToolDescriptor>): AIAgentContextBase<TStrategy> {
         return this.copy(llm = llm.copy(tools = tools))
     }
 
@@ -213,8 +214,8 @@ public interface AIAgentContextBase {
         storage: AIAgentStorage = this.storage,
         runId: String = this.runId,
         strategyId: String = this.strategyName,
-        pipeline: AIAgentPipeline = this.pipeline,
-    ): AIAgentContextBase
+        pipeline: AIAgentPipeline<TStrategy> = this.pipeline,
+    ): AIAgentContextBase<TStrategy>
 
     /**
      * Creates a copy of the current [AIAgentContext] with deep copies of all mutable properties.
@@ -223,7 +224,7 @@ public interface AIAgentContextBase {
      *
      * @return A new instance of [AIAgentContext] with copies of all mutable properties.
      */
-    public suspend fun fork(): AIAgentContextBase
+    public suspend fun fork(): AIAgentContextBase<TStrategy>
 
     /**
      * Replaces the current context with the provided context.
@@ -232,7 +233,7 @@ public interface AIAgentContextBase {
      *
      * @param context The context to replace the current context with.
      */
-    public suspend fun replace(context: AIAgentContextBase)
+    public suspend fun replace(context: AIAgentContextBase<*>)
 }
 
 /**
@@ -240,5 +241,5 @@ public interface AIAgentContextBase {
  *
  * @throws ClassCastException If agent input can't be cast to [T]
  */
-public inline fun <reified T> AIAgentContextBase.agentInput(): T =
+public inline fun <reified T> AIAgentContextBase<*>.agentInput(): T =
     agentInput as? T ?: throw ClassCastException("Can't cast agent input to ${T::class}. Agent input: $agentInput")

@@ -3,7 +3,7 @@ package ai.koog.agents.features.tokenizer.feature
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.builder.graphStrategy
 import ai.koog.agents.core.dsl.extension.*
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.testing.feature.withTesting
@@ -162,7 +162,7 @@ class MessageTokenizerTest {
             mockLLMAnswer("Madrid is the final answer!") onRequestContains "Madrid"
         }
 
-        val testStrategy = strategy("test") {
+        val testStrategy = graphStrategy("test") {
             val callLLM by nodeLLMRequest()
             val callTool by nodeExecuteTool()
             val sendToolResul by nodeLLMSendToolResult()
@@ -201,6 +201,7 @@ class MessageTokenizerTest {
             install(MessageTokenizer) {
                 tokenizer = MockTokenizer()
             }
+
             withTesting()
         }
 
