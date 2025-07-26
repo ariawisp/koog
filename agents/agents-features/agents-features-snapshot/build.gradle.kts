@@ -17,7 +17,7 @@ kotlin {
                 api(project(":rag:rag-base"))
 
                 api(libs.kotlinx.serialization.json)
-                api(ktorLibs.serialization.kotlinx.json)
+                api(libs.ktor.serialization.kotlinx.json)
             }
         }
 
@@ -30,7 +30,10 @@ kotlin {
 
         jvmMain {
             dependencies {
-                api(ktorLibs.client.cio)
+                api(libs.ktor.client.cio)
+                api(libs.lettuce.core)
+                api(libs.kotlinx.coroutines.reactive)
+                implementation(libs.commons.pool2)
             }
         }
 
@@ -39,6 +42,7 @@ kotlin {
                 implementation(kotlin("test-junit5"))
                 implementation(project(":agents:agents-test"))
                 implementation(libs.mockk)
+                implementation(libs.testcontainers)
             }
         }
     }
