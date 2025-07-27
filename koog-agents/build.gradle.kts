@@ -26,6 +26,7 @@ val included = setOf(
     ":agents:agents-features:agents-features-tokenizer",
     ":agents:agents-features:agents-features-snapshot",
     ":agents:agents-features:agents-features-pubsub",
+    ":agents:agents-features:agents-features-distributed",
     ":agents:agents-mcp",
     ":agents:agents-tools",
     ":agents:agents-utils",

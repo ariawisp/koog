@@ -17,6 +17,7 @@ include(":agents:agents-features:agents-features-trace")
 include(":agents:agents-features:agents-features-tokenizer")
 include(":agents:agents-features:agents-features-snapshot")
 include(":agents:agents-features:agents-features-pubsub")
+include(":agents:agents-features:agents-features-distributed")
 
 include(":agents:agents-mcp")
 include(":agents:agents-test")

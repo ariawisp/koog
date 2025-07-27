@@ -25,6 +25,7 @@ dependencies {
     api(project(":agents:agents-features:agents-features-memory"))
     api(project(":agents:agents-features:agents-features-opentelemetry"))
     api(project(":agents:agents-features:agents-features-pubsub"))
+    api(project(":agents:agents-features:agents-features-distributed"))
     api(project(":agents:agents-features:agents-features-snapshot"))
 
     api(project(":prompt:prompt-markdown"))
@@ -93,6 +94,7 @@ registerRunExampleTask("runExampleFilePersistentAgent", "ai.koog.agents.example.
 registerRunExampleTask("runExamplePubSub", "ai.koog.agents.example.features.pubsub.PubSubKt")
 registerRunExampleTask("runExampleGCPPubSub", "ai.koog.agents.example.features.pubsub.GCPPubSubExampleKt")
 registerRunExampleTask("runExampleRedisPubSub", "ai.koog.agents.example.features.pubsub.RedisPubSubExampleKt")
+registerRunExampleTask("runExampleDistributedCoordination", "ai.koog.agents.example.features.distributed.DistributedCoordinationKt")
 
 dokka {
     dokkaSourceSets.named("main") {
