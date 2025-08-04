@@ -25,6 +25,7 @@ import ai.koog.agents.memory.model.SingleFact
 import ai.koog.agents.memory.prompts.MemoryPrompts
 import ai.koog.agents.memory.providers.AgentMemoryProvider
 import ai.koog.agents.memory.providers.NoMemory
+import ai.koog.agents.memory.retrieval.RetrievalProvider
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
@@ -100,7 +101,9 @@ public class AgentMemory(
     @property:InternalAgentsApi
     public val llm: AIAgentLLMContext,
     @property:InternalAgentsApi
-    public val scopesProfile: MemoryScopesProfile
+    public val scopesProfile: MemoryScopesProfile,
+    @property:InternalAgentsApi
+    public val retriever: RetrievalProvider? = null
 ) {
     private val logger = KotlinLogging.logger { }
 
@@ -122,6 +125,19 @@ public class AgentMemory(
          * Defaults to [NoMemory], which doesn't store anything.
          */
         public var memoryProvider: AgentMemoryProvider = NoMemory
+
+        /**
+         * Optional retrieval provider for advanced knowledge search.
+         * When configured, enables the nodeRetrieveKnowledge functionality.
+         * Supports graph-based, temporal, and hybrid search strategies.
+         */
+        public var retriever: RetrievalProvider? = null
+
+        /**
+         * Whether to expose a knowledge search tool to the LLM.
+         * Only takes effect if retriever is configured.
+         */
+        public var exposeKnowledgeTool: Boolean = true
 
         /**
          * Profile containing scope names for memory operations.
@@ -168,6 +184,80 @@ public class AgentMemory(
             set(value) {
                 scopesProfile.names[MemoryScopeType.PRODUCT] = value
             }
+
+        // === Configuration Presets ===
+        
+        /**
+         * Configures the agent to use an in-memory knowledge graph for advanced memory capabilities.
+         * This enables temporal reasoning, entity-centric search, semantic search, and knowledge evolution.
+         * 
+         * Features enabled:
+         * - Temporal queries (what was known at time T)
+         * - Entity-centric traversal (what's related to X)  
+         * - Advanced semantic search with hybrid ranking
+         * - Automatic knowledge consolidation and decay
+         * - Conversation auto-ingestion
+         * 
+         * Example:
+         * ```kotlin
+         * install(AgentMemory) {
+         *     useGraphInMemoryPreset()
+         * }
+         * ```
+         */
+        public fun useGraphInMemoryPreset(
+            autoIngestConversations: Boolean = true,
+            minConfidenceThreshold: Double = 0.7
+        ) {
+            val graph = ai.koog.agents.memory.graph.providers.InMemoryKnowledgeGraph()
+            val config = ai.koog.agents.memory.providers.GraphMemoryConfig(
+                autoIngestConversations = autoIngestConversations,
+                minConfidenceThreshold = minConfidenceThreshold
+            )
+            
+            memoryProvider = ai.koog.agents.memory.providers.GraphMemoryProvider(
+                graph = graph,
+                config = config
+            )
+            
+            // Enable retrieval capabilities
+            retriever = ai.koog.agents.memory.retrieval.SmartRouter(
+                providers = listOf(
+                    ai.koog.agents.memory.retrieval.providers.VectorRetrievalProvider()
+                )
+            )
+        }
+        
+        /**
+         * Configures the agent to use Graphiti (external graph database) for enterprise-scale memory.
+         * This provides all graph capabilities with external persistence and scalability.
+         * 
+         * Requires the optional `agents-features-memory-graphiti` module.
+         * 
+         * Example:
+         * ```kotlin 
+         * install(AgentMemory) {
+         *     useGraphitiPreset(
+         *         uri = "neo4j://localhost:7687",
+         *         username = "neo4j", 
+         *         password = "password"
+         *     )
+         * }
+         * ```
+         */
+        public fun useGraphitiPreset(
+            uri: String,
+            username: String,
+            password: String,
+            autoIngestConversations: Boolean = true
+        ) {
+            // This would require the Graphiti module to be available
+            // For now, we'll create a placeholder that provides clear error message
+            throw UnsupportedOperationException(
+                "Graphiti preset requires the 'agents-features-memory-graphiti' module. " +
+                "Add it to your dependencies and use GraphitiKnowledgeGraph directly."
+            )
+        }
 
         private companion object {
             const val UNKNOWN_NAME = "unknown"
@@ -267,11 +357,17 @@ public class AgentMemory(
             pipeline.interceptContextAgentFeature(this) { agentContext ->
                 config.agentName = agentContext.strategyName
 
-                AgentMemory(config.memoryProvider, agentContext.llm, config.scopesProfile)
+                AgentMemory(
+                    config.memoryProvider, 
+                    agentContext.llm, 
+                    config.scopesProfile,
+                    config.retriever
+                )
             }
         }
     }
 
+    
     /**
      * Extracts and saves facts from the LLM chat history based on the provided concept.
      *

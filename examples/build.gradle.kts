@@ -21,8 +21,10 @@ application {
 dependencies {
     api(project(":agents:agents-ext"))
     api(project(":agents:agents-mcp"))
+    api(project(":agents:agents-test")) // For mock LLM examples
     api(project(":agents:agents-features:agents-features-event-handler"))
     api(project(":agents:agents-features:agents-features-memory"))
+    api(project(":agents:agents-features:agents-features-memory-graphiti"))
     api(project(":agents:agents-features:agents-features-opentelemetry"))
     api(project(":agents:agents-features:agents-features-snapshot"))
 
@@ -105,6 +107,9 @@ registerRunExampleTask("runExampleFeatureOpenTelemetry", "ai.koog.agents.example
 registerRunExampleTask("runExampleBedrockAgent", "ai.koog.agents.example.client.BedrockAgentKt")
 registerRunExampleTask("runExampleJokesWithModeration", "ai.koog.agents.example.moderation.JokesWithModerationKt")
 registerRunExampleTask("runExampleFilePersistentAgent", "ai.koog.agents.example.snapshot.FilePersistentAgentExampleKt")
+registerRunExampleTask("runExampleMinecraftCompanion", "ai.koog.agents.example.minecraft.MinecraftFactionCompanionKt")
+registerRunExampleTask("runExampleMinecraftSimple", "ai.koog.agents.example.minecraft.MinecraftCompanionSimpleKt")
+registerRunExampleTask("runExampleMinecraftGraphiti", "ai.koog.agents.example.graphiti.MinecraftWithGraphitiKt")
 
 dokka {
     dokkaSourceSets.named("main") {

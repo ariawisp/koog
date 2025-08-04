@@ -13,6 +13,7 @@ val excluded = setOf(
     ":integration-tests",
     ":koog-spring-boot-starter",
     ":koog-ktor",
+    ":agents:agents-features:agents-features-memory-graphiti", // Optional provider module
     project.path, // the current project should not depend on itself
 )
 
