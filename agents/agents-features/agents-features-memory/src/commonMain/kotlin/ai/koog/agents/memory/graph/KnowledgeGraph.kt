@@ -28,6 +28,23 @@ public interface KnowledgeGraph {
      * Get graph statistics for monitoring
      */
     public suspend fun stats(): GraphStats
+    
+    /**
+     * Resolve an entity mention to an existing entity or create a new one.
+     * This is the core of entity resolution - matching text mentions to entities.
+     */
+    public suspend fun resolveEntity(mention: String, context: EntityResolutionContext): EntityResolutionResult
+    
+    /**
+     * Invalidate edges that contradict new information.
+     * Critical for temporal consistency and handling state changes.
+     */
+    public suspend fun invalidateContradictingEdges(newFact: Knowledge.Relation, at: Instant): List<EdgeInvalidation>
+    
+    /**
+     * Detect communities within the graph for implicit relationship discovery.
+     */
+    public suspend fun detectCommunities(algorithm: CommunityDetectionAlgorithm = CommunityDetectionAlgorithm.LEIDEN): List<Community>
 }
 
 /**
@@ -38,8 +55,37 @@ public data class Episode(
     val timestamp: Instant,
     val source: EpisodeSource,
     val metadata: Map<String, Any> = emptyMap(),
-    val references: List<String> = emptyList() // Entity IDs referenced
+    val references: List<String> = emptyList(), // Entity IDs referenced
+    val entityMentions: List<EntityMention> = emptyList(), // Entities mentioned in content
+    val validFrom: Instant? = null, // When facts in this episode become valid
+    val validTo: Instant? = null, // When facts in this episode stop being valid
+    val confidence: Double = 1.0 // Overall confidence in this episode's information
 )
+
+/**
+ * Represents a mention of an entity within an episode
+ */
+public data class EntityMention(
+    val entityId: String, // UUID or normalized ID
+    val text: String, // The actual text that mentions this entity (e.g., "Steve", "the leader")
+    val startOffset: Int, // Character position in content where mention starts
+    val endOffset: Int, // Character position where mention ends
+    val confidence: Double = 1.0, // Confidence that this text refers to this entity
+    val type: EntityType = EntityType.UNKNOWN // Type of entity mentioned
+)
+
+/**
+ * Types of entities that can be mentioned
+ */
+public enum class EntityType {
+    PERSON,
+    LOCATION,
+    ORGANIZATION,
+    ITEM,
+    EVENT,
+    CONCEPT,
+    UNKNOWN
+}
 
 /**
  * Source of an episode - kept simple and extensible
@@ -267,3 +313,76 @@ public enum class ResolutionStrategy {
 // Type aliases for clarity
 public typealias NodeId = String
 public typealias EdgeId = String
+
+/**
+ * Context for entity resolution operations
+ */
+public data class EntityResolutionContext(
+    val episodeContent: String? = null,
+    val nearbyEntities: List<Knowledge.Entity> = emptyList(),
+    val confidenceThreshold: Double = 0.8,
+    val entityType: EntityType? = null
+)
+
+/**
+ * Result of entity resolution
+ */
+public sealed interface EntityResolutionResult {
+    public data class Resolved(
+        val entityId: String,
+        val entity: Knowledge.Entity,
+        val confidence: Double,
+        val isNew: Boolean
+    ) : EntityResolutionResult
+    
+    public data class Ambiguous(
+        val candidates: List<EntityCandidate>,
+        val reason: String
+    ) : EntityResolutionResult
+    
+    public data class Failed(
+        val reason: String
+    ) : EntityResolutionResult
+}
+
+/**
+ * Candidate entity for resolution
+ */
+public data class EntityCandidate(
+    val entityId: String,
+    val entity: Knowledge.Entity,
+    val similarityScore: Double,
+    val matchingFeatures: Set<String>
+)
+
+/**
+ * Edge invalidation record
+ */
+public data class EdgeInvalidation(
+    val edgeId: EdgeId,
+    val edge: Knowledge.Relation,
+    val invalidatedAt: Instant,
+    val reason: String,
+    val replacedBy: EdgeId? = null
+)
+
+/**
+ * Community detection algorithms
+ */
+public enum class CommunityDetectionAlgorithm {
+    LEIDEN,
+    LOUVAIN,
+    LABEL_PROPAGATION,
+    CONNECTED_COMPONENTS
+}
+
+/**
+ * Detected community in the graph
+ */
+public data class Community(
+    val id: String,
+    val members: Set<NodeId>,
+    val cohesionScore: Double,
+    val centralNodes: List<NodeId>,
+    val description: String? = null
+)

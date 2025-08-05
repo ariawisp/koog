@@ -76,7 +76,7 @@ val factionSearch by nodeRetrieveKnowledge {
 
 1. **RetrievalProvider**: Interface for retrieval backends
    - `VectorRetrievalProvider`: Works with existing RAG/memory
-   - `GraphRetrievalProvider`: (Future) Neo4j/Graphiti integration
+   - `GraphRetrievalProvider`: (Future) Neo4j/graph database integration
    
 2. **SmartRouter**: Automatically selects providers based on:
    - Query characteristics (temporal, multi-hop, anchored)
@@ -104,8 +104,8 @@ val factionSearch by nodeRetrieveKnowledge {
 When a graph provider is configured, the system enables:
 
 ```kotlin
-// Configure with Graphiti/Neo4j backend
-val graphProvider = GraphitiRetrievalProvider(
+// Configure with graph database backend
+val graphProvider = GraphRetrievalProvider(
     neo4jUri = "bolt://localhost:7687",
     neo4jUser = "neo4j", 
     neo4jPassword = "password"
@@ -197,7 +197,7 @@ No breaking changes - the existing memory nodes and APIs remain intact.
 
 ## Future Enhancements
 
-- Full Graphiti integration with episodes, bi-temporal queries
+- Full graph database integration with episodes, bi-temporal queries
 - Community detection and clustering
 - Custom entity/relationship types
 - Cross-encoder reranking models

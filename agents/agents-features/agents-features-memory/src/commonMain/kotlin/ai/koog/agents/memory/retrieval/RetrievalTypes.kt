@@ -135,7 +135,11 @@ public interface RetrievalProvider {
     public fun supports(recipe: RetrievalRecipe): Boolean
     
     /**
-     * Retrieve knowledge based on the query
+     * Retrieve knowledge based on the query with optional security context
+     * Security context is automatically applied to filter results based on access permissions
      */
-    public suspend fun retrieve(query: RetrievalQuery): List<RetrievalResult>
+    public suspend fun retrieve(
+        query: RetrievalQuery,
+        securityContext: ai.koog.agents.memory.security.SecurityContext? = null
+    ): List<RetrievalResult>
 }

@@ -1,5 +1,8 @@
 package ai.koog.agents.memory.retrieval
 
+import ai.koog.agents.features.tokenizer.feature.PromptTokenizer
+import ai.koog.agents.memory.retrieval.config.TokenAwareRetrievalConfig
+import ai.koog.agents.memory.retrieval.metrics.RetrievalMetricsCollector
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
@@ -27,7 +30,10 @@ public data class RoutingPolicy(
  */
 public class SmartRouter(
     private val providers: List<RetrievalProvider>,
-    private val policy: RoutingPolicy = RoutingPolicy()
+    private val policy: RoutingPolicy = RoutingPolicy(),
+    private val tokenizer: PromptTokenizer? = null,
+    private val tokenConfig: TokenAwareRetrievalConfig? = null,
+    private val metricsCollector: RetrievalMetricsCollector? = null
 ) : RetrievalProvider {
     
     private val logger = KotlinLogging.logger {}
@@ -36,9 +42,22 @@ public class SmartRouter(
         require(providers.isNotEmpty()) { "At least one provider must be configured" }
     }
     
+    // Wrap providers with token awareness if configured
+    private val effectiveProviders: List<RetrievalProvider> = if (tokenizer != null && tokenConfig != null) {
+        providers.map { provider ->
+            provider.withTokenAwareness(
+                tokenizer = tokenizer,
+                config = tokenConfig,
+                metricsCollector = metricsCollector
+            )
+        }
+    } else {
+        providers
+    }
+    
     override fun supports(recipe: RetrievalRecipe): Boolean = true // Router can handle any recipe
     
-    override suspend fun retrieve(query: RetrievalQuery): List<RetrievalResult> {
+    override suspend fun retrieve(query: RetrievalQuery, securityContext: ai.koog.agents.memory.security.SecurityContext?): List<RetrievalResult> {
         // Select the best provider based on query characteristics
         val selectedProvider = selectProvider(query)
         
@@ -50,16 +69,16 @@ public class SmartRouter(
         
         // Try primary provider, fall back to others if it fails
         return try {
-            selectedProvider.retrieve(query)
+            selectedProvider.retrieve(query, securityContext)
         } catch (e: Exception) {
             logger.warn(e) { "Primary provider failed, trying fallback" }
-            fallbackRetrieve(query, selectedProvider)
+            fallbackRetrieve(query, selectedProvider, securityContext)
         }
     }
     
     private fun selectProvider(query: RetrievalQuery): RetrievalProvider {
         // Check if a specific recipe is requested and a provider supports it
-        val recipeProvider = providers.firstOrNull { it.supports(query.recipe) }
+        val recipeProvider = effectiveProviders.firstOrNull { it.supports(query.recipe) }
         if (recipeProvider != null) {
             return recipeProvider
         }
@@ -74,7 +93,7 @@ public class SmartRouter(
         
         if (needsGraph && policy.enableGraph) {
             // Look for a graph-capable provider
-            val graphProvider = providers.firstOrNull { 
+            val graphProvider = effectiveProviders.firstOrNull { 
                 it.supports(RetrievalRecipe.HYBRID_NODE_DISTANCE) 
             }
             if (graphProvider != null) {
@@ -83,18 +102,19 @@ public class SmartRouter(
         }
         
         // Default to first available provider
-        return providers.first()
+        return effectiveProviders.first()
     }
     
     private suspend fun fallbackRetrieve(
         query: RetrievalQuery, 
-        failedProvider: RetrievalProvider
+        failedProvider: RetrievalProvider,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
     ): List<RetrievalResult> {
         // Try other providers
-        for (provider in providers) {
+        for (provider in effectiveProviders) {
             if (provider != failedProvider) {
                 try {
-                    return provider.retrieve(query)
+                    return provider.retrieve(query, securityContext)
                 } catch (e: Exception) {
                     logger.warn(e) { "Fallback provider ${provider::class.simpleName} also failed" }
                 }
@@ -114,12 +134,26 @@ public fun createSmartRouter(
     memoryProvider: ai.koog.agents.memory.providers.AgentMemoryProvider? = null,
     documentStorage: ai.koog.rag.base.RankedDocumentStorage<String>? = null,
     graphProvider: RetrievalProvider? = null,
+    tokenizer: PromptTokenizer? = null,
+    tokenConfig: TokenAwareRetrievalConfig? = null,
+    metricsCollector: RetrievalMetricsCollector? = null,
     policy: RoutingPolicy = RoutingPolicy()
 ): SmartRouter {
     val providers = buildList {
         // Add graph provider first if available (highest priority)
         if (graphProvider != null) {
             add(graphProvider)
+        }
+        
+        // Try to create KnowledgeGraphRetrievalProvider from GraphMemoryProvider
+        if (graphProvider == null && memoryProvider != null) {
+            val graphMemoryProvider = memoryProvider as? ai.koog.agents.memory.providers.GraphMemoryProvider
+            if (graphMemoryProvider != null) {
+                val knowledgeGraphRetriever = createKnowledgeGraphRetriever(graphMemoryProvider, tokenizer)
+                if (knowledgeGraphRetriever != null) {
+                    add(knowledgeGraphRetriever)
+                }
+            }
         }
         
         // Add vector provider as fallback
@@ -133,5 +167,29 @@ public fun createSmartRouter(
         }
     }
     
-    return SmartRouter(providers, policy)
+    return SmartRouter(
+        providers = providers, 
+        policy = policy,
+        tokenizer = tokenizer,
+        tokenConfig = tokenConfig,
+        metricsCollector = metricsCollector
+    )
+}
+
+/**
+ * Create a KnowledgeGraphRetrievalProvider from a GraphMemoryProvider
+ * that uses a KnowledgeGraph.
+ */
+private fun createKnowledgeGraphRetriever(
+    graphMemoryProvider: ai.koog.agents.memory.providers.GraphMemoryProvider,
+    tokenizer: PromptTokenizer? = null
+): ai.koog.agents.memory.retrieval.providers.KnowledgeGraphRetrievalProvider? {
+    // Get the graph from GraphMemoryProvider's public property
+    val graph = try {
+        graphMemoryProvider.knowledgeGraph
+    } catch (e: Exception) {
+        null
+    } ?: return null
+    
+    return ai.koog.agents.memory.retrieval.providers.KnowledgeGraphRetrievalProvider(graph, tokenizer)
 }

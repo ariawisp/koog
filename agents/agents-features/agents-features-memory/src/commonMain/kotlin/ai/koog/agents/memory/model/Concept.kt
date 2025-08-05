@@ -236,4 +236,52 @@ public sealed interface MemoryScope {
      */
     @Serializable
     public object CrossProduct : MemoryScope
+
+    /**
+     * Security-aware memory scopes for multi-agent scenarios
+     */
+    public sealed interface Secure : MemoryScope {
+        /**
+         * Private memories shared between specific entities only
+         * Example: Player<->Companion private conversations
+         */
+        @Serializable
+        public data class Private(
+            val owners: Set<String>,
+            val encrypted: Boolean = true
+        ) : Secure
+
+        /**
+         * Group-restricted memories with optional role-based access
+         * Example: Faction-only battle plans visible to leaders
+         */
+        @Serializable
+        public data class Group(
+            val groupId: String,
+            val members: Set<String> = emptySet(),
+            val requiredRoles: Set<String> = emptySet()
+        ) : Secure
+
+        /**
+         * Hierarchical organizational memories with access levels
+         * Example: Department data with role-based visibility
+         */
+        @Serializable
+        public data class Hierarchical(
+            val organizationId: String,
+            val accessLevel: AccessLevel,
+            val departments: Set<String> = emptySet()
+        ) : Secure
+    }
+}
+
+/**
+ * Access levels for hierarchical memory scopes
+ */
+@Serializable
+public enum class AccessLevel {
+    PUBLIC,
+    INTERNAL,
+    CONFIDENTIAL,
+    RESTRICTED
 }

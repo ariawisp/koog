@@ -228,36 +228,6 @@ public class AgentMemory(
             )
         }
         
-        /**
-         * Configures the agent to use Graphiti (external graph database) for enterprise-scale memory.
-         * This provides all graph capabilities with external persistence and scalability.
-         * 
-         * Requires the optional `agents-features-memory-graphiti` module.
-         * 
-         * Example:
-         * ```kotlin 
-         * install(AgentMemory) {
-         *     useGraphitiPreset(
-         *         uri = "neo4j://localhost:7687",
-         *         username = "neo4j", 
-         *         password = "password"
-         *     )
-         * }
-         * ```
-         */
-        public fun useGraphitiPreset(
-            uri: String,
-            username: String,
-            password: String,
-            autoIngestConversations: Boolean = true
-        ) {
-            // This would require the Graphiti module to be available
-            // For now, we'll create a placeholder that provides clear error message
-            throw UnsupportedOperationException(
-                "Graphiti preset requires the 'agents-features-memory-graphiti' module. " +
-                "Add it to your dependencies and use GraphitiKnowledgeGraph directly."
-            )
-        }
 
         private companion object {
             const val UNKNOWN_NAME = "unknown"

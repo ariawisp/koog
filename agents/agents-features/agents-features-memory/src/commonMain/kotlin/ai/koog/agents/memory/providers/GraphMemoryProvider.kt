@@ -4,6 +4,7 @@ import ai.koog.agents.memory.graph.*
 import ai.koog.agents.memory.model.*
 import ai.koog.agents.memory.retrieval.RetrievalProvider
 import ai.koog.agents.memory.retrieval.RetrievalQuery
+// GraphMemoryProviderWithGraph interface removed - access graph directly via property
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
@@ -67,10 +68,21 @@ public class GraphMemoryProvider(
     private val clock: Clock = Clock.System
 ) : AgentMemoryProvider {
     
+    /**
+     * The underlying knowledge graph. 
+     * Made public to allow direct access for advanced retrieval operations.
+     */
+    public val knowledgeGraph: KnowledgeGraph get() = graph
+    
     // Note: Capabilities are implicit - the provider simply implements
     // the methods it supports and throws clear exceptions for unsupported operations
     
-    override suspend fun save(fact: Fact, subject: MemorySubject, scope: MemoryScope) {
+    override suspend fun save(
+        fact: Fact, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
+    ) {
         // Convert Fact to Episode for graph ingestion
         val episode = Episode(
             content = when (fact) {
@@ -101,7 +113,12 @@ public class GraphMemoryProvider(
         graph.ingest(episode)
     }
     
-    override suspend fun load(concept: Concept, subject: MemorySubject, scope: MemoryScope): List<Fact> {
+    override suspend fun load(
+        concept: Concept, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
+    ): List<Fact> {
         // Use semantic search to find facts matching the concept
         val knowledge = graph.query(
             KnowledgeRequest.Semantic(
@@ -113,7 +130,11 @@ public class GraphMemoryProvider(
         return knowledge.mapNotNull { it.toFactOrNull(concept, subject, scope) }
     }
     
-    override suspend fun loadAll(subject: MemorySubject, scope: MemoryScope): List<Fact> {
+    override suspend fun loadAll(
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
+    ): List<Fact> {
         // Query all knowledge and filter by metadata
         val allKnowledge = graph.query(
             KnowledgeRequest.Pattern(
@@ -142,7 +163,8 @@ public class GraphMemoryProvider(
     override suspend fun loadByDescription(
         description: String, 
         subject: MemorySubject, 
-        scope: MemoryScope
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
     ): List<Fact> {
         // Use retriever if available, otherwise fallback to semantic search
         val knowledge = if (retriever != null) {

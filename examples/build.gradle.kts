@@ -24,7 +24,6 @@ dependencies {
     api(project(":agents:agents-test")) // For mock LLM examples
     api(project(":agents:agents-features:agents-features-event-handler"))
     api(project(":agents:agents-features:agents-features-memory"))
-    api(project(":agents:agents-features:agents-features-memory-graphiti"))
     api(project(":agents:agents-features:agents-features-opentelemetry"))
     api(project(":agents:agents-features:agents-features-snapshot"))
 
@@ -109,7 +108,7 @@ registerRunExampleTask("runExampleJokesWithModeration", "ai.koog.agents.example.
 registerRunExampleTask("runExampleFilePersistentAgent", "ai.koog.agents.example.snapshot.FilePersistentAgentExampleKt")
 registerRunExampleTask("runExampleMinecraftCompanion", "ai.koog.agents.example.minecraft.MinecraftFactionCompanionKt")
 registerRunExampleTask("runExampleMinecraftSimple", "ai.koog.agents.example.minecraft.MinecraftCompanionSimpleKt")
-registerRunExampleTask("runExampleMinecraftGraphiti", "ai.koog.agents.example.graphiti.MinecraftWithGraphitiKt")
+registerRunExampleTask("runExampleMinecraftGraph", "ai.koog.agents.example.graph.MinecraftWithGraphKt")
 
 dokka {
     dokkaSourceSets.named("main") {

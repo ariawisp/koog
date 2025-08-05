@@ -1,6 +1,6 @@
 package ai.koog.agents.memory.retrieval
 
-import ai.koog.agents.memory.feature.nodes.RetrievalQueryBuilder
+import ai.koog.agents.memory.nodes.RetrievalQueryBuilder
 import ai.koog.agents.memory.model.Concept
 import ai.koog.agents.memory.model.FactType
 import ai.koog.agents.memory.model.MemoryScope
@@ -42,7 +42,7 @@ class RetrievalProviderTest {
             }
         }
         
-        val query = builder.build()
+        val query = builder.build("")
         
         assertEquals("Find information about bases", query.text)
         assertEquals(10, query.k)

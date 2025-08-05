@@ -53,27 +53,41 @@ public interface AgentMemoryProvider {
      * - Atomic storage of the fact
      * - Proper scoping and subject categorization
      * - Consistent storage format
+     * - Security-aware access control
      *
      * @param fact Knowledge unit to store (can be SingleFact or MultipleFacts)
      * @param subject Context category (e.g., MACHINE, PROJECT)
-     * @param scope Visibility boundary (e.g., Agent, Feature)
+     * @param scope Visibility boundary (e.g., Agent, Feature, Secure.Private)
+     * @param securityContext Optional security context for access control
      * @throws IOException if storage operation fails
      */
-    public suspend fun save(fact: Fact, subject: MemorySubject, scope: MemoryScope)
+    public suspend fun save(
+        fact: Fact, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext? = null
+    )
 
     /**
      * Retrieves facts associated with a specific concept.
      * This operation provides:
      * - Direct concept-based knowledge retrieval
      * - Context-aware fact filtering
+     * - Security-aware access control
      * - Ordered fact list (typically by timestamp)
      *
      * @param concept Knowledge category to retrieve
      * @param subject Context to search within
      * @param scope Visibility boundary to consider
-     * @return List of matching facts, empty if none found
+     * @param securityContext Optional security context for access control
+     * @return List of matching facts, empty if none found (filtered by security)
      */
-    public suspend fun load(concept: Concept, subject: MemorySubject, scope: MemoryScope): List<Fact>
+    public suspend fun load(
+        concept: Concept, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext? = null
+    ): List<Fact>
 
     /**
      * Retrieves all facts within a specific context.
@@ -84,9 +98,14 @@ public interface AgentMemoryProvider {
      *
      * @param subject Context to retrieve from
      * @param scope Visibility boundary to consider
-     * @return All available facts in the context
+     * @param securityContext Optional security context for access control
+     * @return All available facts in the context (filtered by security)
      */
-    public suspend fun loadAll(subject: MemorySubject, scope: MemoryScope): List<Fact>
+    public suspend fun loadAll(
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext? = null
+    ): List<Fact>
 
     /**
      * Performs semantic search across stored facts.
@@ -94,18 +113,26 @@ public interface AgentMemoryProvider {
      * - Natural language queries
      * - Fuzzy concept matching
      * - Context-aware search results
+     * - Security-aware filtering
      *
      * Implementation considerations:
      * - May use different matching algorithms
      * - Could integrate with LLM for better understanding
      * - Should handle synonyms and related terms
+     * - Must respect security boundaries
      *
      * @param description Natural language query or description
      * @param subject Context to search within
      * @param scope Visibility boundary to consider
-     * @return Facts matching the semantic query
+     * @param securityContext Optional security context for access control
+     * @return Facts matching the semantic query (filtered by security)
      */
-    public suspend fun loadByDescription(description: String, subject: MemorySubject, scope: MemoryScope): List<Fact>
+    public suspend fun loadByDescription(
+        description: String, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext? = null
+    ): List<Fact>
 }
 
 /**

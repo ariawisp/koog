@@ -9,11 +9,11 @@ plugins {
 
 val excluded = setOf(
     ":agents:agents-test",
+    ":agents:agents-benchmark",
     ":examples",
     ":integration-tests",
     ":koog-spring-boot-starter",
     ":koog-ktor",
-    ":agents:agents-features:agents-features-memory-graphiti", // Optional provider module
     project.path, // the current project should not depend on itself
 )
 

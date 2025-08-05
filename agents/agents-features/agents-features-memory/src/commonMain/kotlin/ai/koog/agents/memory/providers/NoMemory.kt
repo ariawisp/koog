@@ -12,20 +12,20 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 public object NoMemory : AgentMemoryProvider {
     private val logger = KotlinLogging.logger { }
 
-    override suspend fun save(fact: Fact, subject: MemorySubject, scope: MemoryScope) {
+    override suspend fun save(fact: Fact, subject: MemorySubject, scope: MemoryScope, securityContext: ai.koog.agents.memory.security.SecurityContext?) {
         logger.info {
             "Memory feature is not enabled in the agent. Skipping saving fact for concept '${fact.concept.keyword}'"
         }
     }
 
-    override suspend fun load(concept: Concept, subject: MemorySubject, scope: MemoryScope): List<Fact> {
+    override suspend fun load(concept: Concept, subject: MemorySubject, scope: MemoryScope, securityContext: ai.koog.agents.memory.security.SecurityContext?): List<Fact> {
         logger.info {
             "Memory feature is not enabled in the agent. No facts will be loaded for concept '${concept.keyword}'"
         }
         return emptyList()
     }
 
-    override suspend fun loadAll(subject: MemorySubject, scope: MemoryScope): List<Fact> {
+    override suspend fun loadAll(subject: MemorySubject, scope: MemoryScope, securityContext: ai.koog.agents.memory.security.SecurityContext?): List<Fact> {
         logger.info { "Memory feature is not enabled in the agent. No facts will be loaded" }
         return emptyList()
     }
@@ -33,7 +33,8 @@ public object NoMemory : AgentMemoryProvider {
     override suspend fun loadByDescription(
         description: String,
         subject: MemorySubject,
-        scope: MemoryScope
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
     ): List<Fact> {
         logger.info {
             "Memory feature is not enabled in the agent. No facts will be loaded for question: '$description'"

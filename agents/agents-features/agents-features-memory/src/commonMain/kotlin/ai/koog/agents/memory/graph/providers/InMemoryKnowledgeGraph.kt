@@ -60,8 +60,14 @@ internal data class NodeData(
     val properties: Map<String, Any>,
     val createdAt: Instant,
     val confidence: Double,
-    val provenance: List<ProvenanceItem>
-)
+    val provenance: List<ProvenanceItem>,
+    val validFrom: Instant? = null,
+    val validTo: Instant? = null
+) {
+    // For backward compatibility, use createdAt as validFrom if not specified
+    val effectiveValidFrom: Instant get() = validFrom ?: createdAt
+    val effectiveValidTo: Instant? get() = validTo
+}
 
 internal data class EdgeData(
     val id: EdgeId,
@@ -71,8 +77,14 @@ internal data class EdgeData(
     val properties: Map<String, Any>,
     val createdAt: Instant,
     val confidence: Double,
-    val provenance: List<ProvenanceItem>
-)
+    val provenance: List<ProvenanceItem>,
+    val validFrom: Instant? = null,
+    val validTo: Instant? = null
+) {
+    // For backward compatibility, use createdAt as validFrom if not specified
+    val effectiveValidFrom: Instant get() = validFrom ?: createdAt
+    val effectiveValidTo: Instant? get() = validTo
+}
 
 /**
  * Thread-safe snapshot of the graph state
@@ -155,7 +167,9 @@ public class InMemoryKnowledgeGraph(
                         properties = candidate.properties,
                         createdAt = episode.timestamp,
                         confidence = candidate.confidence,
-                        provenance = listOf(ProvenanceItem.Episode(episodeId, episode.source))
+                        provenance = listOf(ProvenanceItem.Episode(episodeId, episode.source)),
+                        validFrom = episode.validFrom ?: episode.timestamp,
+                        validTo = episode.validTo
                     )
                     
                     val existing = nodes[nodeId]
@@ -173,10 +187,20 @@ public class InMemoryKnowledgeGraph(
                         // Merge properties from new node into existing
                         val mergedProps = existing.properties + candidate.properties
                         val mergedLabels = existing.labels + candidate.labels
+                        
+                        // Update temporal bounds if needed
+                        val newValidFrom = minOf(existing.effectiveValidFrom, node.effectiveValidFrom)
+                        val newValidTo = when {
+                            existing.validTo == null || node.validTo == null -> null
+                            else -> maxOf(existing.validTo, node.validTo)
+                        }
+                        
                         val updatedNode = existing.copy(
                             labels = mergedLabels,
                             properties = mergedProps,
-                            provenance = existing.provenance + node.provenance
+                            provenance = existing.provenance + node.provenance,
+                            validFrom = newValidFrom,
+                            validTo = newValidTo
                         )
                         nodes[nodeId] = updatedNode
                         
@@ -204,7 +228,9 @@ public class InMemoryKnowledgeGraph(
                         properties = candidate.properties,
                         createdAt = episode.timestamp,
                         confidence = candidate.confidence,
-                        provenance = listOf(ProvenanceItem.Episode(episodeId, episode.source))
+                        provenance = listOf(ProvenanceItem.Episode(episodeId, episode.source)),
+                        validFrom = episode.validFrom ?: episode.timestamp,
+                        validTo = episode.validTo
                     )
                     
                     edges[edgeId] = edge
@@ -258,7 +284,9 @@ public class InMemoryKnowledgeGraph(
                 ) + episode.metadata,
                 createdAt = episode.timestamp,
                 confidence = 1.0,
-                provenance = listOf(ProvenanceItem.Episode(episodeId, episode.source))
+                provenance = listOf(ProvenanceItem.Episode(episodeId, episode.source)),
+                validFrom = episode.validFrom ?: episode.timestamp,
+                validTo = episode.validTo
             )
             
             nodes[nodeId] = node
@@ -289,6 +317,16 @@ public class InMemoryKnowledgeGraph(
     
     private fun queryEntityCentric(request: KnowledgeRequest.EntityCentric, snapshot: GraphSnapshot): List<Knowledge> {
         val centerNode = snapshot.nodes[request.centerNode] ?: return emptyList()
+        
+        // Check if center node is valid at the requested time
+        if (request.at != null) {
+            val validFrom = centerNode.effectiveValidFrom
+            val validTo = centerNode.effectiveValidTo ?: Instant.DISTANT_FUTURE
+            if (request.at < validFrom || request.at >= validTo) {
+                return emptyList() // Node not valid at requested time
+            }
+        }
+        
         val visited = mutableSetOf<NodeId>()
         val results = mutableListOf<Knowledge>()
         
@@ -303,6 +341,15 @@ public class InMemoryKnowledgeGraph(
             visited.add(nodeId)
             
             snapshot.nodes[nodeId]?.let { node ->
+                // Check temporal validity if point-in-time query
+                if (request.at != null) {
+                    val validFrom = node.effectiveValidFrom
+                    val validTo = node.effectiveValidTo ?: Instant.DISTANT_FUTURE
+                    if (request.at < validFrom || request.at >= validTo) {
+                        return@let // Skip nodes not valid at requested time
+                    }
+                }
+                
                 if (matchesFilters(node, request.filters)) {
                     results.add(nodeToKnowledge(node))
                 }
@@ -313,6 +360,15 @@ public class InMemoryKnowledgeGraph(
                 is Traversal.Outgoing, is Traversal.Bidirectional -> {
                     snapshot.outgoingEdges[nodeId]?.forEach { edgeId ->
                         snapshot.edges[edgeId]?.let { edge ->
+                            // Check edge temporal validity
+                            if (request.at != null) {
+                                val validFrom = edge.effectiveValidFrom
+                                val validTo = edge.effectiveValidTo ?: Instant.DISTANT_FUTURE
+                                if (request.at < validFrom || request.at >= validTo) {
+                                    return@let // Skip edges not valid at requested time
+                                }
+                            }
+                            
                             if (shouldIncludeEdge(edge, request.traversal)) {
                                 queue.addLast(edge.to to depth + 1)
                                 results.add(edgeToKnowledge(edge))
@@ -327,6 +383,15 @@ public class InMemoryKnowledgeGraph(
                 is Traversal.Incoming, is Traversal.Bidirectional -> {
                     snapshot.incomingEdges[nodeId]?.forEach { edgeId ->
                         snapshot.edges[edgeId]?.let { edge ->
+                            // Check edge temporal validity
+                            if (request.at != null) {
+                                val validFrom = edge.effectiveValidFrom
+                                val validTo = edge.effectiveValidTo ?: Instant.DISTANT_FUTURE
+                                if (request.at < validFrom || request.at >= validTo) {
+                                    return@let // Skip edges not valid at requested time
+                                }
+                            }
+                            
                             if (shouldIncludeEdge(edge, request.traversal)) {
                                 queue.addLast(edge.from to depth + 1)
                                 results.add(edgeToKnowledge(edge))
@@ -428,14 +493,43 @@ public class InMemoryKnowledgeGraph(
     }
     
     private fun queryTemporal(request: KnowledgeRequest.Temporal, snapshot: GraphSnapshot): List<Knowledge> {
-        return snapshot.nodes.values
+        val results = mutableListOf<Knowledge>()
+        
+        // Query nodes that were valid during the time window
+        snapshot.nodes.values
             .filter { node ->
-                node.createdAt >= request.start && node.createdAt <= request.end
+                // Check if node was valid during the requested time window
+                val nodeValidFrom = node.effectiveValidFrom
+                val nodeValidTo = node.effectiveValidTo ?: Instant.DISTANT_FUTURE
+                
+                // Node is included if its validity period overlaps with the query window
+                nodeValidFrom <= request.end && nodeValidTo >= request.start
             }
             .filter { node ->
                 request.entityFilter.isEmpty() || node.id in request.entityFilter
             }
-            .map { nodeToKnowledge(it) }
+            .forEach { node ->
+                results.add(nodeToKnowledge(node))
+            }
+        
+        // Also query edges that were valid during the time window
+        snapshot.edges.values
+            .filter { edge ->
+                // Check if edge was valid during the requested time window
+                val edgeValidFrom = edge.effectiveValidFrom
+                val edgeValidTo = edge.effectiveValidTo ?: Instant.DISTANT_FUTURE
+                
+                // Edge is included if its validity period overlaps with the query window
+                edgeValidFrom <= request.end && edgeValidTo >= request.start
+            }
+            .filter { edge ->
+                request.eventTypes.isEmpty() || edge.type in request.eventTypes
+            }
+            .forEach { edge ->
+                results.add(edgeToKnowledge(edge))
+            }
+        
+        return results
     }
     
     override suspend fun evolve(context: EvolutionContext): Unit = mutex.withLock {
@@ -536,6 +630,246 @@ public class InMemoryKnowledgeGraph(
             nodesByLabel = nodesByLabel.mapValues { it.value.size.toLong() },
             edgesByType = edgesByType.mapValues { it.value.size.toLong() }
         )
+    }
+    
+    override suspend fun resolveEntity(mention: String, context: EntityResolutionContext): EntityResolutionResult {
+        val normalizedMention = mention.trim().lowercase()
+        val candidates = mutableListOf<EntityCandidate>()
+        
+        // Take a snapshot for thread-safe querying
+        val snapshot = mutex.withLock { createSnapshot() }
+        
+        // Search for entities that might match this mention
+        val searchTerms = config.tokenizer.tokenize(mention)
+        
+        // Find entities with matching terms
+        val candidateNodeIds = searchTerms.flatMap { term ->
+            snapshot.nodeTermIndex[term] ?: emptySet()
+        }.toSet()
+        
+        // Score each candidate
+        candidateNodeIds.forEach { nodeId ->
+            snapshot.nodes[nodeId]?.let { node ->
+                // Skip if wrong entity type
+                if (context.entityType != null && 
+                    !node.labels.contains(context.entityType.name)) {
+                    return@let
+                }
+                
+                var score = 0.0
+                val matchingFeatures = mutableSetOf<String>()
+                
+                // Check name property
+                val nodeName = node.properties["name"]?.toString()?.lowercase()
+                if (nodeName != null) {
+                    when {
+                        nodeName == normalizedMention -> {
+                            score += 1.0
+                            matchingFeatures.add("exact_name_match")
+                        }
+                        nodeName.contains(normalizedMention) || normalizedMention.contains(nodeName) -> {
+                            score += 0.7
+                            matchingFeatures.add("partial_name_match")
+                        }
+                        searchTerms.any { it in nodeName } -> {
+                            score += 0.4
+                            matchingFeatures.add("term_match")
+                        }
+                    }
+                }
+                
+                // Check aliases
+                (node.properties["aliases"] as? List<*>)?.forEach { alias ->
+                    val normalizedAlias = alias.toString().lowercase()
+                    if (normalizedAlias == normalizedMention) {
+                        score += 0.9
+                        matchingFeatures.add("alias_match")
+                    }
+                }
+                
+                // Context bonus - if mentioned with nearby entities
+                if (context.nearbyEntities.any { it.id == nodeId }) {
+                    score += 0.2
+                    matchingFeatures.add("context_proximity")
+                }
+                
+                // Add to candidates if score is high enough
+                if (score > 0.3) {
+                    candidates.add(EntityCandidate(
+                        entityId = nodeId,
+                        entity = nodeToKnowledge(node),
+                        similarityScore = score,
+                        matchingFeatures = matchingFeatures
+                    ))
+                }
+            }
+        }
+        
+        // Sort by score
+        candidates.sortByDescending { it.similarityScore }
+        
+        return when {
+            candidates.isEmpty() -> {
+                // No matches found - create new entity
+                val newId = generateId("entity")
+                val newEntity = Knowledge.Entity(
+                    id = newId,
+                    labels = setOf(context.entityType?.name ?: "Entity"),
+                    properties = mapOf("name" to mention),
+                    confidence = 0.8,
+                    timestamp = clock.now(),
+                    provenance = emptyList()
+                )
+                
+                EntityResolutionResult.Resolved(
+                    entityId = newId,
+                    entity = newEntity,
+                    confidence = 0.8,
+                    isNew = true
+                )
+            }
+            
+            candidates.size == 1 && candidates[0].similarityScore >= context.confidenceThreshold -> {
+                // Clear match
+                EntityResolutionResult.Resolved(
+                    entityId = candidates[0].entityId,
+                    entity = candidates[0].entity,
+                    confidence = candidates[0].similarityScore,
+                    isNew = false
+                )
+            }
+            
+            candidates.size > 1 && 
+            candidates[0].similarityScore >= context.confidenceThreshold &&
+            candidates[0].similarityScore - candidates[1].similarityScore > 0.2 -> {
+                // Clear winner
+                EntityResolutionResult.Resolved(
+                    entityId = candidates[0].entityId,
+                    entity = candidates[0].entity,
+                    confidence = candidates[0].similarityScore,
+                    isNew = false
+                )
+            }
+            
+            else -> {
+                // Ambiguous
+                EntityResolutionResult.Ambiguous(
+                    candidates = candidates.take(5),
+                    reason = "Multiple entities match '$mention' with similar confidence"
+                )
+            }
+        }
+    }
+    
+    override suspend fun invalidateContradictingEdges(newFact: Knowledge.Relation, at: Instant): List<EdgeInvalidation> = mutex.withLock {
+        val invalidations = mutableListOf<EdgeInvalidation>()
+        
+        // Find edges that contradict the new fact
+        edges.values.forEach { edge ->
+            // Same relationship type from same source
+            if (edge.from == newFact.from && edge.type == newFact.type && edge.to != newFact.to) {
+                // This is a contradiction - e.g., "Steve LEADS faction1" vs "Steve LEADS faction2"
+                val invalidationReason = "Contradicted by new fact: ${newFact.from} ${newFact.type} ${newFact.to}"
+                invalidations.add(EdgeInvalidation(
+                    edgeId = edge.id,
+                    edge = edgeToKnowledge(edge),
+                    invalidatedAt = at,
+                    reason = invalidationReason,
+                    replacedBy = newFact.id
+                ))
+                
+                // Mark the edge as invalid by setting validTo
+                val updatedEdge = edge.copy(
+                    validTo = at,
+                    properties = edge.properties + mapOf(
+                        "invalidated_by" to newFact.id,
+                        "invalidation_reason" to invalidationReason
+                    )
+                )
+                edges[edge.id] = updatedEdge
+            }
+        }
+        
+        invalidations
+    }
+    
+    override suspend fun detectCommunities(algorithm: CommunityDetectionAlgorithm): List<Community> {
+        // Take snapshot for analysis
+        val snapshot = mutex.withLock { createSnapshot() }
+        
+        return when (algorithm) {
+            CommunityDetectionAlgorithm.CONNECTED_COMPONENTS -> {
+                detectConnectedComponents(snapshot)
+            }
+            else -> {
+                // Other algorithms would require more complex implementations
+                emptyList()
+            }
+        }
+    }
+    
+    private fun detectConnectedComponents(snapshot: GraphSnapshot): List<Community> {
+        val visited = mutableSetOf<NodeId>()
+        val communities = mutableListOf<Community>()
+        
+        snapshot.nodes.keys.forEach { nodeId ->
+            if (nodeId !in visited) {
+                val component = mutableSetOf<NodeId>()
+                val queue = ArrayDeque<NodeId>()
+                queue.add(nodeId)
+                
+                // BFS to find all connected nodes
+                while (queue.isNotEmpty()) {
+                    val current = queue.removeFirst()
+                    if (current in visited) continue
+                    
+                    visited.add(current)
+                    component.add(current)
+                    
+                    // Add neighbors
+                    snapshot.outgoingEdges[current]?.forEach { edgeId ->
+                        snapshot.edges[edgeId]?.let { edge ->
+                            if (edge.to !in visited) {
+                                queue.add(edge.to)
+                            }
+                        }
+                    }
+                    
+                    snapshot.incomingEdges[current]?.forEach { edgeId ->
+                        snapshot.edges[edgeId]?.let { edge ->
+                            if (edge.from !in visited) {
+                                queue.add(edge.from)
+                            }
+                        }
+                    }
+                }
+                
+                if (component.size > 1) {
+                    communities.add(Community(
+                        id = "community-${communities.size}",
+                        members = component,
+                        cohesionScore = 1.0, // Connected components have perfect cohesion
+                        centralNodes = findCentralNodes(component, snapshot),
+                        description = "Connected component with ${component.size} members"
+                    ))
+                }
+            }
+        }
+        
+        return communities
+    }
+    
+    private fun findCentralNodes(members: Set<NodeId>, snapshot: GraphSnapshot): List<NodeId> {
+        // Find nodes with most connections within the community
+        return members
+            .map { nodeId ->
+                val degree = (snapshot.outgoingEdges[nodeId]?.size ?: 0) + 
+                           (snapshot.incomingEdges[nodeId]?.size ?: 0)
+                nodeId to degree
+            }
+            .sortedByDescending { it.second }
+            .take(3)
+            .map { it.first }
     }
     
     // Helper functions

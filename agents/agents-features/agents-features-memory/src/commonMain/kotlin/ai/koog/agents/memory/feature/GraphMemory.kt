@@ -20,6 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Graph-based memory implementation for AI agents.
@@ -132,10 +134,14 @@ public class GraphMemory(
         
         override fun install(config: Config, pipeline: AIAgentPipeline) {
             pipeline.interceptContextAgentFeature(this) { agentContext ->
-                val episodeProcessor = config.episodeProcessor ?: DefaultEpisodeProcessor(agentContext.llm)
-                val graph = config.graph ?: InMemoryKnowledgeGraph(
-                    clock = config.clock,
-                    episodeProcessor = episodeProcessor
+                // Create graph first if not provided
+                val graph = config.graph ?: InMemoryKnowledgeGraph(clock = config.clock)
+                
+                // Use DefaultEpisodeProcessor with entity resolution enabled
+                val episodeProcessor = config.episodeProcessor ?: DefaultEpisodeProcessor(
+                    llm = agentContext.llm,
+                    knowledgeGraph = graph,
+                    minConfidence = config.minConfidenceThreshold
                 )
                 
                 val memory = GraphMemory(
@@ -361,146 +367,331 @@ public enum class UpdateOperation {
 }
 
 /**
- * Default episode processor using LLM
+ * Default episode processor using LLM with entity resolution
  */
+@OptIn(ExperimentalUuidApi::class)
 internal class DefaultEpisodeProcessor(
-    private val llm: AIAgentLLMContext
+    private val llm: AIAgentLLMContext,
+    private val knowledgeGraph: KnowledgeGraph? = null,
+    private val minConfidence: Double = 0.7
 ) : EpisodeProcessor {
     override suspend fun process(episode: Episode): ProcessedEpisode {
-        // Use structured output to extract entities and relations
-        val structuredData = JsonStructuredData.createJsonStructure<KnowledgeExtraction>(
-            id = "knowledge-extraction",
-            examples = listOf(
-                KnowledgeExtraction(
-                    entities = listOf(
-                        ExtractedEntity(
-                            id = "player-steve",
-                            labels = setOf("Player"),
-                            properties = mapOf("name" to "Steve")
-                        )
-                    ),
-                    relations = listOf(
-                        ExtractedRelation(
-                            from = "player-steve",
-                            relationTo = "base-fortress",
-                            type = "OWNS",
-                            properties = mapOf("since" to "2024")
-                        )
-                    ),
-                    updates = emptyList()
-                )
+        // Extract raw entities and relations with enhanced prompting
+        val rawExtraction = extractRawKnowledge(episode)
+        
+        // If we have a knowledge graph, perform entity resolution
+        return if (knowledgeGraph != null) {
+            val resolvedEntities = resolveEntities(rawExtraction.entities, episode)
+            val resolvedRelations = updateRelationIds(rawExtraction.relations, rawExtraction.entities, resolvedEntities)
+            
+            ProcessedEpisode(
+                entities = resolvedEntities.filter { it.confidence >= minConfidence },
+                relations = resolvedRelations.filter { it.confidence >= minConfidence },
+                updates = rawExtraction.updates
             )
+        } else {
+            // Without knowledge graph, return raw extraction
+            ProcessedEpisode(
+                entities = rawExtraction.entities
+                    .filter { it.confidence >= minConfidence }
+                    .map { EntityCandidate(
+                        id = it.id,
+                        labels = it.labels,
+                        properties = it.properties,
+                        confidence = it.confidence
+                    )},
+                relations = rawExtraction.relations.filter { it.confidence >= minConfidence },
+                updates = rawExtraction.updates
+            )
+        }
+    }
+    
+    private suspend fun extractRawKnowledge(episode: Episode): RawKnowledgeExtraction {
+        val structuredData = JsonStructuredData.createJsonStructure<EnhancedKnowledgeExtraction>(
+            id = "enhanced-knowledge-extraction",
+            examples = listOf(createExampleExtraction())
         )
         
         val extraction = llm.writeSession {
-            // Add extraction instructions to the prompt
             prompt = Prompt.build(prompt) {
-                user("""Extract entities and their relationships from the following text.
+                user("""Extract entities, relationships, and temporal information from the following text.
                     
                     Text: ${episode.content}
+                    Timestamp: ${episode.timestamp}
                     
                     Instructions:
-                    - Identify all entities (people, places, organizations, concepts, etc.)
-                    - Identify relationships between entities
-                    - Extract any property updates (changes to existing entities)
-                    - Use clear, consistent naming for entities
-                    - Preserve important details as properties
-                    - Ensure each entity has a unique ID
-                    - Use appropriate relationship types (e.g., OWNS, BELONGS_TO, LOCATED_AT, etc.)
+                    1. For each entity, provide:
+                       - Clear text mentions (exact phrases that refer to the entity)
+                       - Entity type (PERSON, LOCATION, ORGANIZATION, etc.)
+                       - Confidence score (0.0-1.0)
+                       - Any aliases or alternative names mentioned
                     
-                    Return the result as a JSON object with the following structure:
-                    {
-                      "entities": [
-                        {
-                          "id": "unique-entity-id",
-                          "labels": ["Entity", "Type"],
-                          "properties": {"key": "value"}
-                        }
-                      ],
-                      "relations": [
-                        {
-                          "from": "entity-id-1",
-                          "relationTo": "entity-id-2",
-                          "type": "RELATIONSHIP_TYPE",
-                          "properties": {"key": "value"}
-                        }
-                      ],
-                      "updates": [
-                        {
-                          "targetId": "entity-id",
-                          "property": "property-name",
-                          "value": "new-value",
-                          "operation": "SET"
-                        }
-                      ]
-                    }
+                    2. For relationships:
+                       - Use the entity text mentions as references
+                       - Provide confidence scores
+                       - Note if the relationship is temporal (has start/end times)
+                    
+                    3. For temporal information:
+                       - Extract any time references (dates, "yesterday", "last week", etc.)
+                       - Identify which facts are time-bound
+                       - Note state changes (was X, now Y)
+                    
+                    4. Be conservative with confidence scores:
+                       - 1.0: Explicitly stated facts
+                       - 0.8-0.9: Strong implications
+                       - 0.6-0.7: Reasonable inferences
+                       - Below 0.6: Speculation
+                    
+                    Return the structured JSON response.
                     """.trimIndent())
             }
             
-            // Request structured output
             val result = requestLLMStructured(structuredData)
             result.getOrThrow().structure
         }
         
-        return ProcessedEpisode(
+        return RawKnowledgeExtraction(
             entities = extraction.entities.map { entity ->
-                EntityCandidate(
-                    id = entity.id,
-                    labels = entity.labels,
-                    properties = entity.properties
+                InternalEntityCandidate(
+                    id = "temp-${Uuid.random()}", // Temporary ID, will be resolved
+                    labels = setOf(entity.type),
+                    properties = buildMap {
+                        put("name", entity.mainMention)
+                        entity.aliases?.let { put("aliases", it) }
+                        entity.properties.forEach { (k, v) -> put(k, v) }
+                    },
+                    confidence = entity.confidence,
+                    mentions = entity.mentions
                 )
             },
             relations = extraction.relations.map { relation ->
                 RelationCandidate(
-                    from = relation.from,
-                    to = relation.relationTo,
+                    from = relation.fromMention, // Will be resolved to entity ID
+                    to = relation.toMention,      // Will be resolved to entity ID
                     type = relation.type,
-                    properties = relation.properties
+                    properties = buildMap {
+                        relation.properties.forEach { (k, v) -> put(k, v) }
+                        relation.validFrom?.let { put("valid_from", it) }
+                        relation.validTo?.let { put("valid_to", it) }
+                    },
+                    confidence = relation.confidence
                 )
             },
             updates = extraction.updates.map { update ->
                 PropertyUpdate(
-                    targetId = update.targetId,
+                    targetId = update.targetMention, // Will be resolved
                     property = update.property,
                     value = update.value,
                     operation = update.operation
                 )
-            }
+            },
+            temporalContext = TemporalContext(
+                referenceTime = episode.timestamp,
+                validFrom = episode.validFrom,
+                validTo = episode.validTo
+            )
         )
     }
+    
+    private suspend fun resolveEntities(
+        candidates: List<InternalEntityCandidate>,
+        episode: Episode
+    ): List<EntityCandidate> {
+        val resolved = mutableListOf<EntityCandidate>()
+        val mentionToId = mutableMapOf<String, String>()
+        
+        // Group entities by their main mention to handle coreferences
+        val entityGroups = candidates.groupBy { it.properties["name"]?.toString() ?: "" }
+        
+        for ((mainMention, group) in entityGroups) {
+            if (mainMention.isBlank()) continue
+            
+            // Use the highest confidence entity from the group
+            val representative = group.maxByOrNull { it.confidence } ?: continue
+            
+            // Resolve this entity
+            val resolution = knowledgeGraph!!.resolveEntity(
+                mention = mainMention,
+                context = EntityResolutionContext(
+                    episodeContent = episode.content,
+                    entityType = representative.labels.firstOrNull()?.let { label ->
+                        EntityType.entries.find { it.name == label }
+                    },
+                    confidenceThreshold = 0.7
+                )
+            )
+            
+            when (resolution) {
+                is EntityResolutionResult.Resolved -> {
+                    // Update the candidate with the resolved ID
+                    val resolvedCandidate = EntityCandidate(
+                        id = resolution.entityId,
+                        labels = representative.labels,
+                        properties = representative.properties,
+                        confidence = representative.confidence * resolution.confidence
+                    )
+                    resolved.add(resolvedCandidate)
+                    
+                    // Map all mentions to this ID
+                    group.forEach { candidate ->
+                        candidate.mentions.forEach { mention ->
+                            mentionToId[mention] = resolution.entityId
+                        }
+                    }
+                }
+                
+                is EntityResolutionResult.Ambiguous -> {
+                    // For now, create a new entity if ambiguous
+                    val newId = "entity-${Uuid.random()}"
+                    val resolvedCandidate = EntityCandidate(
+                        id = newId,
+                        labels = representative.labels,
+                        properties = representative.properties,
+                        confidence = representative.confidence * 0.8 // Lower confidence due to ambiguity
+                    )
+                    resolved.add(resolvedCandidate)
+                    
+                    group.forEach { candidate ->
+                        candidate.mentions.forEach { mention ->
+                            mentionToId[mention] = newId
+                        }
+                    }
+                }
+                
+                is EntityResolutionResult.Failed -> {
+                    // Skip this entity
+                    continue
+                }
+            }
+        }
+        
+        // Store the mention mapping in episode metadata for relation resolution
+        @Suppress("UNCHECKED_CAST")
+        (episode.metadata as MutableMap<String, Any>)["mentionToEntityId"] = mentionToId
+        
+        return resolved
+    }
+    
+    private fun updateRelationIds(
+        relations: List<RelationCandidate>,
+        originalEntities: List<InternalEntityCandidate>,
+        resolvedEntities: List<EntityCandidate>
+    ): List<RelationCandidate> {
+        // Create a mapping from mentions to resolved entity IDs
+        val mentionToId = mutableMapOf<String, String>()
+        
+        resolvedEntities.forEach { entity ->
+            val name = entity.properties["name"]?.toString()
+            if (name != null) {
+                mentionToId[name] = entity.id
+            }
+            // Also map aliases
+            (entity.properties["aliases"] as? List<*>)?.forEach { alias ->
+                mentionToId[alias.toString()] = entity.id
+            }
+        }
+        
+        // Update relations with resolved IDs
+        return relations.mapNotNull { relation ->
+            val fromId = mentionToId[relation.from]
+            val toId = mentionToId[relation.to]
+            
+            if (fromId != null && toId != null) {
+                relation.copy(from = fromId, to = toId)
+            } else {
+                // Skip relations where we couldn't resolve entities
+                null
+            }
+        }
+    }
+    
+    private fun createExampleExtraction() = EnhancedKnowledgeExtraction(
+        entities = listOf(
+            EnhancedExtractedEntity(
+                mainMention = "Steve",
+                mentions = listOf("Steve", "he", "the player"),
+                type = "PERSON",
+                confidence = 0.95,
+                aliases = listOf("SteveTheBuilder"),
+                properties = mapOf("role" to "leader")
+            )
+        ),
+        relations = listOf(
+            EnhancedExtractedRelation(
+                fromMention = "Steve",
+                toMention = "Mountain Fortress",
+                type = "OWNS",
+                confidence = 0.9,
+                properties = mapOf("since" to "2024-01-15"),
+                validFrom = "2024-01-15"
+            )
+        ),
+        updates = emptyList()
+    )
 }
 
 /**
- * Data class for LLM knowledge extraction
+ * Data class for LLM knowledge extraction - enhanced version
  */
 @Serializable
-internal data class KnowledgeExtraction(
-    val entities: List<ExtractedEntity>,
-    val relations: List<ExtractedRelation>,
-    val updates: List<ExtractedUpdate>
+internal data class EnhancedKnowledgeExtraction(
+    val entities: List<EnhancedExtractedEntity>,
+    val relations: List<EnhancedExtractedRelation>,
+    val updates: List<EnhancedExtractedUpdate>
 )
 
 @Serializable
-internal data class ExtractedEntity(
-    val id: String,
-    val labels: Set<String>,
-    val properties: Map<String, String>
-)
-
-@Serializable
-internal data class ExtractedRelation(
-    val from: String,
-    val relationTo: String,
+internal data class EnhancedExtractedEntity(
+    val mainMention: String,
+    val mentions: List<String>,
     val type: String,
-    val properties: Map<String, String>
+    val confidence: Double,
+    val aliases: List<String>? = null,
+    val properties: Map<String, String> = emptyMap()
 )
 
 @Serializable
-internal data class ExtractedUpdate(
-    val targetId: String,
+internal data class EnhancedExtractedRelation(
+    val fromMention: String,
+    val toMention: String,
+    val type: String,
+    val confidence: Double,
+    val properties: Map<String, String> = emptyMap(),
+    val validFrom: String? = null,
+    val validTo: String? = null
+)
+
+@Serializable
+internal data class EnhancedExtractedUpdate(
+    val targetMention: String,
     val property: String,
     val value: String,
-    val operation: UpdateOperation
+    val operation: UpdateOperation,
+    val confidence: Double = 1.0
+)
+
+// Internal data structures for processing
+
+internal data class RawKnowledgeExtraction(
+    val entities: List<InternalEntityCandidate>,
+    val relations: List<RelationCandidate>,
+    val updates: List<PropertyUpdate>,
+    val temporalContext: TemporalContext?
+)
+
+internal data class InternalEntityCandidate(
+    val id: String,
+    val labels: Set<String>,
+    val properties: Map<String, Any>,
+    val confidence: Double,
+    val mentions: List<String>
+)
+
+internal data class TemporalContext(
+    val referenceTime: kotlinx.datetime.Instant,
+    val validFrom: kotlinx.datetime.Instant? = null,
+    val validTo: kotlinx.datetime.Instant? = null,
+    val stateChanges: List<String> = emptyList()
 )
 
 /**

@@ -5,7 +5,7 @@ import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.memory.feature.AgentMemory
-import ai.koog.agents.memory.feature.nodes.nodeRetrieveKnowledge
+import ai.koog.agents.memory.nodes.nodeRetrieveKnowledge
 import ai.koog.agents.memory.model.Concept
 import ai.koog.agents.memory.model.DefaultTimeProvider
 import ai.koog.agents.memory.model.FactType
@@ -157,7 +157,9 @@ class RetrievalNodesTest {
     @Test
     fun testRetrievalNodeWithoutConfiguredRetriever() = runTest {
         val strategy = strategy<String, List<RetrievalResult>>("test-no-retriever") {
-            val search by nodeRetrieveKnowledge<String>("Who owns the base?")
+            val search by nodeRetrieveKnowledge<String> {
+                text = "Who owns the base?"
+            }
             
             edge(nodeStart forwardTo search)
             edge(search forwardTo nodeFinish)
@@ -191,7 +193,7 @@ class RetrievalNodesTest {
             agent.run("test")
             assertFalse(true, "Should have thrown error")
         } catch (e: Exception) {
-            assertTrue(e.message?.contains("retriever not configured") == true)
+            assertTrue(e.message?.contains("No retriever configured") == true)
         }
     }
     

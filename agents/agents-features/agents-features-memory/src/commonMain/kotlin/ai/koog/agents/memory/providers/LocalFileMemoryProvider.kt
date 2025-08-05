@@ -132,6 +132,9 @@ public data class LocalFileMemoryProvider<Path>(
             is MemoryScope.Feature -> listOf("feature", scope.id, "subject", subject.name)
             is MemoryScope.Product -> listOf("product", scope.name, "subject", subject.name)
             MemoryScope.CrossProduct -> listOf("organization", "subject", subject.name)
+            is MemoryScope.Secure.Private -> listOf("secure", "private", scope.owners.sorted().joinToString("-"), "subject", subject.name)
+            is MemoryScope.Secure.Group -> listOf("secure", "group", scope.groupId, "subject", subject.name)
+            is MemoryScope.Secure.Hierarchical -> listOf("secure", "hierarchical", scope.organizationId, scope.accessLevel.name, "subject", subject.name)
         }
         return segments.fold(root) { acc, segment -> fs.fromRelativeString(acc, segment) }
     }
@@ -200,7 +203,12 @@ public data class LocalFileMemoryProvider<Path>(
      * @param subject Context category for the fact (e.g., MACHINE, PROJECT)
      * @param scope Visibility scope for the fact (e.g., Agent, Feature)
      */
-    override suspend fun save(fact: Fact, subject: MemorySubject, scope: MemoryScope) {
+    override suspend fun save(
+        fact: Fact, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
+    ) {
         val path = getStoragePath(subject, scope)
         storage.createDirectories(fs.fromRelativeString(root, config.storageDirectory))
 
@@ -233,7 +241,12 @@ public data class LocalFileMemoryProvider<Path>(
      * @param scope Visibility scope to search in (e.g., Agent, Feature)
      * @return List of facts for the concept, or empty list if none found
      */
-    override suspend fun load(concept: Concept, subject: MemorySubject, scope: MemoryScope): List<Fact> {
+    override suspend fun load(
+        concept: Concept, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
+    ): List<Fact> {
         val path = getStoragePath(subject, scope)
         val facts = loadFacts(path)
         return facts[concept.keyword] ?: emptyList()
@@ -259,7 +272,11 @@ public data class LocalFileMemoryProvider<Path>(
      * @param scope Visibility scope to retrieve from (e.g., Agent, Feature)
      * @return Combined list of all facts in the specified context
      */
-    override suspend fun loadAll(subject: MemorySubject, scope: MemoryScope): List<Fact> {
+    override suspend fun loadAll(
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
+    ): List<Fact> {
         val path = getStoragePath(subject, scope)
         return loadFacts(path).values.flatten()
     }
@@ -293,9 +310,10 @@ public data class LocalFileMemoryProvider<Path>(
      * @return List of facts whose concepts match the description
      */
     override suspend fun loadByDescription(
-        description: String,
-        subject: MemorySubject,
-        scope: MemoryScope
+        description: String, 
+        subject: MemorySubject, 
+        scope: MemoryScope,
+        securityContext: ai.koog.agents.memory.security.SecurityContext?
     ): List<Fact> {
         val path = getStoragePath(subject, scope)
         val facts = loadFacts(path)

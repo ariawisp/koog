@@ -29,12 +29,12 @@ public class VectorRetrievalProvider(
         else -> false
     }
     
-    override suspend fun retrieve(query: RetrievalQuery): List<RetrievalResult> {
+    override suspend fun retrieve(query: RetrievalQuery, securityContext: ai.koog.agents.memory.security.SecurityContext?): List<RetrievalResult> {
         val results = mutableListOf<RetrievalResult>()
         
         // Retrieve from memory facts if available
         if (memoryProvider != null && query.target in setOf(RetrievalTarget.FACTS, RetrievalTarget.ALL)) {
-            results.addAll(retrieveFromMemory(query))
+            results.addAll(retrieveFromMemory(query, securityContext))
         }
         
         // Retrieve from document storage if available
@@ -48,7 +48,7 @@ public class VectorRetrievalProvider(
             .take(query.k)
     }
     
-    private suspend fun retrieveFromMemory(query: RetrievalQuery): List<RetrievalResult> {
+    private suspend fun retrieveFromMemory(query: RetrievalQuery, securityContext: ai.koog.agents.memory.security.SecurityContext?): List<RetrievalResult> {
         val results = mutableListOf<RetrievalResult>()
         
         // Get subjects and scopes from filters or use defaults
@@ -65,7 +65,8 @@ public class VectorRetrievalProvider(
                 val facts = memoryProvider!!.loadByDescription(
                     description = query.text,
                     subject = subject,
-                    scope = scope
+                    scope = scope,
+                    securityContext = securityContext
                 )
                 
                 // Convert facts to retrieval results
