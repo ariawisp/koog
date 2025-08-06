@@ -202,6 +202,28 @@ val embedMetalShaders = tasks.register<Exec>("embedMetalShaders") {
     }
 }
 
+// Task to copy native library to resources
+val copyNativeLibraryToResources = tasks.register<Copy>("copyNativeLibraryToResources") {
+    dependsOn(buildMetalInferenceLib, embedMetalShaders)
+    
+    val osArch = System.getProperty("os.arch").lowercase()
+    // Copy to src resources so it's included in the JAR
+    val resourceDir = file("src/jvmMain/resources/native/$osArch")
+    
+    from(file("native/metal-inference-jni/target/release")) {
+        include("*.dylib", "*.so", "*.dll", "*.metallib")
+    }
+    into(resourceDir)
+    
+    doFirst {
+        resourceDir.mkdirs()
+    }
+    
+    doLast {
+        logger.lifecycle("Copied native library and shaders to: $resourceDir")
+    }
+}
+
 // Clean task for native library
 val cleanMetalInferenceLib = tasks.register<Delete>("cleanMetalInferenceLib") {
     delete(file("native/metal-inference-jni/target"))
@@ -336,28 +358,39 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 // Include native library in JAR
 tasks.withType<Jar>().configureEach {
     if (name == "jvmJar") {
-        dependsOn(buildMetalInferenceLib)
+        dependsOn(buildMetalInferenceLib, copyNativeLibraryToResources)
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         if (OperatingSystem.current().isMacOsX) {
             dependsOn(embedMetalShaders)
         }
-        
-        // Include native libraries and shaders
-        from("src/jvmMain/resources/native") {
-            into("native")
-        }
+        // Resources are automatically included from src/jvmMain/resources
     }
 }
 
 // Configure test tasks to use the native library
 tasks.withType<Test>().configureEach {
     if (OperatingSystem.current().isMacOsX) {
-        dependsOn(buildMetalInferenceLib, embedMetalShaders)
+        dependsOn(buildMetalInferenceLib, embedMetalShaders, copyNativeLibraryToResources)
         
-        // Set library path for tests
-        systemProperty("java.library.path", file("native/metal-inference-jni/target/release").absolutePath)
-        
-        // Set working directory to where Metal shaders are
+        // The library will be loaded from resources, so we just need the working directory
+        // for Metal shaders to be found at runtime
         workingDir = file("native/metal-inference-jni/target/release")
+        
+        // Enable more detailed error messages
+        jvmArgs("-Djava.awt.headless=true")
+        testLogging {
+            events("passed", "skipped", "failed", "standardOut", "standardError")
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+        }
+    }
+}
+
+// Ensure native library is copied to resources before processing
+tasks.named("jvmProcessResources") {
+    if (OperatingSystem.current().isMacOsX) {
+        dependsOn(copyNativeLibraryToResources)
     }
 }
 

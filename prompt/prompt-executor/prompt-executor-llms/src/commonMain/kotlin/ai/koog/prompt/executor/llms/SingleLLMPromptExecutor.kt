@@ -36,7 +36,7 @@ public open class SingleLLMPromptExecutor(
         return response
     }
 
-    public fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
+    override fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
         logger.debug { "Executing streaming prompt: $prompt with model: $model" }
 
         val responseFlow = llmClient.executeStreaming(prompt, model)
@@ -46,7 +46,7 @@ public open class SingleLLMPromptExecutor(
         }
     }
 
-    public suspend fun executeMultipleChoices(
+    override suspend fun executeMultipleChoices(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
@@ -58,5 +58,5 @@ public open class SingleLLMPromptExecutor(
         return choices
     }
 
-    public suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult = llmClient.moderate(prompt, model)
+    override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult = llmClient.moderate(prompt, model)
 }

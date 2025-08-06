@@ -21,8 +21,10 @@ public abstract class HarmonyDownsamplerBase<T> {
     
     /**
      * Main downsampling method that each provider must implement.
+     * @param prompt The Harmony prompt to downsample
+     * @param model The target model for the request
      */
-    public abstract fun downsample(prompt: Prompt): T
+    public abstract fun downsample(prompt: Prompt, model: ai.koog.prompt.llm.LLModel): T
     
     /**
      * Extract text content from a HarmonyMessage.

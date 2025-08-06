@@ -296,18 +296,7 @@ public data class HarmonyMessage(
 }
 
 
-/**
- * Metadata about the Harmony request and processing parameters.
- */
-@OptIn(ExperimentalUuidApi::class)
-@Serializable
-public data class HarmonyMetadata(
-    val model: String,
-    val maxTokens: Int? = null,
-    val temperature: Double? = null,
-    val includeReasoning: Boolean = false,
-    val requestId: String = Uuid.random().toString()
-)
+// HarmonyMetadata removed - using LLMParams directly
 
 /**
  * Reasoning effort levels control how much internal analysis the model performs.

@@ -1,6 +1,7 @@
 package ai.koog.prompt.dsl
 
 import ai.koog.prompt.harmony.*
+import ai.koog.prompt.params.LLMParams
 import ai.koog.agents.core.tools.ToolDescriptor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -34,12 +35,12 @@ public class PromptBuilder internal constructor(
     private val harmonyMessages = mutableListOf<HarmonyMessage>()
     private var systemContext = SystemContext()
     private var developerContext = DeveloperContext.empty()
-    private var metadata = HarmonyMetadata(model = model)
+    private var metadata = LLMParams()
 
     internal companion object {
         internal fun from(prompt: Prompt, clock: Clock = Clock.System): PromptBuilder = PromptBuilder(
             prompt.id,
-            prompt.metadata.model,
+            "gpt-4", // Default model, actual model is specified at execution time
             clock
         ).apply {
             harmonyMessages.addAll(prompt.conversation.messages)

@@ -138,7 +138,7 @@ public open class MultiLLMPromptExecutor(
      * @param prompt The prompt to execute, containing the messages and parameters.
      * @param model The LLM model to use for execution.
      **/
-    public fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
+    override fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
         logger.debug { "Executing streaming prompt: $prompt with model: $model" }
 
         val provider = model.provider
@@ -160,7 +160,7 @@ public open class MultiLLMPromptExecutor(
      * @return A list of `LLMChoice` objects containing the choices generated based on the prompt.
      * @throws IllegalArgumentException If no client is found for the model's provider and no fallback settings are configured.
      */
-    public suspend fun executeMultipleChoices(
+    override suspend fun executeMultipleChoices(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
@@ -192,7 +192,7 @@ public open class MultiLLMPromptExecutor(
      * @return A `ModerationResult` representing the result of the moderation process.
      * @throws IllegalArgumentException If no client is found for the model's provider.
      */
-    public suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult {
+    override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult {
         logger.debug { "Moderating multi-modal content with model: ${model.id}" }
 
         val provider = model.provider

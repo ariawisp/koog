@@ -65,13 +65,6 @@ public fun AIAgentEnvironmentToolResultToAgentContent.toResult(): ReceivedToolRe
     result = toolResult
 )
 
-/**
- * Adds a tool result to the prompt.
- *
- * This method converts a `ReceivedToolResult` into a `Message.Tool.Result` and adds it to the message list.
- *
- * @param result The result from a tool execution to be added as a tool result message
- */
-public fun PromptBuilder.ToolMessageBuilder.result(result: ReceivedToolResult) {
-    result(result.toMessage(clock))
-}
+// Note: ToolMessageBuilder no longer exists in the new Harmony-based prompt DSL.
+// Tool results are now added directly as HarmonyMessage instances using:
+// harmonyMessage(HarmonyMessage.tool(text = result.response, recipient = "assistant").withChannel("commentary"))

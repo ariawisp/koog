@@ -146,6 +146,14 @@ public class HarmonyProviderRegistry(
             )
         }
     }
+    
+    override suspend fun moderate(
+        prompt: Prompt,
+        model: LLModel
+    ): ai.koog.prompt.dsl.ModerationResult {
+        val client = selectClient(model)
+        return client.moderate(prompt, model)
+    }
 }
 
 /**

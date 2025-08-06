@@ -17,9 +17,9 @@ public object HarmonyOpenAIDownsampler : HarmonyDownsamplerBase<OpenAIChatReques
      * Downsample Prompt (which IS HarmonyCore) to OpenAI chat completion request.
      * Pure function with explicit channel mapping rules.
      */
-    override fun downsample(prompt: Prompt): OpenAIChatRequest {
+    override fun downsample(prompt: Prompt, model: ai.koog.prompt.llm.LLModel): OpenAIChatRequest {
         return OpenAIChatRequest(
-            model = prompt.metadata.model,
+            model = model.id,
             messages = downsampleMessages(prompt.conversation),
             tools = downsampleTools(prompt.developerContext.tools),
             temperature = prompt.metadata.temperature,
@@ -146,5 +146,5 @@ public object HarmonyOpenAIDownsampler : HarmonyDownsamplerBase<OpenAIChatReques
 /**
  * Extension function for direct downsampling from Prompt.
  */
-public fun Prompt.toOpenAI(): OpenAIChatRequest = 
-    HarmonyOpenAIDownsampler.downsample(this)
+public fun Prompt.toOpenAI(model: ai.koog.prompt.llm.LLModel): OpenAIChatRequest = 
+    HarmonyOpenAIDownsampler.downsample(this, model)

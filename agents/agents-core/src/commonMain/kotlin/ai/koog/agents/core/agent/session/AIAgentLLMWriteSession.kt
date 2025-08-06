@@ -321,7 +321,13 @@ public class AIAgentLLMWriteSession internal constructor(
      *             the modifications to be applied to the current prompt.
      */
     public fun updatePrompt(body: PromptBuilder.() -> Unit) {
-        prompt = prompt(prompt, clock, body)
+        // Create a new prompt with the same id, copying existing data
+        prompt = ai.koog.prompt.dsl.prompt(prompt.id) {
+            // Copy existing messages first
+            harmonyMessages(prompt.messages)
+            // Apply new changes
+            body()
+        }
     }
 
     /**
@@ -348,7 +354,7 @@ public class AIAgentLLMWriteSession internal constructor(
      * @param newParams The new set of LLMParams to replace the existing parameters in the prompt.
      */
     public fun changeLLMParams(newParams: LLMParams): Unit = rewritePrompt {
-        prompt.withParams(newParams)
+        it.copy(metadata = newParams)
     }
 
     /**
@@ -360,7 +366,11 @@ public class AIAgentLLMWriteSession internal constructor(
      * @return the response from the LLM after processing the request, as a [Message.Response].
      */
     override suspend fun requestLLMWithoutTools(): Message.Response {
-        return super.requestLLMWithoutTools().also { response -> updatePrompt { message(response) } }
+        return super.requestLLMWithoutTools().also { response -> 
+            updatePrompt { 
+                assistant(response.content)
+            }
+        }
     }
 
     /**
@@ -370,7 +380,11 @@ public class AIAgentLLMWriteSession internal constructor(
      * @return The response received from the Language Learning Model (LLM).
      */
     override suspend fun requestLLMOnlyCallingTools(): Message.Response {
-        return super.requestLLMOnlyCallingTools().also { response -> updatePrompt { message(response) } }
+        return super.requestLLMOnlyCallingTools().also { response -> 
+            updatePrompt { 
+                assistant(response.content)
+            }
+        }
     }
 
     /**
@@ -380,7 +394,11 @@ public class AIAgentLLMWriteSession internal constructor(
      * @return A response message received from the LLM after executing the enforced tool request.
      */
     override suspend fun requestLLMForceOneTool(tool: ToolDescriptor): Message.Response {
-        return super.requestLLMForceOneTool(tool).also { response -> updatePrompt { message(response) } }
+        return super.requestLLMForceOneTool(tool).also { response -> 
+            updatePrompt { 
+                assistant(response.content)
+            }
+        }
     }
 
     /**
@@ -391,7 +409,11 @@ public class AIAgentLLMWriteSession internal constructor(
      * @return The response generated after executing the provided tool.
      */
     override suspend fun requestLLMForceOneTool(tool: Tool<*, *>): Message.Response {
-        return super.requestLLMForceOneTool(tool).also { response -> updatePrompt { message(response) } }
+        return super.requestLLMForceOneTool(tool).also { response -> 
+            updatePrompt { 
+                assistant(response.content)
+            }
+        }
     }
 
     /**
@@ -402,7 +424,9 @@ public class AIAgentLLMWriteSession internal constructor(
      */
     override suspend fun requestLLM(): Message.Response {
         return super.requestLLM().also { response ->
-            updatePrompt { message(response) }
+            updatePrompt { 
+                assistant(response.content)
+            }
         }
     }
 
@@ -418,7 +442,9 @@ public class AIAgentLLMWriteSession internal constructor(
     override suspend fun requestLLMMultiple(): List<Message.Response> {
         return super.requestLLMMultiple().also { responses ->
             updatePrompt {
-                responses.forEach { message(it) }
+                responses.forEach { response ->
+                    assistant(response.content)
+                }
             }
         }
     }
@@ -455,12 +481,17 @@ public class AIAgentLLMWriteSession internal constructor(
      */
     public suspend fun requestLLMStreaming(definition: StructuredDataDefinition? = null): Flow<String> {
         if (definition != null) {
-            val prompt = prompt(prompt, clock) {
-                user {
-                    definition.definition(this)
-                }
+            val updatedPrompt = ai.koog.prompt.dsl.prompt(prompt.id) {
+                // Copy existing messages
+                harmonyMessages(prompt.messages)
+                // Add new user message
+                user(buildString {
+                    val contentBuilder = ai.koog.prompt.text.TextContentBuilder()
+                    definition.definition(contentBuilder)
+                    append(contentBuilder.build())
+                })
             }
-            this.prompt = prompt
+            this.prompt = updatedPrompt
         }
 
         return executor.executeStreaming(prompt, model)

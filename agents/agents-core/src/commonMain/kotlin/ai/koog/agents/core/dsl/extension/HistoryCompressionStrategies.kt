@@ -3,6 +3,7 @@ package ai.koog.agents.core.dsl.extension
 import ai.koog.agents.core.agent.session.AIAgentLLMWriteSession
 import ai.koog.agents.core.prompt.Prompts.summarizeInTLDR
 import ai.koog.prompt.message.Message
+import ai.koog.prompt.harmony.HarmonyMessage
 import kotlinx.datetime.Instant
 
 /**
@@ -27,7 +28,7 @@ public abstract class HistoryCompressionStrategy {
     public abstract suspend fun compress(
         llmSession: AIAgentLLMWriteSession,
         preserveMemory: Boolean,
-        memoryMessages: List<Message>
+        memoryMessages: List<HarmonyMessage>
     )
 
     /**
@@ -43,9 +44,13 @@ public abstract class HistoryCompressionStrategy {
         return with(llmSession) {
             dropTrailingToolCalls()
             updatePrompt {
-                user {
-                    summarizeInTLDR()
-                }
+                user(buildString {
+                    val contentBuilder = ai.koog.prompt.text.TextContentBuilder()
+                    with(ai.koog.agents.core.prompt.Prompts) {
+                        contentBuilder.summarizeInTLDR()
+                    }
+                    append(contentBuilder.build())
+                })
             }
             listOf(llmSession.requestLLMWithoutTools())
         }
@@ -63,25 +68,36 @@ public abstract class HistoryCompressionStrategy {
         llmSession: AIAgentLLMWriteSession,
         tldrMessages: List<Message>,
         preserveMemory: Boolean,
-        memoryMessages: List<Message>
+        memoryMessages: List<HarmonyMessage>
     ) {
         with(llmSession) {
-            // Filter messages similar to MicroAgentBase
-            val systemMessages = prompt.messages.filterIsInstance<Message.System>()
-            val firstUserMessage = prompt.messages.firstOrNull { it is Message.User }
+            // Filter messages by role
+            val systemMessages = prompt.messages.filter { it.author.role == ai.koog.prompt.harmony.Role.SYSTEM }
+            val firstUserMessage = prompt.messages.firstOrNull { it.author.role == ai.koog.prompt.harmony.Role.USER }
 
-            prompt = prompt.withMessages {
-                buildList {
-                    addAll(systemMessages)
-                    // Restore memory messages if needed
-                    if (preserveMemory && memoryMessages.isNotEmpty()) {
-                        addAll(memoryMessages)
+            prompt = prompt.copy(
+                conversation = prompt.conversation.copy(
+                    messages = buildList {
+                        // Keep system messages
+                        addAll(systemMessages)
+                        
+                        // Restore memory messages if needed
+                        if (preserveMemory && memoryMessages.isNotEmpty()) {
+                            addAll(memoryMessages)
+                        }
+
+                        // Add first user message if exists
+                        if (firstUserMessage != null) add(firstUserMessage)
+                        
+                        // Add TLDR messages as assistant responses
+                        tldrMessages.forEach { msg ->
+                            add(ai.koog.prompt.harmony.HarmonyMessage.assistant(
+                                msg.content
+                            ))
+                        }
                     }
-
-                    if (firstUserMessage != null) add(firstUserMessage)
-                    addAll(tldrMessages)
-                }
-            }
+                )
+            )
         }
     }
 
@@ -103,7 +119,7 @@ public abstract class HistoryCompressionStrategy {
         override suspend fun compress(
             llmSession: AIAgentLLMWriteSession,
             preserveMemory: Boolean,
-            memoryMessages: List<Message>
+            memoryMessages: List<HarmonyMessage>
         ) {
             val tldr = compressPromptIntoTLDR(llmSession)
             composePromptWithRequiredMessages(llmSession, tldr, preserveMemory, memoryMessages)
@@ -134,7 +150,7 @@ public abstract class HistoryCompressionStrategy {
         override suspend fun compress(
             llmSession: AIAgentLLMWriteSession,
             preserveMemory: Boolean,
-            memoryMessages: List<Message>
+            memoryMessages: List<HarmonyMessage>
         ) {
             llmSession.leaveLastNMessages(n)
             val tldr = compressPromptIntoTLDR(llmSession)
@@ -160,7 +176,7 @@ public abstract class HistoryCompressionStrategy {
         override suspend fun compress(
             llmSession: AIAgentLLMWriteSession,
             preserveMemory: Boolean,
-            memoryMessages: List<Message>
+            memoryMessages: List<HarmonyMessage>
         ) {
             llmSession.leaveMessagesFromTimestamp(timestamp)
             val tldr = compressPromptIntoTLDR(llmSession)
@@ -188,7 +204,7 @@ public abstract class HistoryCompressionStrategy {
         override suspend fun compress(
             llmSession: AIAgentLLMWriteSession,
             preserveMemory: Boolean,
-            memoryMessages: List<Message>
+            memoryMessages: List<HarmonyMessage>
         ) {
             val chunkedTLDR = llmSession.prompt.messages.chunked(chunkSize).flatMap { chunk ->
                 llmSession.clearHistory()

@@ -21,8 +21,11 @@ public object MetalInferenceJNI {
     init {
         try {
             loadNativeLibrary()
+            logger.info { "Metal inference native library loaded successfully" }
         } catch (e: Exception) {
-            logger.error(e) { "Failed to load Metal inference native library" }
+            logger.error(e) { "Failed to load Metal inference native library: ${e.message}" }
+            // Re-throw to make the error visible in tests
+            throw RuntimeException("Failed to load Metal inference native library", e)
         }
     }
     
@@ -34,9 +37,13 @@ public object MetalInferenceJNI {
             System.loadLibrary(libName)
             logger.info { "Loaded $libName from java.library.path" }
         } catch (e: UnsatisfiedLinkError) {
+            logger.debug { "Failed to load from java.library.path: ${e.message}" }
+            
             // Try loading from resources
             val osName = System.getProperty("os.name").lowercase()
             val osArch = System.getProperty("os.arch").lowercase()
+            
+            logger.debug { "OS: $osName, Arch: $osArch" }
             
             val libFileName = when {
                 osName.contains("mac") -> "lib$libName.dylib"
@@ -46,11 +53,17 @@ public object MetalInferenceJNI {
             }
             
             val resourcePath = "/native/$osArch/$libFileName"
-            val inputStream = this::class.java.getResourceAsStream(resourcePath)
-                ?: throw UnsatisfiedLinkError("Native library not found in resources: $resourcePath")
+            logger.debug { "Looking for native library at: $resourcePath" }
             
-            val tempFile = Files.createTempFile("metal_inference_jni", libFileName.substringAfterLast('.'))
+            val inputStream = this::class.java.getResourceAsStream(resourcePath)
+                ?: throw UnsatisfiedLinkError("Native library not found in resources: $resourcePath. Available resources: ${
+                    this::class.java.classLoader.getResources("").toList()
+                }")
+            
+            val tempFile = Files.createTempFile("metal_inference_jni", ".${libFileName.substringAfterLast('.')}")
             tempFile.toFile().deleteOnExit()
+            
+            logger.debug { "Extracting native library to: ${tempFile.toAbsolutePath()}" }
             
             inputStream.use { input ->
                 Files.newOutputStream(tempFile).use { output ->
@@ -59,7 +72,7 @@ public object MetalInferenceJNI {
             }
             
             System.load(tempFile.toAbsolutePath().toString())
-            logger.info { "Loaded $libName from resources" }
+            logger.info { "Loaded $libName from resources at ${tempFile.toAbsolutePath()}" }
         }
     }
     

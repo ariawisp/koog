@@ -112,7 +112,7 @@ public open class AnthropicLLMClient(
         }
 
         // Use HarmonyAnthropicDownsampler to convert Harmony Prompt to Anthropic format
-        val anthropicRequest = HarmonyAnthropicDownsampler.downsample(prompt)
+        val anthropicRequest = HarmonyAnthropicDownsampler.downsample(prompt, model)
         
         // Add streaming flag if needed
         val requestWithStream = anthropicRequest.copy(stream = false)
@@ -140,7 +140,7 @@ public open class AnthropicLLMClient(
         }
 
         // Use HarmonyAnthropicDownsampler to convert Harmony Prompt to Anthropic format
-        val anthropicRequest = HarmonyAnthropicDownsampler.downsample(prompt)
+        val anthropicRequest = HarmonyAnthropicDownsampler.downsample(prompt, model)
         
         // Add streaming flag
         val requestWithStream = anthropicRequest.copy(stream = true)

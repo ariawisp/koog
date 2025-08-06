@@ -1,6 +1,7 @@
 package ai.koog.prompt.dsl
 
 import ai.koog.prompt.harmony.*
+import ai.koog.prompt.params.LLMParams
 import ai.koog.agents.core.tools.ToolDescriptor
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
@@ -20,7 +21,7 @@ public data class Prompt(
     val systemContext: SystemContext,
     val developerContext: DeveloperContext,
     val conversation: ConversationGraph,
-    val metadata: HarmonyMetadata
+    val metadata: LLMParams
 ) {
 
     /**
@@ -32,7 +33,7 @@ public data class Prompt(
     /**
      * Native Harmony parameters - alias for metadata
      */
-    public val params: HarmonyMetadata
+    public val params: LLMParams
         get() = metadata
 
     /**
@@ -47,7 +48,7 @@ public data class Prompt(
             systemContext = SystemContext(),
             developerContext = DeveloperContext.empty(),
             conversation = ConversationGraph.empty(),
-            metadata = HarmonyMetadata(model = "gpt-4")
+            metadata = LLMParams()
         )
 
         /**
@@ -114,3 +115,18 @@ public fun prompt(
     model: String = "gpt-4", 
     init: PromptBuilder.() -> Unit
 ): Prompt = Prompt.build(id, model, Clock.System, init)
+
+// Backward compatibility extensions
+
+/**
+ * Updates prompt parameters.
+ */
+public fun Prompt.withUpdatedParams(block: LLMParams.() -> LLMParams): Prompt {
+    return copy(metadata = metadata.block())
+}
+
+/**
+ * Updates prompt parameters (alternate name).
+ */
+public fun Prompt.withParams(block: LLMParams.() -> LLMParams): Prompt = 
+    withUpdatedParams(block)

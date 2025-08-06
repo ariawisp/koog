@@ -10,7 +10,7 @@ import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.feature.AIAgentFeature
 import ai.koog.agents.core.feature.AIAgentPipeline
-import ai.koog.prompt.message.Message
+import ai.koog.prompt.harmony.HarmonyMessage
 import kotlin.reflect.KType
 
 /**
@@ -64,7 +64,7 @@ public class AIAgentParallelNodesMergeContext<Input, Output>(
     override fun <Feature : Any> featureOrThrow(feature: AIAgentFeature<*, Feature>): Feature =
         underlyingContextBase.featureOrThrow(feature)
 
-    override suspend fun getHistory(): List<Message> = underlyingContextBase.getHistory()
+    override suspend fun getHistory(): List<HarmonyMessage> = underlyingContextBase.getHistory()
 
     override fun copy(
         environment: AIAgentEnvironment,

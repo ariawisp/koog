@@ -1,6 +1,8 @@
 package ai.koog.prompt.executor.clients.harmony
 
 import ai.koog.agents.core.tools.ToolDescriptor
+import ai.koog.agents.core.tools.ToolParameterType
+import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.harmony.*
@@ -32,6 +34,18 @@ public class HarmonyNativeLLMClient(
         private val json = Json { 
             prettyPrint = true
             ignoreUnknownKeys = true
+        }
+        
+        fun mapParameterType(type: ToolParameterType): String {
+            return when (type) {
+                is ToolParameterType.String -> "string"
+                is ToolParameterType.Integer -> "number"
+                is ToolParameterType.Float -> "number"
+                is ToolParameterType.Boolean -> "boolean"
+                is ToolParameterType.List -> "any[]"
+                is ToolParameterType.Object -> "object"
+                is ToolParameterType.Enum -> "string"
+            }
         }
     }
     
@@ -77,8 +91,8 @@ public class HarmonyNativeLLMClient(
             tokens = tokens,
             stopTokens = stopTokens,
             maxTokens = prompt.metadata.maxTokens ?: 2048,
-            temperature = prompt.metadata.temperature ?: 0.7f,
-            topP = prompt.metadata.topP ?: 0.9f
+            temperature = (prompt.metadata.temperature ?: 0.7).toFloat(),
+            topP = (prompt.metadata.topP ?: 0.9).toFloat()
         )
         
         // Parse response tokens back to messages
@@ -126,8 +140,8 @@ public class HarmonyNativeLLMClient(
                 model = model,
                 tokens = tokens,
                 stopTokens = stopTokens,
-                temperature = prompt.metadata.temperature ?: 0.7f,
-                topP = prompt.metadata.topP ?: 0.9f
+                temperature = (prompt.metadata.temperature ?: 0.7).toFloat(),
+                topP = (prompt.metadata.topP ?: 0.9).toFloat()
             ).collect { token ->
                 // Process each token through the parser
                 val state = streamingParser.processToken(token)
@@ -171,7 +185,7 @@ public class HarmonyNativeLLMClient(
                 content = listOf(
                     HarmonyContent.Text(
                         buildString {
-                            appendLine(prompt.systemContext.identity)
+                            appendLine(prompt.systemContext.modelIdentity)
                             appendLine("Knowledge cutoff: ${prompt.systemContext.knowledgeCutoff}")
                             appendLine("Current date: ${prompt.systemContext.currentDate}")
                             appendLine()
@@ -216,20 +230,23 @@ public class HarmonyNativeLLMClient(
                                     tools.forEach { tool ->
                                         appendLine("// ${tool.description}")
                                         append("type ${tool.name} = ")
-                                        if (tool.parameters.isEmpty()) {
+                                        val allParams = tool.requiredParameters + tool.optionalParameters
+                                        if (allParams.isEmpty()) {
                                             appendLine("() => any;")
                                         } else {
                                             appendLine("(_: {")
-                                            tool.parameters.forEach { param ->
-                                                if (param.description != null) {
-                                                    appendLine("// ${param.description}")
-                                                }
+                                            tool.requiredParameters.forEach { param ->
+                                                appendLine("// ${param.description}")
                                                 append(param.name)
                                                 append(": ")
-                                                append(param.type)
-                                                if (!param.required) {
-                                                    append("?")
-                                                }
+                                                append(mapParameterType(param.type))
+                                                appendLine(",")
+                                            }
+                                            tool.optionalParameters.forEach { param ->
+                                                appendLine("// ${param.description}")
+                                                append(param.name)
+                                                append("?: ")
+                                                append(mapParameterType(param.type))
                                                 appendLine(",")
                                             }
                                             appendLine("}) => any;")
@@ -272,7 +289,7 @@ public class HarmonyNativeLLMClient(
                 is ChanneledMessage.Final -> {
                     // Determine role from content or context
                     val role = when {
-                        message.role != null -> message.role
+                        message.role != null -> message.role!!
                         message.content.startsWith("User:") -> Role.USER
                         else -> Role.ASSISTANT
                     }
@@ -313,8 +330,9 @@ public class HarmonyNativeLLMClient(
                 }
                 "commentary" -> {
                     // Check if this is a tool call
-                    if (message.recipient?.startsWith("functions.") == true) {
-                        val toolName = message.recipient.removePrefix("functions.")
+                    val recipient = message.recipient
+                    if (recipient != null && recipient.startsWith("functions.")) {
+                        val toolName = recipient.removePrefix("functions.")
                         responses.add(
                             Message.Tool.Call(
                                 id = "call_${System.currentTimeMillis()}",
@@ -336,8 +354,16 @@ public class HarmonyNativeLLMClient(
         return responses
     }
     
-    override fun close() {
+    fun close() {
         harmonyEncoding.close()
+    }
+    
+    override suspend fun moderate(
+        prompt: Prompt,
+        model: LLModel
+    ): ModerationResult {
+        logger.warn { "Moderation is not supported by HarmonyNativeLLMClient" }
+        throw UnsupportedOperationException("Moderation is not supported by HarmonyNativeLLMClient")
     }
 }
 
@@ -462,7 +488,7 @@ public class HarmonyInferenceClient(
         throw NotImplementedError("HTTP streaming inference not yet implemented")
     }
     
-    public fun close() {
+    fun close() {
         metalModel?.let {
             MetalInferenceJNI.releaseModel(it)
             metalModel = null

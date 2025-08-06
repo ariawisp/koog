@@ -27,7 +27,7 @@ internal object HarmonyAnthropicDownsampler : HarmonyDownsamplerBase<AnthropicMe
      * Anthropic allows including analysis in the system prompt,
      * which provides hidden context without exposing to users.
      */
-    override fun downsample(prompt: Prompt): AnthropicMessagesRequest {
+    override fun downsample(prompt: Prompt, model: ai.koog.prompt.llm.LLModel): AnthropicMessagesRequest {
         // Build system prompt including analysis if configured
         val analysisMessages = extractAnalysisMessages(prompt.conversation.messages)
         val systemPrompt = buildSystemPrompt(
@@ -46,7 +46,7 @@ internal object HarmonyAnthropicDownsampler : HarmonyDownsamplerBase<AnthropicMe
         val topP = samplingParams.topP
         
         return AnthropicMessagesRequest(
-            model = prompt.metadata.model,
+            model = model.id,
             system = systemPrompt,
             messages = messages,
             maxTokens = prompt.metadata.maxTokens ?: 4096,

@@ -47,7 +47,7 @@ class MetalInferenceTest {
         assertNotNull(model, "Model should load successfully")
         
         // Clean up
-        MetalInferenceJNI.releaseModel(model)
+        model?.let { MetalInferenceJNI.releaseModel(it) }
     }
     
     @Test
@@ -64,22 +64,24 @@ class MetalInferenceTest {
             val temperature = 0.7f
             val topP = 0.9f
             
-            val outputTokens = MetalInferenceJNI.inferTokens(
-                model,
-                inputTokens,
-                maxTokens,
-                temperature,
-                topP
-            )
+            val outputTokens = model?.let {
+                MetalInferenceJNI.inferTokens(
+                    it,
+                    inputTokens,
+                    maxTokens,
+                    temperature,
+                    topP
+                )
+            }
             
             assertNotNull(outputTokens, "Inference should produce output tokens")
-            assertTrue(outputTokens.isNotEmpty(), "Output should contain tokens")
-            assertTrue(outputTokens.size <= maxTokens, "Output should not exceed max tokens")
+            assertTrue(outputTokens?.isNotEmpty() == true, "Output should contain tokens")
+            assertTrue((outputTokens?.size ?: 0) <= maxTokens, "Output should not exceed max tokens")
             
-            println("Generated ${outputTokens.size} tokens")
+            println("Generated ${outputTokens?.size} tokens")
             println("✅ Metal inference with shaders working correctly!")
         } finally {
-            MetalInferenceJNI.releaseModel(model)
+            model?.let { MetalInferenceJNI.releaseModel(it) }
         }
     }
     

@@ -7,7 +7,7 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.environment.ReceivedToolResult
 import ai.koog.agents.core.environment.SafeTool
 import ai.koog.agents.core.environment.executeTool
-import ai.koog.agents.core.environment.result
+// Note: result extension was removed - use ReceivedToolResult directly
 import ai.koog.agents.core.tools.Tool
 import ai.koog.agents.core.tools.ToolArgs
 import ai.koog.agents.core.tools.ToolDescriptor
@@ -162,9 +162,14 @@ public fun AIAgentSubgraphBuilderBase<*, *>.nodeLLMModerateMessage(
 ): AIAgentNodeDelegate<Message, ModeratedMessage> =
     node<Message, ModeratedMessage>(name) { message ->
         val moderationPrompt = if (includeCurrentPrompt) {
-            prompt(llm.prompt) { message(message) }
+            ai.koog.prompt.dsl.prompt(llm.prompt.id) {
+                harmonyMessages(llm.prompt.messages)
+                assistant(message.toString())
+            }
         } else {
-            prompt("single-message-moderation") { message(message) }
+            ai.koog.prompt.dsl.prompt("single-message-moderation") {
+                assistant(message.toString())
+            }
         }
 
         val moderationResult = llm.promptExecutor.moderate(moderationPrompt, moderatingModel ?: llm.model)
@@ -316,9 +321,13 @@ public fun AIAgentSubgraphBuilderBase<*, *>.nodeLLMSendToolResult(
     node(name) { result ->
         llm.writeSession {
             updatePrompt {
-                tool {
-                    result(result)
-                }
+                // Add tool response to the prompt
+                harmonyMessage(
+                    ai.koog.prompt.harmony.HarmonyMessage.tool(
+                        text = result.content,
+                        recipient = "assistant"
+                    ).withChannel("commentary")
+                )
             }
 
             requestLLM()
@@ -369,8 +378,14 @@ public fun AIAgentSubgraphBuilderBase<*, *>.nodeExecuteMultipleToolsAndSendResul
 
         llm.writeSession {
             updatePrompt {
-                tool {
-                    results.forEach { result(it) }
+                // Add all tool responses to the prompt
+                results.forEach { result ->
+                    harmonyMessage(
+                        ai.koog.prompt.harmony.HarmonyMessage.tool(
+                            text = result.content,
+                            recipient = "assistant"
+                        ).withChannel("commentary")
+                    )
                 }
             }
 
@@ -390,8 +405,14 @@ public fun AIAgentSubgraphBuilderBase<*, *>.nodeLLMSendMultipleToolResults(
     node(name) { results ->
         llm.writeSession {
             updatePrompt {
-                tool {
-                    results.forEach { result(it) }
+                // Add all tool responses to the prompt
+                results.forEach { result ->
+                    harmonyMessage(
+                        ai.koog.prompt.harmony.HarmonyMessage.tool(
+                            text = result.content,
+                            recipient = "assistant"
+                        ).withChannel("commentary")
+                    )
                 }
             }
 

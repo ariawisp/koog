@@ -133,7 +133,7 @@ public sealed class AIAgentLLMSession(
             for all requests without tools.
          */
         val promptWithDisabledTools = prompt
-            .withUpdatedParams { toolChoice = null }
+            .copy(metadata = prompt.metadata.copy(toolChoice = null))
             .let { preparePrompt(it, emptyList()) }
 
         return executeSingle(promptWithDisabledTools, emptyList())
@@ -149,9 +149,9 @@ public sealed class AIAgentLLMSession(
      */
     public open suspend fun requestLLMOnlyCallingTools(): Message.Response {
         validateSession()
-        val promptWithOnlyCallingTools = prompt.withUpdatedParams {
-            toolChoice = LLMParams.ToolChoice.Required
-        }
+        val promptWithOnlyCallingTools = prompt.copy(
+            metadata = prompt.metadata.copy(toolChoice = LLMParams.ToolChoice.Required)
+        )
         return executeSingle(promptWithOnlyCallingTools, tools)
     }
 
@@ -172,9 +172,9 @@ public sealed class AIAgentLLMSession(
     public open suspend fun requestLLMForceOneTool(tool: ToolDescriptor): Message.Response {
         validateSession()
         check(tools.contains(tool)) { "Unable to force call to tool `${tool.name}` because it is not defined" }
-        val promptWithForcingOneTool = prompt.withUpdatedParams {
-            toolChoice = LLMParams.ToolChoice.Named(tool.name)
-        }
+        val promptWithForcingOneTool = prompt.copy(
+            metadata = prompt.metadata.copy(toolChoice = LLMParams.ToolChoice.Named(tool.name))
+        )
         return executeSingle(promptWithForcingOneTool, tools)
     }
 

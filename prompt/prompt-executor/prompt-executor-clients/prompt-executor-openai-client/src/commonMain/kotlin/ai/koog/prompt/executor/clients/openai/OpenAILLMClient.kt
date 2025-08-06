@@ -105,17 +105,16 @@ public open class OpenAILLMClient(
 
     override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): List<Message.Response> {
         // Prompt IS HarmonyCore - work with it directly!
-        val promptWithModel = prompt.copy(
-            metadata = prompt.metadata.copy(model = model.id),
-            developerContext = if (tools.isNotEmpty()) {
-                prompt.developerContext.copy(
+        val promptWithTools = if (tools.isNotEmpty()) {
+            prompt.copy(
+                developerContext = prompt.developerContext.copy(
                     tools = HarmonyConverter.fromToolDescriptors(tools)
                 )
-            } else prompt.developerContext
-        )
+            )
+        } else prompt
         
         // Downsample to OpenAI format using pure function
-        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithModel)
+        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithTools, model)
         
         return processOpenAIResponse(executeOpenAIRequest(openAIRequest)).flatten()
     }
@@ -127,10 +126,7 @@ public open class OpenAILLMClient(
         }
 
         // Prompt IS HarmonyCore
-        val promptWithModel = prompt.copy(
-            metadata = prompt.metadata.copy(model = model.id)
-        )
-        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithModel).copy(stream = true)
+        val openAIRequest = HarmonyOpenAIDownsampler.downsample(prompt, model).copy(stream = true)
 
         try {
             httpClient.sse(
@@ -183,15 +179,14 @@ public open class OpenAILLMClient(
         tools: List<ToolDescriptor>
     ): List<Message.Response> {
         // Prompt IS HarmonyCore now
-        val promptWithModel = prompt.copy(
-            metadata = prompt.metadata.copy(model = model.id),
-            developerContext = if (tools.isNotEmpty()) {
-                prompt.developerContext.copy(
+        val promptWithTools = if (tools.isNotEmpty()) {
+            prompt.copy(
+                developerContext = prompt.developerContext.copy(
                     tools = HarmonyConverter.fromToolDescriptors(tools)
                 )
-            } else prompt.developerContext
-        )
-        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithModel)
+            )
+        } else prompt
+        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithTools, model)
         
         return processOpenAIResponse(executeOpenAIRequest(openAIRequest)).flatten()
     }

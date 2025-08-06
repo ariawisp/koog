@@ -27,7 +27,7 @@ public object HarmonyGoogleDownsampler : HarmonyDownsamplerBase<GoogleGenerateRe
      * 
      * IMPORTANT: Analysis channel is completely filtered for safety.
      */
-    override fun downsample(prompt: Prompt): GoogleGenerateRequest {
+    override fun downsample(prompt: Prompt, model: ai.koog.prompt.llm.LLModel): GoogleGenerateRequest {
         // Build system instruction from system and developer contexts
         val systemInstruction = buildSystemInstruction(prompt)
         

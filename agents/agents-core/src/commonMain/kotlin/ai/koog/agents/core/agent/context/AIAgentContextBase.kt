@@ -9,7 +9,7 @@ import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.feature.AIAgentFeature
 import ai.koog.agents.core.feature.AIAgentPipeline
 import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.prompt.message.Message
+import ai.koog.prompt.harmony.HarmonyMessage
 import kotlin.reflect.KType
 
 /**
@@ -173,7 +173,7 @@ public interface AIAgentContextBase {
     /**
      * Retrieves the history of messages exchanged during the agent's execution.
      */
-    public suspend fun getHistory(): List<Message>
+    public suspend fun getHistory(): List<HarmonyMessage>
 
     /**
      * Creates a new instance of [AIAgentContext] with updated tools, while preserving the other properties

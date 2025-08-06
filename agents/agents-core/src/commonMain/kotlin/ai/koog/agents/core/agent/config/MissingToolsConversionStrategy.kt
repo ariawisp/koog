@@ -2,7 +2,7 @@ package ai.koog.agents.core.agent.config
 
 import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.prompt.dsl.Prompt
-import ai.koog.prompt.message.Message
+import ai.koog.prompt.harmony.*
 
 /**
  * Determines how the tool calls which are present in the prompt, but whose definitions are not present in the request,
@@ -25,16 +25,22 @@ public abstract class MissingToolsConversionStrategy(private val format: ToolCal
 
     /**
      * Converts the given message by formatting specific types of tool-related messages
-     * (e.g., `Message.Tool.Call` and `Message.Tool.Result`) into descriptive messages.
+     * (tool calls and results in commentary channel) into descriptive messages.
      * If the message is not a tool-related message, it remains unchanged.
      *
      * @param message The input message to be converted.
      * @return The converted message, either modified if it's a tool-related message, or unchanged otherwise.
      */
-    public fun convertMessage(message: Message): Message {
-        return when (message) {
-            is Message.Tool.Call -> format.describeToolCall(message)
-            is Message.Tool.Result -> format.describeToolResult(message)
+    public fun convertMessage(message: HarmonyMessage): HarmonyMessage {
+        return when {
+            // Tool call: commentary channel with recipient starting with "functions."
+            message.channel == "commentary" && message.recipient?.startsWith("functions.") == true -> {
+                format.describeToolCall(message)
+            }
+            // Tool result: tool role in commentary channel
+            message.author.role == Role.TOOL && message.channel == "commentary" -> {
+                format.describeToolResult(message)
+            }
             else -> message
         }
     }
@@ -59,8 +65,23 @@ public abstract class MissingToolsConversionStrategy(private val format: ToolCal
             val toolNames = tools.map { it.name }
             return prompt.withMessages { messages ->
                 messages.map { message ->
-                    if (message is Message.Tool && message.tool !in toolNames) {
-                        convertMessage(message)
+                    // Check if this is a tool-related message for a missing tool
+                    val isToolCall = message.channel == "commentary" && 
+                        message.recipient?.startsWith("functions.") == true
+                    val isToolResult = message.author.role == Role.TOOL && 
+                        message.channel == "commentary"
+                    
+                    if (isToolCall || isToolResult) {
+                        val toolName = when {
+                            isToolCall -> message.recipient?.substringAfter("functions.") ?: ""
+                            else -> message.author.name ?: ""
+                        }
+                        
+                        if (toolName !in toolNames) {
+                            convertMessage(message)
+                        } else {
+                            message
+                        }
                     } else {
                         message
                     }

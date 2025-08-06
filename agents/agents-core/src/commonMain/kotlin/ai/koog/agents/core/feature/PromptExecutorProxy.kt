@@ -39,7 +39,7 @@ public class PromptExecutorProxy(
         return responses
     }
 
-    override suspend fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> {
+    override fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> {
         logger.debug { "Executing LLM streaming call (prompt: $prompt)" }
         val stream = executor.executeStreaming(prompt, model)
 
@@ -50,7 +50,7 @@ public class PromptExecutorProxy(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
-    ): List<LLMChoice> {
+    ): List<Message.Response> {
         logger.debug { "Executing LLM call prompt: $prompt with tools: [${tools.joinToString { it.name }}]" }
 
         val responses = executor.executeMultipleChoices(prompt, model, tools)
@@ -61,9 +61,7 @@ public class PromptExecutorProxy(
 
             responses.forEachIndexed { index, response ->
                 messageBuilder.appendLine("- Response #$index")
-                response.forEach { message ->
-                    messageBuilder.appendLine("  -- [${message.role}] ${message.content}")
-                }
+                messageBuilder.appendLine("  -- [${response.role}] ${response.content}")
             }
 
             "Finished LLM call with responses: $messageBuilder"

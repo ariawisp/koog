@@ -1,11 +1,11 @@
 package ai.koog.agents.core.agent.config
 
-import ai.koog.prompt.message.Message
-import ai.koog.prompt.message.Message.Assistant
-import ai.koog.prompt.message.Message.User
+import ai.koog.prompt.harmony.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.datetime.Clock
 
 /**
  * Describes the way to reformat tool call/tool result messages,
@@ -15,18 +15,18 @@ public interface ToolCallDescriber {
     /**
      * Composes a description of a tool call message.
      *
-     * @param message The tool call message to be described. Must be an instance of Message.Tool.Call.
-     * @return A Message instance containing the description of the tool call.
+     * @param message The tool call message to be described. Must be a tool call in commentary channel.
+     * @return A HarmonyMessage instance containing the description of the tool call.
      */
-    public fun describeToolCall(message: Message.Tool.Call): Message
+    public fun describeToolCall(message: HarmonyMessage): HarmonyMessage
 
     /**
      * Describes the tool result by transforming it into a user-readable message object.
      *
-     * @param message The tool result message to be described. It contains the tool call id, tool name, and content details.
+     * @param message The tool result message to be described. It contains the tool response.
      * @return A transformed message representing the description of the tool result.
      */
-    public fun describeToolResult(message: Message.Tool.Result): Message
+    public fun describeToolResult(message: HarmonyMessage): HarmonyMessage
 
     /**
      * JSON object implementing the `ToolCallDescriber` interface.
@@ -49,42 +49,58 @@ public interface ToolCallDescriber {
         }
 
         /**
-         * Formats a tool call message into a standardized Message.Assistant response.
+         * Formats a tool call message into a standardized assistant response.
          *
-         * @param message the tool call message of type [Message.Tool.Call] containing details about the tool invocation,
-         * such as tool ID, name, and arguments.
-         * @return a [Message.Assistant] containing the serialized JSON representation of the tool call information.
+         * @param message the tool call message containing details about the tool invocation.
+         * @return a HarmonyMessage containing the serialized JSON representation of the tool call information.
          */
-        override fun describeToolCall(message: Message.Tool.Call): Message {
-            return Assistant(
-                content = Json.encodeToString(
-                    buildJsonObject {
-                        message.id?.let { put("tool_call_id", JsonPrimitive(it)) }
-                        put("tool_name", JsonPrimitive(message.tool))
-                        put("tool_args", message.contentJson)
-                    }
-                ),
-                metaInfo = message.metaInfo
+        override fun describeToolCall(message: HarmonyMessage): HarmonyMessage {
+            // Extract tool name from recipient (e.g., "functions.get_weather" -> "get_weather")
+            val toolName = message.recipient?.substringAfter("functions.") ?: "unknown"
+            val toolArgs = try {
+                Json.parseToJsonElement(message.getTextContent()).jsonObject
+            } catch (e: Exception) {
+                buildJsonObject { put("content", JsonPrimitive(message.getTextContent())) }
+            }
+            
+            return HarmonyMessage(
+                author = HarmonyAuthor.from(Role.ASSISTANT),
+                content = listOf(HarmonyContent.Text(
+                    Json.encodeToString(
+                        buildJsonObject {
+                            put("tool_name", JsonPrimitive(toolName))
+                            put("tool_args", toolArgs)
+                        }
+                    )
+                )),
+                channel = "final",
+                timestamp = message.timestamp
             )
         }
 
         /**
          * Creates a user message containing a structured JSON representation
-         * of a tool result including its ID, tool name, and result content.
+         * of a tool result.
          *
-         * @param message The tool result message containing the tool's ID, name, and content.
-         * @return A User message with a JSON-encoded representation of the tool result.
+         * @param message The tool result message containing the tool response.
+         * @return A user message with a JSON-encoded representation of the tool result.
          */
-        override fun describeToolResult(message: Message.Tool.Result): Message {
-            return User(
-                content = Json.encodeToString(
-                    buildJsonObject {
-                        message.id?.let { put("tool_call_id", JsonPrimitive(it)) }
-                        put("tool_name", JsonPrimitive(message.tool))
-                        put("tool_result", JsonPrimitive(message.content))
-                    }
-                ),
-                metaInfo = message.metaInfo
+        override fun describeToolResult(message: HarmonyMessage): HarmonyMessage {
+            // Tool results have author.name set to the tool name
+            val toolName = message.author.name ?: "unknown"
+            
+            return HarmonyMessage(
+                author = HarmonyAuthor.from(Role.USER),
+                content = listOf(HarmonyContent.Text(
+                    Json.encodeToString(
+                        buildJsonObject {
+                            put("tool_name", JsonPrimitive(toolName))
+                            put("tool_result", JsonPrimitive(message.getTextContent()))
+                        }
+                    )
+                )),
+                channel = "final",
+                timestamp = message.timestamp
             )
         }
     }

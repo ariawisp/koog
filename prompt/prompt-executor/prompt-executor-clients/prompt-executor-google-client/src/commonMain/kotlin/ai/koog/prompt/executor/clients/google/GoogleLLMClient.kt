@@ -112,7 +112,7 @@ public open class GoogleLLMClient(
         }
 
         // Use HarmonyGoogleDownsampler to convert Harmony Prompt to Google format
-        val googleRequest = HarmonyGoogleDownsampler.downsample(prompt)
+        val googleRequest = HarmonyGoogleDownsampler.downsample(prompt, model)
         
         return withContext(Dispatchers.SuitableForIO) {
             val response = httpClient.post("$DEFAULT_PATH/${model.id}:$DEFAULT_METHOD_GENERATE_CONTENT") {
@@ -137,7 +137,7 @@ public open class GoogleLLMClient(
         }
 
         // Use HarmonyGoogleDownsampler to convert Harmony Prompt to Google format
-        val request = HarmonyGoogleDownsampler.downsample(prompt)
+        val request = HarmonyGoogleDownsampler.downsample(prompt, model)
 
         try {
             httpClient.sse(

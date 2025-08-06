@@ -93,9 +93,13 @@ public open class AIAgentSubgraph<Input, Output>(
             replaceHistoryWithTLDR()
 
             updatePrompt {
-                user {
-                    selectRelevantTools(tools, toolSelectionStrategy.subtaskDescription)
-                }
+                user(buildString {
+                    with(ai.koog.agents.core.prompt.Prompts) {
+                        val contentBuilder = ai.koog.prompt.text.TextContentBuilder()
+                        contentBuilder.selectRelevantTools(tools, toolSelectionStrategy.subtaskDescription)
+                        append(contentBuilder.build())
+                    }
+                })
             }
 
             val selectedTools = this.requestLLMStructured(
@@ -130,7 +134,7 @@ public open class AIAgentSubgraph<Input, Output>(
                 llm = llm.copy(
                     tools = newTools,
                     model = llmModel ?: llm.model,
-                    prompt = llm.prompt.copy(params = llmParams ?: llm.prompt.params)
+                    prompt = llm.prompt.copy(metadata = llmParams ?: llm.prompt.metadata)
                 )
             )
         }
@@ -140,7 +144,7 @@ public open class AIAgentSubgraph<Input, Output>(
 
         // Restore original LLM params on the new prompt.
         val newPrompt = innerContext.llm.readSession {
-            prompt.copy(params = context.llm.prompt.params)
+            prompt.copy(metadata = context.llm.prompt.metadata)
         }
         context.llm.writeSession { prompt = newPrompt }
 

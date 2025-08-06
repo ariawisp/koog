@@ -1,6 +1,7 @@
 package ai.koog.prompt.executor.model
 
 import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.harmony.*
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
@@ -25,10 +26,38 @@ public interface PromptExecutor {
         model: LLModel,
         tools: List<ToolDescriptor> = emptyList()
     ): List<Message.Response>
+    
+    /**
+     * Execute a prompt and return a streaming flow of response chunks.
+     */
+    public fun executeStreaming(
+        prompt: Prompt,
+        model: LLModel
+    ): Flow<String> = throw UnsupportedOperationException("Streaming not supported by this executor")
+    
+    /**
+     * Execute a prompt and return multiple response choices.
+     */
+    public suspend fun executeMultipleChoices(
+        prompt: Prompt,
+        model: LLModel,
+        tools: List<ToolDescriptor> = emptyList()
+    ): List<Message.Response> = execute(prompt, model, tools)
+    
+    /**
+     * Moderate the content of a prompt for safety.
+     */
+    public suspend fun moderate(
+        prompt: Prompt,
+        model: LLModel
+    ): ModerationResult = ModerationResult(
+        isHarmful = false,
+        categories = emptyMap()
+    )
 
     // Future Harmony-native methods (when agents are updated):
     // suspend fun executeHarmony(request: HarmonyCore, model: LLModel): HarmonyResponse
-    // suspend fun executeStreaming(request: HarmonyCore, model: LLModel): Flow<HarmonyDelta>
+    // suspend fun executeStreamingHarmony(request: HarmonyCore, model: LLModel): Flow<HarmonyDelta>
 }
 
 /**

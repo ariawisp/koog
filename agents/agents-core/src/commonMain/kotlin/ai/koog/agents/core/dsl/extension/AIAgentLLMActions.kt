@@ -40,14 +40,20 @@ public fun AIAgentLLMWriteSession.dropLastNMessages(n: Int) {
  * @param timestamp The threshold timestamp. Messages with a timestamp earlier than this will be removed.
  */
 public fun AIAgentLLMWriteSession.leaveMessagesFromTimestamp(timestamp: Instant) {
-    prompt = prompt.withMessages { it.filter { it.metaInfo.timestamp >= timestamp } }
+    prompt = prompt.copy(
+        conversation = prompt.conversation.copy(
+            messages = prompt.messages.filter { it.timestamp >= timestamp.toEpochMilliseconds() }
+        )
+    )
 }
 
 /**
  * Sets the [ai.koog.prompt.params.LLMParams.ToolChoice] for this LLM session.
  */
 public fun AIAgentLLMWriteSession.setToolChoice(toolChoice: LLMParams.ToolChoice?) {
-    prompt = prompt.withUpdatedParams { this.toolChoice = toolChoice }
+    prompt = prompt.copy(
+        metadata = prompt.metadata.copy(toolChoice = toolChoice)
+    )
 }
 
 /**
@@ -99,13 +105,15 @@ public suspend fun AIAgentLLMWriteSession.replaceHistoryWithTLDR(
     // Store memory-related messages if needed
     val memoryMessages = if (preserveMemory) {
         prompt.messages.filter { message ->
-            message.content.contains("Here are the relevant facts from memory") ||
-                message.content.contains("Memory feature is not enabled")
+            val textContent = message.getTextContent()
+            textContent.contains("Here are the relevant facts from memory") ||
+                textContent.contains("Memory feature is not enabled")
         }
     } else {
         emptyList()
     }
 
+    // Pass HarmonyMessages directly
     strategy.compress(this, preserveMemory, memoryMessages)
 }
 
@@ -113,5 +121,16 @@ public suspend fun AIAgentLLMWriteSession.replaceHistoryWithTLDR(
  * Drops all trailing tool call messages from the current prompt
  */
 public fun AIAgentLLMWriteSession.dropTrailingToolCalls() {
-    rewritePrompt { prompt -> prompt.withMessages { messages -> messages.dropLastWhile { it is Message.Tool.Call } } }
+    rewritePrompt { prompt -> 
+        prompt.copy(
+            conversation = prompt.conversation.copy(
+                messages = prompt.messages.dropLastWhile { msg ->
+                    // Check if it's a tool call (assistant message in commentary channel with recipient)
+                    msg.author.role == ai.koog.prompt.harmony.Role.ASSISTANT && 
+                    msg.channel == "commentary" && 
+                    msg.recipient?.startsWith("functions.") == true
+                }
+            )
+        )
+    }
 }

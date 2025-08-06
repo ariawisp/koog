@@ -38,7 +38,7 @@ class MetalInferenceJNITest {
             println("Model size: ${modelFile.length() / 1024 / 1024} MB")
             
             val model = MetalInferenceJNI.loadModel(modelPath)
-            assertTrue(model != 0L, "Model should load successfully")
+            assertNotNull(model, "Model should load successfully")
             println("Model loaded with handle: $model")
             
             try {

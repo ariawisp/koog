@@ -10,7 +10,7 @@ import ai.koog.agents.core.feature.AIAgentFeature
 import ai.koog.agents.core.feature.AIAgentPipeline
 import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.utils.RWLock
-import ai.koog.prompt.message.Message
+import ai.koog.prompt.harmony.HarmonyMessage
 import kotlin.reflect.KType
 
 /**
@@ -138,7 +138,7 @@ public class AIAgentContext(
      */
     override fun <Feature : Any> feature(feature: AIAgentFeature<*, Feature>): Feature? = feature(feature.key)
 
-    override suspend fun getHistory(): List<Message> {
+    override suspend fun getHistory(): List<HarmonyMessage> {
         return llm.readSession {
             prompt.messages
         }
