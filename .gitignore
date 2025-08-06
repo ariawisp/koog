@@ -7,3 +7,28 @@ env.properties
 .qodana/code-coverage
 local.properties
 /kotlin-js-store/yarn.lock
+
+# Rust/Cargo build artifacts
+**/target/
+**/Cargo.lock
+**/*.rs.bk
+
+# JNI/Native library build artifacts
+**/*.dylib
+**/*.so
+**/*.dll
+**/*.jnilib
+**/*.metallib
+
+# Test output files
+**/*.class
+**/hs_err_pid*
+
+# GPT-OSS build directory (from GitHub clone)
+**/gpt-oss/
+
+# macOS
+.DS_Store
+
+# IDE
+*.iml

@@ -4,6 +4,45 @@ import ai.koog.prompt.executor.clients.LLModelDefinitions
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
+import kotlinx.serialization.Serializable
+
+/**
+ * Request model for OpenAI embeddings API
+ */
+@Serializable
+internal data class OpenAIEmbeddingRequest(
+    val input: String,
+    val model: String,
+    val dimensions: Int? = null
+)
+
+/**
+ * Response model for OpenAI embeddings API
+ */
+@Serializable
+internal data class OpenAIEmbeddingResponse(
+    val data: List<EmbeddingData>,
+    val model: String,
+    val usage: EmbeddingUsage
+)
+
+/**
+ * Embedding data in the response
+ */
+@Serializable
+internal data class EmbeddingData(
+    val embedding: List<Double>,
+    val index: Int
+)
+
+/**
+ * Usage information for embeddings
+ */
+@Serializable
+internal data class EmbeddingUsage(
+    val prompt_tokens: Int,
+    val total_tokens: Int
+)
 
 /**
  * Object containing a collection of predefined OpenAI model configurations.

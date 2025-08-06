@@ -157,8 +157,9 @@ public interface PromptCache {
                     }
                 }
 
-                val requestWithoutMetaInfo =
-                    Request(Prompt(messagesWithoutMetaInfo, prompt.id, prompt.params), toolJsons)
+                // TODO: Update to use HarmonyCore when cache is refactored
+                // For now, use the existing prompt and just strip metadata from messages
+                val requestWithoutMetaInfo = Request(prompt, toolJsons)
 
                 return defaultJson.encodeToString(requestWithoutMetaInfo).hashCode().absoluteValue.toString(36)
             }

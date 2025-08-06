@@ -1,21 +1,18 @@
 package ai.koog.prompt.executor.clients.openrouter
 
 import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.agents.core.tools.ToolParameterDescriptor
-import ai.koog.agents.core.tools.ToolParameterType
 import ai.koog.agents.utils.SuitableForIO
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
 import ai.koog.prompt.executor.clients.LLMClient
-import ai.koog.prompt.executor.clients.openrouter.OpenRouterToolChoice.FunctionName
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.message.Attachment
-import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.ResponseMetaInfo
-import ai.koog.prompt.params.LLMParams
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -42,18 +39,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
-import kotlinx.serialization.json.ClassDiscriminatorMode
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNamingStrategy
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonObjectBuilder
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 /**
  * Configuration settings for connecting to the OpenRouter API.
@@ -87,15 +73,7 @@ public class OpenRouterLLMClient(
         private const val DEFAULT_MESSAGE_PATH = "api/v1/chat/completions"
     }
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        encodeDefaults = true
-        explicitNulls = false
-        namingStrategy = JsonNamingStrategy.SnakeCase
-        // OpenRouter API is not polymorphic, it's "dynamic". Don't add polymorphic discriminators
-        classDiscriminatorMode = ClassDiscriminatorMode.NONE
-    }
+    private val json = openRouterJson
 
     private val httpClient = baseClient.config {
         defaultRequest {
@@ -109,7 +87,7 @@ public class OpenRouterLLMClient(
         }
         install(SSE)
         install(ContentNegotiation) {
-            json(json)
+            json(openRouterJson)
         }
         install(HttpTimeout) {
             requestTimeoutMillis = settings.timeoutConfig.requestTimeoutMillis
@@ -122,27 +100,13 @@ public class OpenRouterLLMClient(
         require(model.capabilities.contains(LLMCapability.Completion)) {
             "Model ${model.id} does not support chat completions"
         }
-        require(model.capabilities.contains(LLMCapability.Tools)) {
+        require(model.capabilities.contains(LLMCapability.Tools) || tools.isEmpty()) {
             "Model ${model.id} does not support tools"
         }
         logger.debug { "Executing prompt: $prompt with tools: $tools" }
 
-        val request = createOpenRouterRequest(prompt, model, tools, false)
-
-        return withContext(Dispatchers.SuitableForIO) {
-            val response = httpClient.post(DEFAULT_MESSAGE_PATH) {
-                setBody(request)
-            }
-
-            if (response.status.isSuccess()) {
-                val openRouterResponse = response.body<OpenRouterResponse>()
-                processOpenRouterResponse(openRouterResponse)
-            } else {
-                val errorBody = response.bodyAsText()
-                logger.error { "Error from OpenRouter API: ${response.status}: $errorBody" }
-                error("Error from OpenRouter API: ${response.status}: $errorBody")
-            }
-        }
+        val response = getOpenRouterResponse(prompt, model, tools)
+        return processOpenRouterResponse(response)
     }
 
     override fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
@@ -151,7 +115,8 @@ public class OpenRouterLLMClient(
             "Model ${model.id} does not support chat completions"
         }
 
-        val request = createOpenRouterRequest(prompt, model, emptyList(), true)
+        val openRouterRequest = HarmonyOpenRouterDownsampler.downsample(prompt).copy(stream = true)
+        val requestBody = json.encodeToString(OpenRouterChatRequest.serializer(), openRouterRequest)
 
         try {
             httpClient.sse(
@@ -163,14 +128,25 @@ public class OpenRouterLLMClient(
                         append(HttpHeaders.CacheControl, "no-cache")
                         append(HttpHeaders.Connection, "keep-alive")
                     }
-                    setBody(request)
+                    setBody(requestBody)
                 }
             ) {
                 incoming.collect { event ->
                     event
                         .takeIf { it.data != "[DONE]" }
-                        ?.data?.trim()?.let { json.decodeFromString<OpenRouterStreamResponse>(it) }
-                        ?.choices?.forEach { choice -> choice.delta.content?.let { emit(it) } }
+                        ?.data?.trim()?.let { data ->
+                            try {
+                                val streamChunk = json.decodeFromString(OpenRouterChatStreamChunk.serializer(), data)
+                                streamChunk.choices.forEach { choice ->
+                                    choice.delta.content?.let { content ->
+                                        emit(content)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                // Ignore parse errors in streaming
+                                logger.debug { "Error parsing stream chunk: $e" }
+                            }
+                        }
                 }
             }
         } catch (e: SSEClientException) {
@@ -184,304 +160,83 @@ public class OpenRouterLLMClient(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    private fun createOpenRouterRequest(
-        prompt: Prompt,
-        model: LLModel,
-        tools: List<ToolDescriptor>,
-        stream: Boolean
-    ): OpenRouterRequest {
-        val messages = mutableListOf<OpenRouterMessage>()
-        val pendingCalls = mutableListOf<OpenRouterToolCall>()
 
-        fun flushCalls() {
-            if (pendingCalls.isNotEmpty()) {
-                messages += OpenRouterMessage(role = "assistant", toolCalls = pendingCalls.toList())
-                pendingCalls.clear()
-            }
-        }
+    private suspend fun getOpenRouterResponse(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): OpenRouterChatResponse {
+        logger.debug { "Executing prompt: $prompt with tools: $tools and model: $model" }
 
-        for (message in prompt.messages) {
-            when (message) {
-                is Message.System -> {
-                    flushCalls()
-                    messages.add(
-                        OpenRouterMessage(
-                            role = "system",
-                            content = Content.Text(message.content)
-                        )
-                    )
-                }
+        val openRouterRequest = HarmonyOpenRouterDownsampler.downsample(prompt)
+        val requestBody = json.encodeToString(OpenRouterChatRequest.serializer(), openRouterRequest)
 
-                is Message.User -> {
-                    flushCalls()
-                    messages.add(message.toOpenRouterMessage(model))
-                }
-
-                is Message.Assistant -> {
-                    flushCalls()
-                    messages.add(
-                        OpenRouterMessage(
-                            role = "assistant",
-                            content = Content.Text(message.content)
-                        )
-                    )
-                }
-
-                is Message.Tool.Result -> {
-                    flushCalls()
-                    messages.add(
-                        OpenRouterMessage(
-                            role = "tool",
-                            content = Content.Text(message.content),
-                            toolCallId = message.id
-                        )
-                    )
-                }
-
-                is Message.Tool.Call -> pendingCalls += OpenRouterToolCall(
-                    id = message.id ?: Uuid.random().toString(),
-                    function = OpenRouterFunction(message.tool, message.content)
-                )
-            }
-        }
-        flushCalls()
-
-        val openRouterTools = tools.map { tool ->
-            val propertiesMap = mutableMapOf<String, JsonElement>()
-
-            // Add required parameters
-            tool.requiredParameters.forEach { param ->
-                propertiesMap[param.name] = buildOpenRouterParam(param)
+        return withContext(Dispatchers.SuitableForIO) {
+            val response = httpClient.post(DEFAULT_MESSAGE_PATH) {
+                setBody(requestBody)
             }
 
-            // Add optional parameters
-            tool.optionalParameters.forEach { param ->
-                propertiesMap[param.name] = buildOpenRouterParam(param)
-            }
-
-            val parametersObject = buildJsonObject {
-                put("type", JsonPrimitive("object"))
-                put("properties", JsonObject(propertiesMap))
-                put(
-                    "required",
-                    buildJsonArray {
-                        tool.requiredParameters.forEach { param ->
-                            add(JsonPrimitive(param.name))
-                        }
-                    }
-                )
-            }
-
-            OpenRouterTool(
-                function = OpenRouterToolFunction(
-                    name = tool.name,
-                    description = tool.description,
-                    parameters = parametersObject
-                )
-            )
-        }
-
-        val toolChoice = when (val toolChoice = prompt.params.toolChoice) {
-            LLMParams.ToolChoice.Auto -> OpenRouterToolChoice.Auto
-            LLMParams.ToolChoice.None -> OpenRouterToolChoice.None
-            LLMParams.ToolChoice.Required -> OpenRouterToolChoice.Required
-            is LLMParams.ToolChoice.Named -> OpenRouterToolChoice.Function(name = FunctionName(toolChoice.name))
-            null -> null
-        }
-
-        return OpenRouterRequest(
-            model = model.id,
-            messages = messages,
-            temperature = if (model.capabilities.contains(
-                    LLMCapability.Temperature
-                )
-            ) {
-                prompt.params.temperature
+            if (response.status.isSuccess()) {
+                response.body<OpenRouterChatResponse>()
             } else {
-                null
-            },
-            tools = if (tools.isNotEmpty()) openRouterTools else null,
-            stream = stream,
-            toolChoice = toolChoice,
-        )
-    }
-
-    private fun Message.User.toOpenRouterMessage(model: LLModel): OpenRouterMessage {
-        val messageContent: Content = if (attachments.isEmpty()) {
-            Content.Text(content)
-        } else {
-            val parts = buildList {
-                if (content.isNotEmpty()) {
-                    add(ContentPart.Text(content))
-                }
-
-                attachments.forEach { attachment ->
-                    when (attachment) {
-                        is Attachment.Image -> {
-                            require(model.capabilities.contains(LLMCapability.Vision.Image)) {
-                                "Model ${model.id} does not support images"
-                            }
-
-                            val imageUrl: String = when (val content = attachment.content) {
-                                is AttachmentContent.URL -> content.url
-                                is AttachmentContent.Binary -> "data:${attachment.mimeType};base64,${content.base64}"
-                                else -> throw IllegalArgumentException(
-                                    "Unsupported image attachment content: ${content::class}"
-                                )
-                            }
-
-                            add(ContentPart.Image(ContentPart.ImageUrl(imageUrl)))
-                        }
-
-                        is Attachment.Audio -> {
-                            require(model.capabilities.contains(LLMCapability.Audio)) {
-                                "Model ${model.id} does not support audio"
-                            }
-
-                            val inputAudio: ContentPart.InputAudio = when (val content = attachment.content) {
-                                is AttachmentContent.Binary -> ContentPart.InputAudio(content.base64, attachment.format)
-                                else -> throw IllegalArgumentException(
-                                    "Unsupported audio attachment content: ${content::class}"
-                                )
-                            }
-
-                            add(ContentPart.Audio(inputAudio))
-                        }
-
-                        is Attachment.File -> {
-                            require(model.capabilities.contains(LLMCapability.Document)) {
-                                "Model ${model.id} does not support files"
-                            }
-
-                            val fileData: ContentPart.FileData = when (val content = attachment.content) {
-                                is AttachmentContent.Binary -> ContentPart.FileData(
-                                    fileData = "data:${attachment.mimeType};base64,${content.base64}",
-                                    filename = attachment.fileName
-                                )
-
-                                else -> throw IllegalArgumentException(
-                                    "Unsupported file attachment content: ${content::class}"
-                                )
-                            }
-
-                            add(ContentPart.File(fileData))
-                        }
-
-                        else -> throw IllegalArgumentException("Unsupported attachment type: $attachment")
-                    }
-                }
-            }
-
-            Content.Parts(parts)
-        }
-
-        return OpenRouterMessage(role = "user", content = messageContent)
-    }
-
-    private fun buildOpenRouterParam(param: ToolParameterDescriptor): JsonObject = buildJsonObject {
-        put("description", JsonPrimitive(param.description))
-        fillOpenRouterParamType(param.type)
-    }
-
-    private fun JsonObjectBuilder.fillOpenRouterParamType(type: ToolParameterType) {
-        when (type) {
-            ToolParameterType.Boolean -> put("type", JsonPrimitive("boolean"))
-            ToolParameterType.Float -> put("type", JsonPrimitive("number"))
-            ToolParameterType.Integer -> put("type", JsonPrimitive("integer"))
-            ToolParameterType.String -> put("type", JsonPrimitive("string"))
-            is ToolParameterType.Enum -> {
-                put("type", JsonPrimitive("string"))
-                put(
-                    "enum",
-                    buildJsonArray {
-                        type.entries.forEach { entry ->
-                            add(JsonPrimitive(entry))
-                        }
-                    }
-                )
-            }
-
-            is ToolParameterType.List -> {
-                put("type", JsonPrimitive("array"))
-                put(
-                    "items",
-                    buildJsonObject {
-                        fillOpenRouterParamType(type.itemsType)
-                    }
-                )
-            }
-
-            is ToolParameterType.Object -> {
-                put("type", JsonPrimitive("object"))
-                put(
-                    "properties",
-                    buildJsonObject {
-                        type.properties.forEach { property ->
-                            put(
-                                property.name,
-                                buildJsonObject {
-                                    fillOpenRouterParamType(property.type)
-                                    put("description", property.description)
-                                }
-                            )
-                        }
-                    }
-                )
+                val errorBody = response.bodyAsText()
+                logger.error { "Error from OpenRouter API: ${response.status}: $errorBody" }
+                error("Error from OpenRouter API: ${response.status}: $errorBody")
             }
         }
     }
 
-    private fun processOpenRouterResponse(response: OpenRouterResponse): List<Message.Response> {
+
+    private fun processOpenRouterResponse(response: OpenRouterChatResponse): List<Message.Response> {
         if (response.choices.isEmpty()) {
             logger.error { "Empty choices in OpenRouter response" }
             error("Empty choices in OpenRouter response")
         }
 
-        val (choice, message) = response.choices
-            .firstOrNull()
-            ?.let { it to it.message } ?: throw IllegalStateException("No choice found in OpenRouter response")
+        val choice = response.choices.firstOrNull() 
+            ?: throw IllegalStateException("No choice found in OpenRouter response")
 
         // Extract token count from the response
-        val inputTokens = response.usage?.promptTokens
-        val outputTokens = response.usage?.completionTokens
         val totalTokensCount = response.usage?.totalTokens
+        val inputTokensCount = response.usage?.promptTokens
+        val outputTokensCount = response.usage?.completionTokens
 
-        return when {
-            message.toolCalls != null && message.toolCalls.isNotEmpty() -> {
-                message.toolCalls.map { toolCall ->
-                    Message.Tool.Call(
-                        id = toolCall.id,
-                        tool = toolCall.function.name,
-                        content = toolCall.function.arguments,
-                        metaInfo = ResponseMetaInfo.create(
-                            clock,
-                            totalTokensCount = totalTokensCount,
-                            inputTokensCount = inputTokens,
-                            outputTokensCount = outputTokens
+        val metaInfo = ResponseMetaInfo.create(
+            clock,
+            totalTokensCount = totalTokensCount,
+            inputTokensCount = inputTokensCount,
+            outputTokensCount = outputTokensCount
+        )
+
+        val message = choice.message
+        return when (message.role) {
+            "assistant" -> {
+                val toolCalls = message.toolCalls
+                if (toolCalls != null && toolCalls.isNotEmpty()) {
+                    toolCalls.map { toolCall ->
+                        Message.Tool.Call(
+                            id = toolCall.id,
+                            tool = toolCall.function.name,
+                            content = toolCall.function.arguments,
+                            metaInfo = metaInfo
+                        )
+                    }
+                } else {
+                    val textContent = when (val content = message.content) {
+                        is JsonPrimitive -> content.content
+                        is JsonObject, is JsonArray -> content.toString()
+                        null -> ""
+                        else -> content.toString()
+                    }
+                    
+                    listOf(
+                        Message.Assistant(
+                            content = textContent,
+                            finishReason = choice.finishReason,
+                            metaInfo = metaInfo
                         )
                     )
                 }
             }
-
-            message.content != null -> {
-                listOf(
-                    Message.Assistant(
-                        content = message.content.text(),
-                        finishReason = choice.finishReason,
-                        metaInfo = ResponseMetaInfo.create(
-                            clock,
-                            totalTokensCount = totalTokensCount,
-                            inputTokensCount = inputTokens,
-                            outputTokensCount = outputTokens
-                        )
-                    )
-                )
-            }
-
             else -> {
-                logger.error { "Unexpected response from OpenRouter: no tool calls and no content" }
-                error("Unexpected response from OpenRouter: no tool calls and no content")
+                logger.error { "Unexpected response from OpenRouter: no assistant message" }
+                error("Unexpected response from OpenRouter: no assistant message")
             }
         }
     }

@@ -1,19 +1,16 @@
 package ai.koog.prompt.executor.clients.anthropic
 
 import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.agents.core.tools.ToolParameterType
 import ai.koog.agents.utils.SuitableForIO
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
 import ai.koog.prompt.executor.clients.LLMClient
+import ai.koog.prompt.harmony.*
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.message.Attachment
-import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.ResponseMetaInfo
-import ai.koog.prompt.params.LLMParams
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -40,15 +37,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNamingStrategy
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonObject
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
+import kotlinx.serialization.json.*
 
 /**
  * Represents the settings for configuring an Anthropic client, including model mapping, base URL, and API version.
@@ -66,13 +55,15 @@ public class AnthropicClientSettings(
 )
 
 /**
- * A client implementation for interacting with Anthropic's API in a suspendable and direct manner.
+ * A client implementation for interacting with Anthropic's API using Harmony format.
  *
  * This class supports functionalities for executing text prompts and streaming interactions with the Anthropic API.
  * It leverages Kotlin Coroutines to handle asynchronous operations and provides full support for configuring HTTP
  * requests, including timeout handling and JSON serialization.
+ * 
+ * The client uses HarmonyAnthropicDownsampler to convert from Harmony's unified format to Anthropic's API format.
  *
- * @constructor Creates an instance of the AnthropicSuspendableDirectClient.
+ * @constructor Creates an instance of the AnthropicLLMClient.
  * @param apiKey The API key required to authenticate with the Anthropic service.
  * @param settings Configurable settings for the Anthropic client, which include the base URL and other options.
  * @param baseClient An optional custom configuration for the underlying HTTP client, defaulting to a Ktor client.
@@ -91,13 +82,7 @@ public open class AnthropicLLMClient(
         private const val DEFAULT_MESSAGE_PATH = "v1/messages"
     }
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        encodeDefaults = true // Ensure default values are included in serialization
-        explicitNulls = false
-        namingStrategy = JsonNamingStrategy.SnakeCase
-    }
+    private val json = anthropicJson
 
     private val httpClient = baseClient.config {
         defaultRequest {
@@ -108,33 +93,37 @@ public open class AnthropicLLMClient(
         }
         install(SSE)
         install(ContentNegotiation) {
-            json(json)
+            json(anthropicJson)
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = settings.timeoutConfig.requestTimeoutMillis // Increase timeout to 60 seconds
+            requestTimeoutMillis = settings.timeoutConfig.requestTimeoutMillis
             connectTimeoutMillis = settings.timeoutConfig.connectTimeoutMillis
             socketTimeoutMillis = settings.timeoutConfig.socketTimeoutMillis
         }
     }
 
     override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): List<Message.Response> {
-        logger.debug { "Executing prompt: $prompt with tools: $tools and model: $model" }
+        logger.debug { "Executing prompt with model: $model" }
         require(model.capabilities.contains(LLMCapability.Completion)) {
             "Model ${model.id} does not support chat completions"
         }
-        require(model.capabilities.contains(LLMCapability.Tools)) {
+        require(model.capabilities.contains(LLMCapability.Tools) || tools.isEmpty()) {
             "Model ${model.id} does not support tools"
         }
 
-        val request = createAnthropicRequest(prompt, tools, model, false)
+        // Use HarmonyAnthropicDownsampler to convert Harmony Prompt to Anthropic format
+        val anthropicRequest = HarmonyAnthropicDownsampler.downsample(prompt)
+        
+        // Add streaming flag if needed
+        val requestWithStream = anthropicRequest.copy(stream = false)
 
         return withContext(Dispatchers.SuitableForIO) {
             val response = httpClient.post(DEFAULT_MESSAGE_PATH) {
-                setBody(request)
+                setBody(requestWithStream)
             }
 
             if (response.status.isSuccess()) {
-                val anthropicResponse = response.body<AnthropicResponse>()
+                val anthropicResponse = response.body<AnthropicMessagesResponse>()
                 processAnthropicResponse(anthropicResponse)
             } else {
                 val errorBody = response.bodyAsText()
@@ -145,12 +134,16 @@ public open class AnthropicLLMClient(
     }
 
     override fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
-        logger.debug { "Executing streaming prompt: $prompt with model: $model without tools" }
+        logger.debug { "Executing streaming prompt with model: $model" }
         require(model.capabilities.contains(LLMCapability.Completion)) {
             "Model ${model.id} does not support chat completions"
         }
 
-        val request = createAnthropicRequest(prompt, emptyList(), model, true)
+        // Use HarmonyAnthropicDownsampler to convert Harmony Prompt to Anthropic format
+        val anthropicRequest = HarmonyAnthropicDownsampler.downsample(prompt)
+        
+        // Add streaming flag
+        val requestWithStream = anthropicRequest.copy(stream = true)
 
         try {
             httpClient.sse(
@@ -162,14 +155,16 @@ public open class AnthropicLLMClient(
                         append(HttpHeaders.CacheControl, "no-cache")
                         append(HttpHeaders.Connection, "keep-alive")
                     }
-                    setBody(request)
+                    setBody(requestWithStream)
                 }
             ) {
                 incoming.collect { event ->
                     event
                         .takeIf { it.event == "content_block_delta" }
-                        ?.data?.trim()?.let { json.decodeFromString<AnthropicStreamResponse>(it) }
-                        ?.delta?.text?.let { emit(it) }
+                        ?.data?.trim()?.let { 
+                            val delta = anthropicJson.decodeFromString<AnthropicStreamEvent.ContentBlockDelta>(it)
+                            (delta.delta as? AnthropicDelta.TextDelta)?.text?.let { emit(it) }
+                        }
                 }
             }
         } catch (e: SSEClientException) {
@@ -183,289 +178,103 @@ public open class AnthropicLLMClient(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    private fun createAnthropicRequest(
+    override suspend fun executeMultipleChoices(
         prompt: Prompt,
-        tools: List<ToolDescriptor>,
         model: LLModel,
-        stream: Boolean
-    ): AnthropicMessageRequest {
-        val systemMessage = mutableListOf<SystemAnthropicMessage>()
-        val messages = mutableListOf<AnthropicMessage>()
+        tools: List<ToolDescriptor>
+    ): List<Message.Response> {
+        // Anthropic doesn't support multiple choices in a single request
+        // We'd need to make multiple requests if this is needed
+        logger.warn { "Anthropic doesn't support multiple choices natively, using single choice" }
+        return execute(prompt, model, tools)
+    }
 
-        for (message in prompt.messages) {
-            when (message) {
-                is Message.System -> {
-                    systemMessage.add(SystemAnthropicMessage(message.content))
-                }
-
-                is Message.User -> {
-                    messages.add(message.toAnthropicUserMessage(model))
-                }
-
-                is Message.Assistant -> {
-                    messages.add(
-                        AnthropicMessage(
-                            role = "assistant",
-                            content = listOf(AnthropicContent.Text(message.content))
-                        )
-                    )
-                }
-
-                is Message.Tool.Result -> {
-                    messages.add(
-                        AnthropicMessage(
-                            role = "user",
-                            content = listOf(
-                                AnthropicContent.ToolResult(
-                                    toolUseId = message.id ?: "",
-                                    content = message.content
-                                )
-                            )
-                        )
-                    )
-                }
-
-                is Message.Tool.Call -> {
-                    // Create a new assistant message with the tool call
-                    messages.add(
-                        AnthropicMessage(
-                            role = "assistant",
-                            content = listOf(
-                                AnthropicContent.ToolUse(
-                                    id = message.id ?: Uuid.random().toString(),
-                                    name = message.tool,
-                                    input = Json.parseToJsonElement(message.content).jsonObject
-                                )
-                            )
-                        )
-                    )
-                }
-            }
-        }
-
-        val anthropicTools = tools.map { tool ->
-            val properties = mutableMapOf<String, JsonElement>()
-
-            (tool.requiredParameters + tool.optionalParameters).forEach { param ->
-                val typeMap = getTypeMapForParameter(param.type)
-
-                properties[param.name] = JsonObject(
-                    mapOf("description" to JsonPrimitive(param.description)) + typeMap
-                )
-            }
-
-            AnthropicTool(
-                name = tool.name,
-                description = tool.description,
-                inputSchema = AnthropicToolSchema(
-                    properties = JsonObject(properties),
-                    required = tool.requiredParameters.map { it.name }
-                )
-            )
-        }
-
-        val toolChoice = when (val toolChoice = prompt.params.toolChoice) {
-            LLMParams.ToolChoice.Auto -> AnthropicToolChoice.Auto
-            LLMParams.ToolChoice.None -> AnthropicToolChoice.None
-            LLMParams.ToolChoice.Required -> AnthropicToolChoice.Any
-            is LLMParams.ToolChoice.Named -> AnthropicToolChoice.Tool(name = toolChoice.name)
-            null -> null
-        }
-
-        // Always include max_tokens as it's required by the API
-        return AnthropicMessageRequest(
-            model = settings.modelVersionsMap[model]
-                ?: throw IllegalArgumentException("Unsupported model: $model"),
-            messages = messages,
-            maxTokens = 2048, // This is required by the API
-            // TODO why 0.7 and not 0.0?
-            temperature = prompt.params.temperature ?: 0.7, // Default temperature if not provided
-            system = systemMessage,
-            tools = if (tools.isNotEmpty()) anthropicTools else emptyList(), // Always provide a list for tools
-            stream = stream,
-            toolChoice = toolChoice,
+    override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult {
+        // Anthropic doesn't have a dedicated moderation endpoint
+        // Could potentially use their safety features or implement custom logic
+        logger.warn { "Anthropic doesn't have a dedicated moderation API" }
+        return ModerationResult(
+            isHarmful = false,
+            categories = emptyMap()
         )
     }
 
-    private fun Message.User.toAnthropicUserMessage(model: LLModel): AnthropicMessage {
-        val listOfContent = buildList {
-            if (content.isNotEmpty() || attachments.isEmpty()) {
-                add(AnthropicContent.Text(content))
-            }
-
-            attachments.forEach { attachment ->
-                when (attachment) {
-                    is Attachment.Image -> {
-                        require(model.capabilities.contains(LLMCapability.Vision.Image)) {
-                            "Model ${model.id} does not support images"
-                        }
-
-                        val imageSource: ImageSource = when (val content = attachment.content) {
-                            is AttachmentContent.URL -> ImageSource.Url(content.url)
-                            is AttachmentContent.Binary -> ImageSource.Base64(content.base64, attachment.mimeType)
-                            else -> throw IllegalArgumentException(
-                                "Unsupported image attachment content: ${content::class}"
-                            )
-                        }
-
-                        add(AnthropicContent.Image(imageSource))
-                    }
-
-                    is Attachment.File -> {
-                        require(model.capabilities.contains(LLMCapability.Document)) {
-                            "Model ${model.id} does not support files"
-                        }
-
-                        val documentSource: DocumentSource = when (val content = attachment.content) {
-                            is AttachmentContent.URL -> DocumentSource.Url(content.url)
-                            is AttachmentContent.Binary -> DocumentSource.Base64(content.base64, attachment.mimeType)
-                            is AttachmentContent.PlainText -> DocumentSource.PlainText(
-                                content.text,
-                                attachment.mimeType
-                            )
-                        }
-
-                        add(AnthropicContent.Document(documentSource))
-                    }
-
-                    else -> throw IllegalArgumentException("Unsupported attachment type: $attachment")
-                }
-            }
+    private fun processAnthropicResponse(response: AnthropicMessagesResponse): List<Message.Response> {
+        val content = response.content
+        if (content.isEmpty()) {
+            logger.error { "Empty content in Anthropic response" }
+            error("Empty content in Anthropic response")
         }
 
-        return AnthropicMessage(role = "user", content = listOfContent)
-    }
-
-    private fun processAnthropicResponse(response: AnthropicResponse): List<Message.Response> {
         // Extract token count from the response
-        val inputTokensCount = response.usage?.inputTokens
-        val outputTokensCount = response.usage?.outputTokens
-        val totalTokensCount = response.usage?.let { it.inputTokens + it.outputTokens }
+        val totalTokensCount = response.usage.inputTokens + response.usage.outputTokens
+        val inputTokensCount = response.usage.inputTokens
+        val outputTokensCount = response.usage.outputTokens
 
-        val responses = response.content.map { content ->
-            when (content) {
-                is AnthropicResponseContent.Text -> {
-                    Message.Assistant(
-                        content = content.text,
-                        finishReason = response.stopReason,
-                        metaInfo = ResponseMetaInfo.create(
-                            clock,
-                            totalTokensCount = totalTokensCount,
-                            inputTokensCount = inputTokensCount,
-                            outputTokensCount = outputTokensCount,
+        val metaInfo = ResponseMetaInfo.create(
+            clock,
+            totalTokensCount = totalTokensCount,
+            inputTokensCount = inputTokensCount,
+            outputTokensCount = outputTokensCount
+        )
+
+        // Process content blocks
+        val messages = mutableListOf<Message.Response>()
+        val textContent = mutableListOf<String>()
+        
+        content.forEach { block ->
+            when (block) {
+                is AnthropicContentBlock.Text -> {
+                    textContent.add(block.text)
+                }
+                is AnthropicContentBlock.ToolUse -> {
+                    // If we have accumulated text, add it as an assistant message first
+                    if (textContent.isNotEmpty()) {
+                        messages.add(
+                            Message.Assistant(
+                                content = textContent.joinToString("\n"),
+                                finishReason = null,
+                                metaInfo = metaInfo
+                            )
+                        )
+                        textContent.clear()
+                    }
+                    
+                    // Add tool call
+                    messages.add(
+                        Message.Tool.Call(
+                            id = block.id,
+                            tool = block.name,
+                            content = block.input.toString(),
+                            metaInfo = metaInfo
                         )
                     )
                 }
-
-                is AnthropicResponseContent.ToolUse -> {
-                    Message.Tool.Call(
-                        id = content.id,
-                        tool = content.name,
-                        content = content.input.toString(),
-                        metaInfo = ResponseMetaInfo.create(
-                            clock,
-                            totalTokensCount = totalTokensCount,
-                            inputTokensCount = inputTokensCount,
-                            outputTokensCount = outputTokensCount,
-                        )
-                    )
+                else -> {
+                    // Handle other content block types if needed
                 }
             }
         }
+        
+        // Add any remaining text content
+        if (textContent.isNotEmpty()) {
+            messages.add(
+                Message.Assistant(
+                    content = textContent.joinToString("\n"),
+                    finishReason = response.stopReason,
+                    metaInfo = metaInfo
+                )
+            )
+        }
 
-        return when {
-            // Fix the situation when the model decides to both call tools and talk
-            responses.any { it is Message.Tool.Call } -> responses.filterIsInstance<Message.Tool.Call>()
-            // If no messages where returned, return an empty message and check stopReason
-            responses.isEmpty() -> listOf(
+        return messages.ifEmpty {
+            listOf(
                 Message.Assistant(
                     content = "",
                     finishReason = response.stopReason,
-                    metaInfo = ResponseMetaInfo.create(
-                        clock,
-                        totalTokensCount = totalTokensCount,
-                        inputTokensCount = inputTokensCount,
-                        outputTokensCount = outputTokensCount,
-                    )
+                    metaInfo = metaInfo
                 )
             )
-            // Just return responses
-            else -> responses
         }
-    }
-
-    /**
-     * Helper function to get the type map for a parameter type without using smart casting
-     */
-    private fun getTypeMapForParameter(type: ToolParameterType): JsonObject {
-        return when (type) {
-            ToolParameterType.Boolean -> JsonObject(mapOf("type" to JsonPrimitive("boolean")))
-            ToolParameterType.Float -> JsonObject(mapOf("type" to JsonPrimitive("number")))
-            ToolParameterType.Integer -> JsonObject(mapOf("type" to JsonPrimitive("integer")))
-            ToolParameterType.String -> JsonObject(mapOf("type" to JsonPrimitive("string")))
-            is ToolParameterType.Enum -> JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive("string"),
-                    "enum" to JsonArray(type.entries.map { JsonPrimitive(it.lowercase()) })
-                )
-            )
-
-            is ToolParameterType.List -> JsonObject(
-                mapOf(
-                    "type" to JsonPrimitive("array"),
-                    "items" to getTypeMapForParameter(type.itemsType)
-                )
-            )
-
-            is ToolParameterType.Object -> {
-                // Create properties map with proper type information
-                val propertiesMap = mutableMapOf<String, JsonElement>()
-
-                for (prop in type.properties) {
-                    // Get type information for the property
-                    val typeInfo = getTypeMapForParameter(prop.type)
-
-                    // Create a map with all type properties and description
-                    val propMap = mutableMapOf<String, JsonElement>()
-                    for (entry in typeInfo.entries) {
-                        propMap[entry.key] = entry.value
-                    }
-                    propMap["description"] = JsonPrimitive(prop.description)
-
-                    // Add to properties map
-                    propertiesMap[prop.name] = JsonObject(propMap)
-                }
-
-                // Create the final object schema
-                val objectMap = mutableMapOf<String, JsonElement>()
-                objectMap["type"] = JsonPrimitive("object")
-                objectMap["properties"] = JsonObject(propertiesMap)
-
-                // Add required field if requiredProperties is not empty
-                if (type.requiredProperties.isNotEmpty()) {
-                    objectMap["required"] = JsonArray(type.requiredProperties.map { JsonPrimitive(it) })
-                }
-
-                // Add additionalProperties for strict validation
-                objectMap["additionalProperties"] = JsonPrimitive(type.additionalProperties ?: false)
-
-                JsonObject(objectMap)
-            }
-        }
-    }
-
-    /**
-     * Attempts to moderate the content of a given prompt using a specific language model.
-     * This method is not supported by the Anthropic API and will always throw an exception.
-     *
-     * @param prompt The prompt to be moderated, containing messages and optional configuration parameters.
-     * @param model The language model to use for moderation.
-     * @return This method does not return a value as it always throws an exception.
-     * @throws UnsupportedOperationException Always thrown, as moderation is not supported by the Anthropic API.
-     */
-    public override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult {
-        logger.warn { "Moderation is not supported by Anthropic API" }
-        throw UnsupportedOperationException("Moderation is not supported by Anthropic API.")
     }
 }

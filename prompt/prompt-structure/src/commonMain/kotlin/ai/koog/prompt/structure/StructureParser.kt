@@ -47,50 +47,45 @@ public class StructureParser(
         exception: SerializationException,
         structure: StructuredData<T>
     ): T {
-        val prompt = prompt(
-            "code-engine-structure-fixing",
-            LLMParams(
-                schema = structure.schema
-            )
-        ) {
-            system {
-                markdown {
-                    +"You are agent responsible for converting incorrectly generated LLM Structured Output into valid JSON that adheres to the given JSON schema."
-                    +"Your sole responsibility is to fix the generated JSON to conform to the given schema."
-                    newline()
+        val systemContent = markdown {
+            +"You are agent responsible for converting incorrectly generated LLM Structured Output into valid JSON that adheres to the given JSON schema."
+            +"Your sole responsibility is to fix the generated JSON to conform to the given schema."
+            newline()
 
-                    h2("PROCESS")
-                    bulleted {
-                        item("Evaluate what parts are incorrect and fix them.")
-                        item("Drop unknown fields and come-up with values for missing fields based on semantics.")
-                        item("Carefully check the types of the fields and fix if any are incorrect.")
-                        item(
-                            "Utilize the provided exception to determine the possible error, but do not forget about other possible mistakes."
-                        )
-                    }
-
-                    h2("KEY PRINCIPLES")
-                    bulleted {
-                        item(
-                            "You MUST stick to the original data, make as few changes as possible to convert it into valid JSON."
-                        )
-                        item(
-                            "Do not drop, alter or change any semantic data unless it is necessary to fit into JSON schema."
-                        )
-                    }
-
-                    h2("DEFINITION")
-                    structure.definition(this)
-                }
+            h2("PROCESS")
+            bulleted {
+                item("Evaluate what parts are incorrect and fix them.")
+                item("Drop unknown fields and come-up with values for missing fields based on semantics.")
+                item("Carefully check the types of the fields and fix if any are incorrect.")
+                item(
+                    "Utilize the provided exception to determine the possible error, but do not forget about other possible mistakes."
+                )
             }
-            user {
-                markdown {
-                    h2("EXCEPTION")
-                    codeblock(exception.message ?: "Unknown exception")
-                    h2("CONTENT")
-                    codeblock(content)
-                }
+
+            h2("KEY PRINCIPLES")
+            bulleted {
+                item(
+                    "You MUST stick to the original data, make as few changes as possible to convert it into valid JSON."
+                )
+                item(
+                    "Do not drop, alter or change any semantic data unless it is necessary to fit into JSON schema."
+                )
             }
+
+            h2("DEFINITION")
+            structure.definition(this)
+        }
+        
+        val userContent = markdown {
+            h2("EXCEPTION")
+            codeblock(exception.message ?: "Unknown exception")
+            h2("CONTENT")
+            codeblock(content)
+        }
+        
+        val prompt = prompt("code-engine-structure-fixing") {
+            system(modelIdentity = systemContent)
+            user(userContent)
         }
 
         return try {

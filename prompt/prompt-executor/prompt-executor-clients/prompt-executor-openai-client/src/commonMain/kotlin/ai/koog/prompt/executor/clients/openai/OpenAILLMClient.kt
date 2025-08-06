@@ -1,8 +1,6 @@
 package ai.koog.prompt.executor.clients.openai
 
 import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.agents.core.tools.ToolParameterDescriptor
-import ai.koog.agents.core.tools.ToolParameterType
 import ai.koog.agents.utils.SuitableForIO
 import ai.koog.prompt.dsl.ModerationCategory
 import ai.koog.prompt.dsl.ModerationCategoryResult
@@ -11,15 +9,14 @@ import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
 import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.executor.clients.LLMEmbeddingProvider
-import ai.koog.prompt.executor.clients.openai.OpenAIToolChoice.FunctionName
-import ai.koog.prompt.executor.model.LLMChoice
+import ai.koog.prompt.harmony.*
+// LLMChoice removed - use Message.Response directly
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Attachment
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.ResponseMetaInfo
-import ai.koog.prompt.params.LLMParams
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -47,19 +44,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
-import kotlinx.serialization.json.ClassDiscriminatorMode
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNamingStrategy
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonObjectBuilder
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.*
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 /**
  * Represents the settings for configuring an OpenAI client.
@@ -97,15 +83,8 @@ public open class OpenAILLMClient(
         private val logger = KotlinLogging.logger { }
     }
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        encodeDefaults = true
-        explicitNulls = false
-        namingStrategy = JsonNamingStrategy.SnakeCase
-        // OpenAI API is not polymorphic, it's "dynamic". Don't add polymorphic discriminators
-        classDiscriminatorMode = ClassDiscriminatorMode.NONE
-    }
+    // Use the properly configured OpenAI JSON
+    private val json = openAIJson
 
     private val httpClient = baseClient.config {
         defaultRequest {
@@ -124,8 +103,22 @@ public open class OpenAILLMClient(
         }
     }
 
-    override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): List<Message.Response> =
-        processOpenAIResponse(getOpenAIResponse(prompt, model, tools)).first()
+    override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): List<Message.Response> {
+        // Prompt IS HarmonyCore - work with it directly!
+        val promptWithModel = prompt.copy(
+            metadata = prompt.metadata.copy(model = model.id),
+            developerContext = if (tools.isNotEmpty()) {
+                prompt.developerContext.copy(
+                    tools = HarmonyConverter.fromToolDescriptors(tools)
+                )
+            } else prompt.developerContext
+        )
+        
+        // Downsample to OpenAI format using pure function
+        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithModel)
+        
+        return processOpenAIResponse(executeOpenAIRequest(openAIRequest)).flatten()
+    }
 
     override fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
         logger.debug { "Executing streaming prompt: $prompt with model: $model" }
@@ -133,7 +126,11 @@ public open class OpenAILLMClient(
             "Model ${model.id} does not support chat completions"
         }
 
-        val request = createOpenAIRequest(prompt, emptyList(), model, true)
+        // Prompt IS HarmonyCore
+        val promptWithModel = prompt.copy(
+            metadata = prompt.metadata.copy(model = model.id)
+        )
+        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithModel).copy(stream = true)
 
         try {
             httpClient.sse(
@@ -145,14 +142,27 @@ public open class OpenAILLMClient(
                         append(HttpHeaders.CacheControl, "no-cache")
                         append(HttpHeaders.Connection, "keep-alive")
                     }
-                    setBody(request)
+                    setBody(openAIRequest)
                 }
             ) {
                 incoming.collect { event ->
                     event
                         .takeIf { it.data != "[DONE]" }
-                        ?.data?.trim()?.let { json.decodeFromString<OpenAIStreamResponse>(it) }
-                        ?.choices?.forEach { choice -> choice.delta.content?.let { emit(it) } }
+                        ?.data?.trim()?.let { data ->
+                            try {
+                                val jsonElement = json.parseToJsonElement(data)
+                                val openAIResponse = json.decodeFromJsonElement<OpenAIChatStreamChunk>(jsonElement)
+                                // Direct streaming without UnifiedResponse conversion
+                                openAIResponse.choices.forEach { choice ->
+                                    choice.delta.content?.let { content ->
+                                        emit(content)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                // Ignore parse errors in streaming
+                                logger.debug { "Error parsing stream chunk: $e" }
+                            }
+                        }
                 }
             }
         } catch (e: SSEClientException) {
@@ -171,8 +181,20 @@ public open class OpenAILLMClient(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
-    ): List<LLMChoice> =
-        processOpenAIResponse(getOpenAIResponse(prompt, model, tools))
+    ): List<Message.Response> {
+        // Prompt IS HarmonyCore now
+        val promptWithModel = prompt.copy(
+            metadata = prompt.metadata.copy(model = model.id),
+            developerContext = if (tools.isNotEmpty()) {
+                prompt.developerContext.copy(
+                    tools = HarmonyConverter.fromToolDescriptors(tools)
+                )
+            } else prompt.developerContext
+        )
+        val openAIRequest = HarmonyOpenAIDownsampler.downsample(promptWithModel)
+        
+        return processOpenAIResponse(executeOpenAIRequest(openAIRequest)).flatten()
+    }
 
     /**
      * Embeds the given text using the OpenAI embeddings API.
@@ -229,42 +251,30 @@ public open class OpenAILLMClient(
             throw IllegalArgumentException("Model ${model.id} does not support moderation")
         }
 
-        require(prompt.messages.isNotEmpty()) {
+        require(prompt.conversation.messages.isNotEmpty()) {
             "Can't moderate an empty prompt"
         }
 
-        val input = prompt.messages
-            .map { message ->
-                if (message is Message.WithAttachments) {
-                    require(message.attachments.all { it is Attachment.Image }) {
-                        "Only image attachments are supported for moderation"
-                    }
-                }
-
-                message.toOpenAIMessageContent(model)
-            }
-            .let { contents ->
-                /*
-                 If all messages contain only text, merge it all in a single text input,
-                 to support OpenAI-compatible providers that do not support attachments.
-
-                 Otherwise create a single content instance with all the parts
-                 */
-                if (contents.all { it is Content.Text }) {
-                    val text = contents.joinToString(separator = "\n\n") { (it as Content.Text).value }
-
-                    Content.Text(text)
-                } else {
-                    val parts = contents.flatMap { content ->
-                        when (content) {
-                            is Content.Parts -> content.value
-                            is Content.Text -> listOf(ContentPart.Text(content.value))
-                        }
-                    }
-
-                    Content.Parts(parts)
+        // Convert messages to moderation input format
+        val input = buildJsonArray {
+            prompt.conversation.messages.forEach { message ->
+                // Extract text content from HarmonyMessage
+                val textContent = message.content
+                    .filterIsInstance<HarmonyContent.Text>()
+                    .joinToString(" ") { it.text }
+                
+                if (textContent.isNotEmpty()) {
+                    add(textContent)
                 }
             }
+        }.let { array ->
+            // If all elements are JsonPrimitives (strings), merge them into a single string
+            if (array.all { it is JsonPrimitive && it.isString }) {
+                JsonPrimitive(array.joinToString("\n\n") { (it as JsonPrimitive).content })
+            } else {
+                array
+            }
+        }
 
         val request = OpenAIModerationRequest(
             input = input,
@@ -373,179 +383,21 @@ public open class OpenAILLMClient(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    private fun createOpenAIRequest(
-        prompt: Prompt,
-        tools: List<ToolDescriptor>,
-        model: LLModel,
-        stream: Boolean
-    ): OpenAIRequest {
-        val messages = mutableListOf<OpenAIMessage>()
-        val pendingCalls = mutableListOf<OpenAIToolCall>()
-
-        fun flushCalls() {
-            if (pendingCalls.isNotEmpty()) {
-                messages += OpenAIMessage(role = "assistant", toolCalls = pendingCalls.toList())
-                pendingCalls.clear()
-            }
-        }
-
-        for (message in prompt.messages) {
-            when (message) {
-                is Message.System -> {
-                    flushCalls()
-                    messages.add(
-                        OpenAIMessage(
-                            role = "system",
-                            content = Content.Text(message.content)
-                        )
-                    )
-                }
-
-                is Message.User -> {
-                    flushCalls()
-                    messages.add(
-                        OpenAIMessage(
-                            role = "user",
-                            content = message.toOpenAIMessageContent(model)
-                        )
-                    )
-                }
-
-                is Message.Assistant -> {
-                    flushCalls()
-                    messages.add(
-                        OpenAIMessage(
-                            role = "assistant",
-                            content = Content.Text(message.content)
-                        )
-                    )
-                }
-
-                is Message.Tool.Result -> {
-                    flushCalls()
-                    messages.add(
-                        OpenAIMessage(
-                            role = "tool",
-                            content = Content.Text(message.content),
-                            toolCallId = message.id
-                        )
-                    )
-                }
-
-                is Message.Tool.Call -> pendingCalls += OpenAIToolCall(
-                    id = message.id ?: Uuid.random().toString(),
-                    function = OpenAIFunction(message.tool, message.content)
-                )
-            }
-        }
-        flushCalls()
-
-        val openAITools = tools.map { tool ->
-            val propertiesMap = mutableMapOf<String, JsonElement>()
-
-            // Add required parameters
-            tool.requiredParameters.forEach { param ->
-                propertiesMap[param.name] = buildOpenAIParam(param)
-            }
-
-            // Add optional parameters
-            tool.optionalParameters.forEach { param ->
-                propertiesMap[param.name] = buildOpenAIParam(param)
-            }
-
-            val parametersObject = buildJsonObject {
-                put("type", JsonPrimitive("object"))
-                put("properties", JsonObject(propertiesMap))
-                put(
-                    "required",
-                    buildJsonArray {
-                        tool.requiredParameters.forEach { param ->
-                            add(JsonPrimitive(param.name))
-                        }
-                    }
-                )
-            }
-
-            OpenAITool(
-                function = OpenAIToolFunction(
-                    name = tool.name,
-                    description = tool.description,
-                    parameters = parametersObject
-                )
-            )
-        }
-
-        val toolChoice = when (val toolChoice = prompt.params.toolChoice) {
-            LLMParams.ToolChoice.Auto -> OpenAIToolChoice.Auto
-            LLMParams.ToolChoice.None -> OpenAIToolChoice.None
-            LLMParams.ToolChoice.Required -> OpenAIToolChoice.Required
-            is LLMParams.ToolChoice.Named -> OpenAIToolChoice.Function(function = FunctionName(toolChoice.name))
-            null -> null
-        }
-
-        val modalities = if (model.capabilities.contains(LLMCapability.Audio)) {
-            listOf(
-                OpenAIModalities.Text,
-                OpenAIModalities.Audio
-            )
-        } else {
-            null
-        }
-        // TODO allow passing this externally and actually controlling this behavior
-        val audio = modalities?.let {
-            OpenAIAudioConfig(
-                format = if (stream) OpenAIAudioFormat.PCM16 else OpenAIAudioFormat.WAV,
-                voice = OpenAIAudioVoice.Alloy,
-            )
-        }
-
-        return OpenAIRequest(
-            model = model.id,
-            messages = messages,
-            temperature = if (model.capabilities.contains(
-                    LLMCapability.Temperature
-                )
-            ) {
-                prompt.params.temperature
-            } else {
-                null
-            },
-            numberOfChoices = if (model.capabilities.contains(
-                    LLMCapability.MultipleChoices
-                )
-            ) {
-                prompt.params.numberOfChoices
-            } else {
-                null
-            },
-            tools = if (tools.isNotEmpty()) openAITools else null,
-            modalities = modalities,
-            audio = audio,
-            stream = stream,
-            toolChoice = toolChoice,
-            user = prompt.params.user,
-        )
-    }
-
-    private suspend fun getOpenAIResponse(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): OpenAIResponse {
-        logger.debug { "Executing prompt: $prompt with tools: $tools and model: $model" }
-        require(model.capabilities.contains(LLMCapability.Completion)) {
-            "Model ${model.id} does not support chat completions"
-        }
-        require(model.capabilities.contains(LLMCapability.Tools) || tools.isEmpty()) {
-            "Model ${model.id} does not support tools"
-        }
-
-        val request = createOpenAIRequest(prompt, tools, model, false)
-
+    /**
+     * Execute OpenAI request directly without UnifiedModel intermediate layer.
+     * This is the new Harmony-first approach.
+     */
+    private suspend fun executeOpenAIRequest(openAIRequest: OpenAIChatRequest): OpenAIChatResponse {
+        logger.debug { "Executing OpenAI request: $openAIRequest" }
+        
         return withContext(Dispatchers.SuitableForIO) {
             val response = httpClient.post(settings.chatCompletionsPath) {
-                setBody(request)
+                setBody(openAIRequest)
             }
 
             if (response.status.isSuccess()) {
-                response.body<OpenAIResponse>()
+                val jsonResponse = json.parseToJsonElement(response.bodyAsText())
+                json.decodeFromJsonElement<OpenAIChatResponse>(jsonResponse)
             } else {
                 val errorBody = response.bodyAsText()
                 logger.error { "Error from OpenAI API: ${response.status}: $errorBody" }
@@ -554,133 +406,12 @@ public open class OpenAILLMClient(
         }
     }
 
-    private fun Message.toOpenAIMessageContent(model: LLModel): Content {
-        return if (this !is Message.WithAttachments || attachments.isEmpty()) {
-            Content.Text(content)
-        } else {
-            val parts = buildList {
-                if (content.isNotEmpty()) {
-                    add(ContentPart.Text(content))
-                }
 
-                attachments.forEach { attachment ->
-                    when (attachment) {
-                        is Attachment.Image -> {
-                            require(model.capabilities.contains(LLMCapability.Vision.Image)) {
-                                "Model ${model.id} does not support images"
-                            }
-
-                            val imageUrl: String = when (val content = attachment.content) {
-                                is AttachmentContent.URL -> content.url
-                                is AttachmentContent.Binary -> "data:${attachment.mimeType};base64,${content.base64}"
-                                else -> throw IllegalArgumentException(
-                                    "Unsupported image attachment content: ${content::class}"
-                                )
-                            }
-
-                            add(ContentPart.Image(ContentPart.ImageUrl(imageUrl)))
-                        }
-
-                        is Attachment.Audio -> {
-                            require(model.capabilities.contains(LLMCapability.Audio)) {
-                                "Model ${model.id} does not support audio"
-                            }
-
-                            val inputAudio: ContentPart.InputAudio = when (val content = attachment.content) {
-                                is AttachmentContent.Binary -> ContentPart.InputAudio(content.base64, attachment.format)
-                                else -> throw IllegalArgumentException(
-                                    "Unsupported audio attachment content: ${content::class}"
-                                )
-                            }
-
-                            add(ContentPart.Audio(inputAudio))
-                        }
-
-                        is Attachment.File -> {
-                            require(model.capabilities.contains(LLMCapability.Document)) {
-                                "Model ${model.id} does not support files"
-                            }
-
-                            val fileData: ContentPart.FileData = when (val content = attachment.content) {
-                                is AttachmentContent.Binary -> ContentPart.FileData(
-                                    fileData = "data:${attachment.mimeType};base64,${content.base64}",
-                                    filename = attachment.fileName
-                                )
-
-                                else -> throw IllegalArgumentException(
-                                    "Unsupported file attachment content: ${content::class}"
-                                )
-                            }
-
-                            add(ContentPart.File(fileData))
-                        }
-
-                        else -> throw IllegalArgumentException("Unsupported attachment type: $attachment")
-                    }
-                }
-            }
-
-            Content.Parts(parts)
-        }
-    }
-
-    private fun buildOpenAIParam(param: ToolParameterDescriptor): JsonObject = buildJsonObject {
-        put("description", JsonPrimitive(param.description))
-        fillOpenAIParamType(param.type)
-    }
-
-    private fun JsonObjectBuilder.fillOpenAIParamType(type: ToolParameterType) {
-        when (type) {
-            ToolParameterType.Boolean -> put("type", JsonPrimitive("boolean"))
-            ToolParameterType.Float -> put("type", JsonPrimitive("number"))
-            ToolParameterType.Integer -> put("type", JsonPrimitive("integer"))
-            ToolParameterType.String -> put("type", JsonPrimitive("string"))
-            is ToolParameterType.Enum -> {
-                put("type", JsonPrimitive("string"))
-                put(
-                    "enum",
-                    buildJsonArray {
-                        type.entries.forEach { entry ->
-                            add(JsonPrimitive(entry))
-                        }
-                    }
-                )
-            }
-
-            is ToolParameterType.List -> {
-                put("type", JsonPrimitive("array"))
-                put(
-                    "items",
-                    buildJsonObject {
-                        fillOpenAIParamType(type.itemsType)
-                    }
-                )
-            }
-
-            is ToolParameterType.Object -> {
-                put("type", JsonPrimitive("object"))
-                type.additionalProperties?.let {
-                    put("additionalProperties", type.additionalProperties)
-                }
-                put(
-                    "properties",
-                    buildJsonObject {
-                        type.properties.forEach { property ->
-                            put(
-                                property.name,
-                                buildJsonObject {
-                                    fillOpenAIParamType(property.type)
-                                    put("description", property.description)
-                                }
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
-
-    private fun processOpenAIResponse(response: OpenAIResponse): List<LLMChoice> {
+    /**
+     * Process OpenAI response directly without UnifiedModel conversion.
+     * This is the new Harmony-first approach.
+     */
+    private fun processOpenAIResponse(response: OpenAIChatResponse): List<List<Message.Response>> {
         if (response.choices.isEmpty()) {
             logger.error { "Empty choices in OpenAI response" }
             error("Empty choices in OpenAI response")
@@ -698,15 +429,19 @@ public open class OpenAILLMClient(
             outputTokensCount = outputTokensCount
         )
 
-        return response.choices.map { processOpenAIMessage(it, metaInfo) }
+        return response.choices.map { processOpenAIChoice(it, metaInfo) }
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
-    private fun processOpenAIMessage(choice: OpenAIChoice, metaInfo: ResponseMetaInfo): List<Message.Response> {
+    /**
+     * Process individual OpenAI choice directly.
+     */
+    private fun processOpenAIChoice(choice: OpenAIChoice, metaInfo: ResponseMetaInfo): List<Message.Response> {
         val message = choice.message
+        val toolCalls = message.toolCalls
         return when {
-            message.toolCalls != null && message.toolCalls.isNotEmpty() -> {
-                message.toolCalls.map { toolCall ->
+            toolCalls != null && toolCalls.isNotEmpty() -> {
+                // Handle tool calls
+                toolCalls.map { toolCall ->
                     Message.Tool.Call(
                         id = toolCall.id,
                         tool = toolCall.function.name,
@@ -715,38 +450,22 @@ public open class OpenAILLMClient(
                     )
                 }
             }
-
-            message.content != null -> {
-                listOf(
-                    Message.Assistant(
-                        content = message.content.text(),
-                        finishReason = choice.finishReason,
-                        metaInfo = metaInfo
-                    )
-                )
-            }
-
-            message.audio != null -> {
-                listOf(
-                    Message.Assistant(
-                        content = message.audio.transcript ?: "",
-                        attachments = listOf(
-                            Attachment.Audio(
-                                content = AttachmentContent.Binary.Base64(message.audio.data),
-                                // FIXME not a proper solution. Seems like there is no data in response about format, need to clarify
-                                format = "unknown",
-                            )
-                        ),
-                        finishReason = choice.finishReason,
-                        metaInfo = metaInfo
-                    )
-                )
-            }
-
             else -> {
-                logger.error { "Unexpected response from OpenAI: no tool calls and no content" }
-                error("Unexpected response from OpenAI: no tool calls and no content")
+                // Handle regular assistant response
+                val content = when (val c = message.content) {
+                    is JsonPrimitive -> c.content
+                    null -> ""
+                    else -> c.toString()
+                }
+                listOf(
+                    Message.Assistant(
+                        content = content,
+                        finishReason = choice.finishReason,
+                        metaInfo = metaInfo
+                    )
+                )
             }
         }
     }
+
 }

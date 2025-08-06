@@ -95,11 +95,11 @@ public open class AIAgent<Input, Output>(
     public val promptExecutor: PromptExecutor,
     private val strategy: AIAgentStrategy<Input, Output>,
     public val agentConfig: AIAgentConfigBase,
-    override val id: String = Uuid.random().toString(),
+    public val id: String = Uuid.random().toString(),
     public val toolRegistry: ToolRegistry = ToolRegistry.EMPTY,
     public val clock: Clock = Clock.System,
     private val installFeatures: FeatureContext.() -> Unit = {},
-) : AIAgentBase<Input, Output>, AIAgentEnvironment, Closeable {
+) : AIAgentEnvironment, Closeable {
 
     private companion object {
         private val logger = KotlinLogging.logger {}
@@ -137,15 +137,30 @@ public open class AIAgent<Input, Output>(
         FeatureContext(this).installFeatures()
     }
 
-    override suspend fun run(agentInput: Input): Output {
+    /**
+     * Executes the agent with the provided input.
+     * 
+     * This method manages the agent lifecycle, including feature preparation,
+     * context creation, and strategy execution.
+     */
+    public suspend fun run(agentInput: Input): Output {
         runningMutex.withLock {
             if (isRunning) {
                 throw IllegalStateException("Agent is already running")
             }
-
             isRunning = true
         }
 
+        try {
+            return runInternal(agentInput)
+        } finally {
+            runningMutex.withLock {
+                isRunning = false
+            }
+        }
+    }
+    
+    private suspend fun runInternal(agentInput: Input): Output {
         pipeline.prepareFeatures()
 
         val sessionUuid = Uuid.random()
@@ -232,10 +247,9 @@ public open class AIAgent<Input, Output>(
         additionalContextData.let { contextData ->
             val nodeId = contextData.nodeId
             strategy.setExecutionPoint(nodeId, contextData.lastInput ?: error("lastInput is null"))
-            val messages = contextData.messageHistory
-            agentContext.llm.withPrompt {
-                this.withMessages { (messages).sortedBy { m -> m.metaInfo.timestamp } }
-            }
+            // TODO: Convert Message to HarmonyMessage when restoring context
+            // For now, just log a warning
+            logger.warn { "Message history restoration not yet implemented for Harmony format" }
         }
 
         agentContext.removeAgentContextData()
@@ -436,6 +450,7 @@ public open class AIAgent<Input, Output>(
     private fun formatLog(agentId: String, runId: String, message: String): String =
         "[agent id: $agentId, run id: $runId] $message"
 
+
     //endregion Private Methods
 }
 
@@ -505,11 +520,7 @@ public fun AIAgent(
     strategy = strategy,
     agentConfig = AIAgentConfig(
         prompt = prompt(
-            id = "chat",
-            params = LLMParams(
-                temperature = temperature,
-                numberOfChoices = numberOfChoices
-            )
+            id = "chat"
         ) {
             system(systemPrompt)
         },

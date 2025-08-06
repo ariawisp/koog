@@ -1,0 +1,28 @@
+[package]
+name = "harmony-jni"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "0.21"
+openai-harmony = { path = "../../../../../harmony-main" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# macOS specific dependencies if needed
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Linux specific dependencies if needed
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Windows specific dependencies if needed
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

@@ -2,6 +2,7 @@ package ai.koog.prompt.executor.clients.openai
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 /**
  * Request model for OpenAI moderation API.
@@ -11,8 +12,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 internal data class OpenAIModerationRequest(
-    @Serializable(with = ContentSerializer::class)
-    val input: Content?,
+    val input: JsonElement,
     val model: String? = null
 )
 

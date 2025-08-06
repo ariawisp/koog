@@ -4,9 +4,17 @@ import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.model.PromptExecutor
+import ai.koog.prompt.executor.model.PromptExecutorExt
 import ai.koog.prompt.executor.model.PromptExecutorExt.execute
+import ai.koog.prompt.executor.model.PromptExecutorExt.singleResponse
 import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.harmony.HarmonyAuthor
+import ai.koog.prompt.harmony.HarmonyContent
+import ai.koog.prompt.harmony.HarmonyMessage
+import ai.koog.prompt.harmony.Role
 import ai.koog.prompt.markdown.markdown
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.prompt.structure.json.JsonStructureLanguage
 import ai.koog.prompt.text.TextContentBuilderBase
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -71,7 +79,8 @@ public suspend fun <T> PromptExecutor.executeStructuredOneShot(
     model: LLModel,
     structure: StructuredData<T>
 ): StructuredResponse<T> {
-    val response = this.execute(prompt = prompt, model = model)
+    val responses = execute(prompt = prompt, model = model, tools = emptyList())
+    val response = responses.singleResponse()
     val responseContent = response.content
     return StructuredResponse(
         structure = structure.parse(responseContent),
@@ -106,19 +115,24 @@ public suspend fun <T> PromptExecutor.executeStructured(
     retries: Int = 1,
     fixingModel: LLModel = OpenAIModels.Chat.GPT4o
 ): Result<StructuredResponse<T>> {
-    val prompt = prompt(prompt) {
-        user {
-            markdown {
-                StructuredOutputPrompts.output(this, structure)
-            }
+    val structuredPrompt = prompt.withMessages { messages ->
+        val additionalContent = buildString {
+            appendLine("## NEXT MESSAGE OUTPUT FORMAT")
+            appendLine("The output in the next message MUST ADHERE TO ${structure.id} format.")
+            appendLine(structure.schema)
         }
+        messages + HarmonyMessage(
+            author = HarmonyAuthor.from(Role.USER),
+            content = listOf(HarmonyContent.Text(additionalContent))
+        )
     }
 
     val structureParser = StructureParser(this, fixingModel)
 
     repeat(retries) { attempt ->
-        logger.debug { "Execute the prompt: <$prompt>" }
-        val response = execute(prompt = prompt, model = mainModel)
+        logger.debug { "Execute the prompt: <$structuredPrompt>" }
+        val responses = execute(prompt = structuredPrompt, model = mainModel, tools = emptyList())
+        val response = responses.singleResponse()
 
         try {
             logger.debug { "$attempt/$retries: Try to parse LLM response content: <${response.content}>" }

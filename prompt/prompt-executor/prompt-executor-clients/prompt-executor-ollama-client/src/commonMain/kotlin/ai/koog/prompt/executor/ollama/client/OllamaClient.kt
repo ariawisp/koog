@@ -8,22 +8,12 @@ import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
 import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.executor.clients.LLMEmbeddingProvider
-import ai.koog.prompt.executor.ollama.client.dto.EmbeddingRequestDTO
-import ai.koog.prompt.executor.ollama.client.dto.EmbeddingResponseDTO
-import ai.koog.prompt.executor.ollama.client.dto.OllamaChatRequestDTO
-import ai.koog.prompt.executor.ollama.client.dto.OllamaChatResponseDTO
-import ai.koog.prompt.executor.ollama.client.dto.OllamaErrorResponseDTO
 import ai.koog.prompt.executor.ollama.client.dto.OllamaModelsListResponseDTO
 import ai.koog.prompt.executor.ollama.client.dto.OllamaPullModelRequestDTO
 import ai.koog.prompt.executor.ollama.client.dto.OllamaPullModelResponseDTO
 import ai.koog.prompt.executor.ollama.client.dto.OllamaShowModelRequestDTO
 import ai.koog.prompt.executor.ollama.client.dto.OllamaShowModelResponseDTO
-import ai.koog.prompt.executor.ollama.client.dto.extractOllamaJsonFormat
-import ai.koog.prompt.executor.ollama.client.dto.extractOllamaOptions
-import ai.koog.prompt.executor.ollama.client.dto.getToolCalls
-import ai.koog.prompt.executor.ollama.client.dto.toOllamaChatMessages
 import ai.koog.prompt.executor.ollama.client.dto.toOllamaModelCard
-import ai.koog.prompt.executor.ollama.client.dto.toOllamaTool
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
@@ -121,10 +111,6 @@ public class OllamaClient(
         private val possibleModerationCategories = moderationCategoriesMapping.values.flatten().distinct()
     }
 
-    private val ollamaJson = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
 
     private val client = baseClient.config {
         defaultRequest {
@@ -140,6 +126,59 @@ public class OllamaClient(
             socketTimeoutMillis = timeoutConfig.socketTimeoutMillis
         }
     }
+    
+    
+    private fun convertOllamaResponseToMessages(response: OllamaChatResponse): List<Message.Response> {
+        val messages = mutableListOf<Message.Response>()
+        
+        val metaInfo = ResponseMetaInfo.create(
+            clock = clock,
+            totalTokensCount = response.evalCount?.let { it + (response.promptEvalCount ?: 0) },
+            inputTokensCount = response.promptEvalCount,
+            outputTokensCount = response.evalCount
+        )
+        
+        response.message?.let { message ->
+            when (message.role) {
+                "assistant" -> {
+                    // Add text content if present
+                    if (!message.content.isNullOrEmpty()) {
+                        messages.add(
+                            Message.Assistant(
+                                content = message.content,
+                                metaInfo = metaInfo
+                            )
+                        )
+                    }
+                    
+                    // Add tool calls if present
+                    message.toolCalls?.forEach { toolCall ->
+                        messages.add(
+                            Message.Tool.Call(
+                                id = "ollama_tool_${toolCall.function.name}_${clock.now().toEpochMilliseconds()}",
+                                tool = toolCall.function.name,
+                                content = toolCall.function.arguments.toString(),
+                                metaInfo = metaInfo
+                            )
+                        )
+                    }
+                }
+                else -> {
+                    // Handle other message types if needed
+                }
+            }
+        }
+        
+        return messages.ifEmpty {
+            listOf(
+                Message.Assistant(
+                    content = "",
+                    metaInfo = metaInfo
+                )
+            )
+        }
+    }
+    
 
     override suspend fun execute(
         prompt: Prompt,
@@ -148,76 +187,22 @@ public class OllamaClient(
     ): List<Message.Response> {
         require(model.provider == LLMProvider.Ollama) { "Model not supported by Ollama" }
 
+        val chatRequest = HarmonyOllamaDownsampler.downsample(prompt)
+
         val response = client.post(DEFAULT_MESSAGE_PATH) {
-            setBody(
-                OllamaChatRequestDTO(
-                    model = model.id,
-                    messages = prompt.toOllamaChatMessages(model),
-                    tools = if (tools.isNotEmpty()) tools.map { it.toOllamaTool() } else null,
-                    format = prompt.extractOllamaJsonFormat(),
-                    options = prompt.extractOllamaOptions(),
-                    stream = false,
-                )
-            )
+            setBody(chatRequest)
         }
 
         if (response.status.isSuccess()) {
-            return parseResponse(response.body<OllamaChatResponseDTO>())
+            val chatResponse = response.body<OllamaChatResponse>()
+            return convertOllamaResponseToMessages(chatResponse)
         } else {
-            val errorResponse = response.body<OllamaErrorResponseDTO>()
+            val errorResponse = response.body<OllamaErrorResponse>()
             logger.error { "Ollama error: ${errorResponse.error}" }
             throw RuntimeException("Ollama API error: ${errorResponse.error}")
         }
     }
 
-    private fun parseResponse(response: OllamaChatResponseDTO): List<Message.Response> {
-        val messages = response.message ?: return emptyList()
-        val content = messages.content
-        val toolCalls = messages.toolCalls ?: emptyList()
-
-        // Get token counts from the response, or use null if not available
-        val promptTokenCount = response.promptEvalCount
-        val responseTokenCount = response.evalCount
-
-        // Calculate total tokens (prompt + response) if both are available
-        val totalTokensCount = when {
-            promptTokenCount != null && responseTokenCount != null -> promptTokenCount + responseTokenCount
-            promptTokenCount != null -> promptTokenCount
-            responseTokenCount != null -> responseTokenCount
-            else -> null
-        }
-
-        val responseMetadata = ResponseMetaInfo.create(
-            clock,
-            totalTokensCount = totalTokensCount,
-            inputTokensCount = promptTokenCount,
-            outputTokensCount = responseTokenCount,
-        )
-
-        return when {
-            content.isNotEmpty() && toolCalls.isEmpty() -> {
-                listOf(
-                    Message.Assistant(
-                        content = content,
-                        metaInfo = responseMetadata
-                    )
-                )
-            }
-
-            content.isEmpty() && toolCalls.isNotEmpty() -> {
-                messages.getToolCalls(responseMetadata)
-            }
-
-            else -> {
-                val toolCallMessages = messages.getToolCalls(responseMetadata)
-                val assistantMessage = Message.Assistant(
-                    content = content,
-                    metaInfo = responseMetadata
-                )
-                listOf(assistantMessage) + toolCallMessages
-            }
-        }
-    }
 
     override fun executeStreaming(
         prompt: Prompt,
@@ -225,15 +210,10 @@ public class OllamaClient(
     ): Flow<String> = flow {
         require(model.provider == LLMProvider.Ollama) { "Model not supported by Ollama" }
 
+        val chatRequest = HarmonyOllamaDownsampler.downsample(prompt).copy(stream = true)
+
         val response = client.post(DEFAULT_MESSAGE_PATH) {
-            setBody(
-                OllamaChatRequestDTO(
-                    model = model.id,
-                    messages = prompt.toOllamaChatMessages(model),
-                    options = prompt.extractOllamaOptions(),
-                    stream = true,
-                )
-            )
+            setBody(chatRequest)
         }
 
         val channel = response.bodyAsChannel()
@@ -243,7 +223,7 @@ public class OllamaClient(
             if (line.isBlank()) continue
 
             try {
-                val chunk = ollamaJson.decodeFromString<OllamaChatResponseDTO>(line)
+                val chunk = ollamaJson.decodeFromString<OllamaChatResponse>(line)
                 chunk.message?.content?.let { content ->
                     if (content.isNotEmpty()) {
                         emit(content)
@@ -272,10 +252,10 @@ public class OllamaClient(
         }
 
         val response = client.post(DEFAULT_EMBEDDINGS_PATH) {
-            setBody(EmbeddingRequestDTO(model = model.id, prompt = text))
+            setBody(OllamaEmbeddingRequest(model = model.id, prompt = text))
         }
 
-        val embeddingResponse = response.body<EmbeddingResponseDTO>()
+        val embeddingResponse = response.body<OllamaEmbeddingResponse>()
         return embeddingResponse.embedding
     }
 

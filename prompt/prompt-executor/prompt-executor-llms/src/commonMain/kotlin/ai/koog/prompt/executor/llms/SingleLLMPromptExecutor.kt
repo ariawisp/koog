@@ -4,7 +4,6 @@ import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.LLMClient
-import ai.koog.prompt.executor.model.LLMChoice
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
@@ -37,7 +36,7 @@ public open class SingleLLMPromptExecutor(
         return response
     }
 
-    override suspend fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
+    public fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
         logger.debug { "Executing streaming prompt: $prompt with model: $model" }
 
         val responseFlow = llmClient.executeStreaming(prompt, model)
@@ -47,11 +46,11 @@ public open class SingleLLMPromptExecutor(
         }
     }
 
-    override suspend fun executeMultipleChoices(
+    public suspend fun executeMultipleChoices(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
-    ): List<LLMChoice> {
+    ): List<Message.Response> {
         logger.debug { "Executing prompt: $prompt with tools: $tools and model: $model" }
         val choices = llmClient.executeMultipleChoices(prompt, model, tools)
         logger.debug { "Choices: $choices" }
@@ -59,5 +58,5 @@ public open class SingleLLMPromptExecutor(
         return choices
     }
 
-    override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult = llmClient.moderate(prompt, model)
+    public suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult = llmClient.moderate(prompt, model)
 }

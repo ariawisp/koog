@@ -13,9 +13,11 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":prompt:prompt-llm"))
+                api(project(":agents:agents-tools"))
                 api(libs.kotlinx.serialization.json)
                 api(libs.kotlinx.datetime)
                 api(libs.kotlinx.io.core)
+                api(libs.kotlinx.coroutines.core)
             }
         }
 

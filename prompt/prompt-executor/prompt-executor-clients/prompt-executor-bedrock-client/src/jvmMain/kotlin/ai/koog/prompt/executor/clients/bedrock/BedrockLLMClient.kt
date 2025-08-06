@@ -8,14 +8,6 @@ import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
 import ai.koog.prompt.executor.clients.LLMClient
-import ai.koog.prompt.executor.clients.anthropic.AnthropicMessageRequest
-import ai.koog.prompt.executor.clients.bedrock.modelfamilies.ai21.BedrockAI21JambaSerialization
-import ai.koog.prompt.executor.clients.bedrock.modelfamilies.ai21.JambaRequest
-import ai.koog.prompt.executor.clients.bedrock.modelfamilies.amazon.BedrockAmazonNovaSerialization
-import ai.koog.prompt.executor.clients.bedrock.modelfamilies.amazon.NovaRequest
-import ai.koog.prompt.executor.clients.bedrock.modelfamilies.anthropic.BedrockAnthropicClaudeSerialization
-import ai.koog.prompt.executor.clients.bedrock.modelfamilies.meta.BedrockMetaLlamaSerialization
-import ai.koog.prompt.executor.clients.bedrock.modelfamilies.meta.LlamaRequest
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
@@ -138,22 +130,7 @@ public class BedrockLLMClient(
         clock = clock
     )
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        explicitNulls = false
-    }
-
-    internal fun getBedrockModelFamily(model: LLModel): BedrockModelFamilies {
-        require(model.provider == LLMProvider.Bedrock) { "Model ${model.id} is not a Bedrock model" }
-        return when {
-            model.id.startsWith("anthropic.claude") -> BedrockModelFamilies.AnthropicClaude
-            model.id.startsWith("amazon.nova") -> BedrockModelFamilies.AmazonNova
-            model.id.startsWith("ai21.jamba") -> BedrockModelFamilies.AI21Jamba
-            model.id.startsWith("meta.llama") -> BedrockModelFamilies.Meta
-            else -> throw IllegalArgumentException("Model ${model.id} is not a supported Bedrock model")
-        }
-    }
+    // Use the new converter pattern instead of the old serializer
 
     override suspend fun execute(
         prompt: Prompt,
@@ -162,7 +139,7 @@ public class BedrockLLMClient(
     ): List<Message.Response> {
         logger.debug { "Executing prompt for model: ${model.id}" }
 
-        val modelFamily = getBedrockModelFamily(model)
+        require(model.provider == LLMProvider.Bedrock) { "Model ${model.id} is not a Bedrock model" }
         require(model.capabilities.contains(LLMCapability.Completion)) {
             "Model ${model.id} does not support chat completions"
         }
@@ -172,27 +149,7 @@ public class BedrockLLMClient(
             throw IllegalArgumentException("Model ${model.id} does not support tools")
         }
 
-        val requestBody = when (modelFamily) {
-            is BedrockModelFamilies.AI21Jamba -> json.encodeToString(
-                JambaRequest.serializer(),
-                BedrockAI21JambaSerialization.createJambaRequest(prompt, model, tools)
-            )
-
-            is BedrockModelFamilies.AmazonNova -> json.encodeToString(
-                NovaRequest.serializer(),
-                BedrockAmazonNovaSerialization.createNovaRequest(prompt, model)
-            )
-
-            is BedrockModelFamilies.AnthropicClaude -> json.encodeToString(
-                AnthropicMessageRequest.serializer(),
-                BedrockAnthropicClaudeSerialization.createAnthropicRequest(prompt, model, tools)
-            )
-
-            is BedrockModelFamilies.Meta -> json.encodeToString(
-                LlamaRequest.serializer(),
-                BedrockMetaLlamaSerialization.createLlamaRequest(prompt, model)
-            )
-        }
+        val requestBody = BedrockConverter.toBedrockRequest(prompt, model, tools)
 
         val invokeRequest = InvokeModelRequest {
             this.modelId = model.id
@@ -213,60 +170,20 @@ public class BedrockLLMClient(
                 error("Received null or empty body from Bedrock model ${model.id}")
             }
 
-            return@withContext when (modelFamily) {
-                is BedrockModelFamilies.AI21Jamba -> BedrockAI21JambaSerialization.parseJambaResponse(
-                    responseBodyString,
-                    clock
-                )
-
-                is BedrockModelFamilies.AmazonNova -> BedrockAmazonNovaSerialization.parseNovaResponse(
-                    responseBodyString,
-                    clock
-                )
-
-                is BedrockModelFamilies.AnthropicClaude -> BedrockAnthropicClaudeSerialization.parseAnthropicResponse(
-                    responseBodyString,
-                    clock
-                )
-
-                is BedrockModelFamilies.Meta -> BedrockMetaLlamaSerialization.parseLlamaResponse(
-                    responseBodyString,
-                    clock
-                )
-            }
+            return@withContext BedrockConverter.fromBedrockResponse(responseBodyString, model)
         }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> {
         logger.debug { "Executing streaming prompt for model: ${model.id}" }
-        val modelFamily = getBedrockModelFamily(model)
-
+        
+        require(model.provider == LLMProvider.Bedrock) { "Model ${model.id} is not a Bedrock model" }
         require(model.capabilities.contains(LLMCapability.Completion)) {
             "Model ${model.id} does not support chat completions"
         }
 
-        val requestBody = when (modelFamily) {
-            is BedrockModelFamilies.AI21Jamba -> json.encodeToString(
-                JambaRequest.serializer(),
-                BedrockAI21JambaSerialization.createJambaRequest(prompt, model, emptyList())
-            )
-
-            is BedrockModelFamilies.AmazonNova -> json.encodeToString(
-                NovaRequest.serializer(),
-                BedrockAmazonNovaSerialization.createNovaRequest(prompt, model)
-            )
-
-            is BedrockModelFamilies.AnthropicClaude -> json.encodeToString(
-                AnthropicMessageRequest.serializer(),
-                BedrockAnthropicClaudeSerialization.createAnthropicRequest(prompt, model, emptyList())
-            )
-
-            is BedrockModelFamilies.Meta -> json.encodeToString(
-                LlamaRequest.serializer(),
-                BedrockMetaLlamaSerialization.createLlamaRequest(prompt, model)
-            )
-        }
+        val requestBody = BedrockConverter.toBedrockRequest(prompt, model, emptyList())
 
         val streamRequest = InvokeModelWithResponseStreamRequest {
             this.modelId = model.id
@@ -302,21 +219,7 @@ public class BedrockLLMClient(
             try {
                 if (chunkJsonString.isBlank()) return@map ""
 
-                when (modelFamily) {
-                    is BedrockModelFamilies.AI21Jamba -> BedrockAI21JambaSerialization.parseJambaStreamChunk(
-                        chunkJsonString
-                    )
-
-                    is BedrockModelFamilies.AmazonNova -> BedrockAmazonNovaSerialization.parseNovaStreamChunk(
-                        chunkJsonString
-                    )
-
-                    is BedrockModelFamilies.AnthropicClaude -> BedrockAnthropicClaudeSerialization.parseAnthropicStreamChunk(
-                        chunkJsonString
-                    )
-
-                    is BedrockModelFamilies.Meta -> BedrockMetaLlamaSerialization.parseLlamaStreamChunk(chunkJsonString)
-                }
+                BedrockConverter.parseStreamChunk(chunkJsonString, model)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse Bedrock stream chunk: $chunkJsonString" }
                 throw e

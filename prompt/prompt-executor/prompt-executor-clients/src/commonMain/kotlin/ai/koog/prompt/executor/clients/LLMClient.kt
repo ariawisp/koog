@@ -3,7 +3,6 @@ package ai.koog.prompt.executor.clients
 import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
-import ai.koog.prompt.executor.model.LLMChoice
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import kotlinx.coroutines.flow.Flow
@@ -37,18 +36,18 @@ public interface LLMClient {
     public fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String>
 
     /**
-     * Executes a prompt and returns a list of LLM choices.
+     * Executes a prompt and returns multiple response choices.
      *
      * @param prompt The prompt to execute
      * @param tools Optional list of tools that can be used by the LLM
      * @param model The LLM model to use
-     *  @return List of LLM choices
+     *  @return List of response messages, one per choice
      */
     public suspend fun executeMultipleChoices(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
-    ): List<LLMChoice> =
+    ): List<Message.Response> =
         throw UnsupportedOperationException("Not implemented for this client")
 
     /**

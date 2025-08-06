@@ -1,300 +1,211 @@
 package ai.koog.prompt.dsl
 
-import ai.koog.prompt.message.Attachment
-import ai.koog.prompt.message.Message
-import ai.koog.prompt.message.RequestMetaInfo
-import ai.koog.prompt.message.ResponseMetaInfo
-import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.text.TextContentBuilder
+import ai.koog.prompt.harmony.*
+import ai.koog.agents.core.tools.ToolDescriptor
 import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
 /**
- * A builder class for creating prompts using a DSL approach.
+ * PromptBuilder - Creates Prompt instances using a fluent DSL.
  *
- * PromptBuilder allows constructing prompts by adding different types of messages
- * (system, user, assistant, tool) in a structured way.
+ * This builder creates Prompt (which IS the Harmony format) directly.
+ * All messages are stored as HarmonyMessage internally.
  *
  * Example usage:
  * ```kotlin
  * val prompt = prompt("example-prompt") {
  *     system("You are a helpful assistant.")
  *     user("What is the capital of France?")
+ *     reasoning(ReasoningEffort.HIGH)
  * }
  * ```
  *
  * @property id The identifier for the prompt
- * @property params The parameters for the language model
+ * @property model The model ID to use
  * @property clock The clock used for timestamps of messages
  */
 @PromptDSL
 public class PromptBuilder internal constructor(
     private val id: String,
-    private val params: LLMParams = LLMParams(),
+    private val model: String = "gpt-4",
     private val clock: Clock = Clock.System
 ) {
-    private val messages = mutableListOf<Message>()
+    private val harmonyMessages = mutableListOf<HarmonyMessage>()
+    private var systemContext = SystemContext()
+    private var developerContext = DeveloperContext.empty()
+    private var metadata = HarmonyMetadata(model = model)
 
     internal companion object {
         internal fun from(prompt: Prompt, clock: Clock = Clock.System): PromptBuilder = PromptBuilder(
             prompt.id,
-            prompt.params,
+            prompt.metadata.model,
             clock
         ).apply {
-            messages.addAll(prompt.messages)
+            harmonyMessages.addAll(prompt.conversation.messages)
+            systemContext = prompt.systemContext
+            developerContext = prompt.developerContext
+            metadata = prompt.metadata
         }
     }
 
     /**
-     * Adds a system message to the prompt.
+     * Adds a system message with model identity and configuration.
      *
-     * System messages provide instructions or context to the language model.
+     * This now directly creates HarmonyMessage with structured system content.
      *
-     * Example:
-     * ```kotlin
-     * system("You are a helpful assistant.")
-     * ```
-     *
-     * @param content The content of the system message
+     * @param modelIdentity The model identity (defaults to ChatGPT identity)
+     * @param knowledgeCutoff Knowledge cutoff date
+     * @param currentDate Current date
+     * @param reasoningEffort Reasoning effort level
      */
-    public fun system(content: String) {
-        messages.add(Message.System(content, RequestMetaInfo.create(clock)))
+    public fun system(
+        modelIdentity: String = "You are ChatGPT, a large language model trained by OpenAI.",
+        knowledgeCutoff: String = "2024-06",
+        currentDate: String = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString(),
+        reasoningEffort: ReasoningEffort = ReasoningEffort.MEDIUM
+    ) {
+        val systemMessage = HarmonyMessage.system(
+            modelIdentity = modelIdentity,
+            knowledgeCutoff = knowledgeCutoff,
+            currentDate = currentDate,
+            reasoningEffort = reasoningEffort
+        )
+        harmonyMessages.add(systemMessage)
+        
+        // Update system context
+        systemContext = systemContext.copy(
+            modelIdentity = modelIdentity,
+            knowledgeCutoff = knowledgeCutoff,
+            currentDate = currentDate,
+            reasoningEffort = reasoningEffort
+        )
     }
 
     /**
-     * Adds a system message to the prompt using a TextContentBuilder.
-     *
-     * This allows for more complex message construction.
-     *
-     * Example:
-     * ```kotlin
-     * system {
-     *     text("You are a helpful assistant.")
-     *     text("Always provide accurate information.")
-     * }
-     * ```
-     *
-     * @param init The initialization block for the TextContentBuilder
+     * Set reasoning effort level for the prompt.
+     * Note: This is GPT-OSS specific and controls chain-of-thought generation.
      */
-    public fun system(init: TextContentBuilder.() -> Unit) {
-        system(TextContentBuilder().apply(init).build())
+    public fun reasoning(effort: ReasoningEffort) {
+        systemContext = systemContext.copy(reasoningEffort = effort)
+    }
+    
+    /**
+     * Set temperature for generation (standard parameter for all providers).
+     */
+    public fun temperature(temp: Double) {
+        metadata = metadata.copy(temperature = temp)
+    }
+    
+    /**
+     * Set max tokens for generation (standard parameter for all providers).
+     */
+    public fun maxTokens(tokens: Int) {
+        metadata = metadata.copy(maxTokens = tokens)
+    }
+    
+    /**
+     * Add instructions in developer context.
+     */
+    public fun instructions(content: String) {
+        developerContext = developerContext.copy(instructions = content)
+    }
+    
+    /**
+     * Add tools to the developer context.
+     */
+    public fun tools(tools: List<ToolDescriptor>) {
+        developerContext = developerContext.copy(
+            tools = HarmonyConverter.fromToolDescriptors(tools)
+        )
     }
 
     /**
-     * Adds a user message to the prompt with optional attachments.
-     *
-     * User messages represent input from the user to the language model.
-     * This method supports adding text content along with a list of attachments such as images, audio, or documents.
-     *
-     * @param content The content of the user message.
-     * @param attachments The list of attachments associated with the user message. Defaults to an empty list if no attachments are provided.
+     * Adds a user message to the prompt.
+     * 
+     * Now creates HarmonyMessage directly in the final channel.
      */
-    public fun user(content: String, attachments: List<Attachment> = emptyList()) {
-        messages.add(Message.User(content, RequestMetaInfo.create(clock), attachments))
+    public fun user(content: String) {
+        harmonyMessages.add(HarmonyMessage.user(content).withChannel("final"))
     }
 
     /**
-     * Adds a user message to the prompt with attachments.
-     *
-     * User messages represent input from the user to the language model.
-     * This method allows attaching content like images, audio, or documents.
-     *
-     * Example:
-     * ```kotlin
-     * // Simple text message
-     * user("What is the capital of France?")
-     *
-     * // Message with attachments using a lambda
-     * user("Please analyze this image") {
-     *     image("photo.jpg")
-     * }
-     * ```
-     *
-     * @param content The content of the user message
-     * @param block Optional lambda to configure attachments using AttachmentBuilder
+     * Add analysis (chain-of-thought) content.
+     * This goes to the analysis channel and is never shown to users.
      */
-    public fun user(content: String, block: AttachmentBuilder.() -> Unit) {
-        user(content, AttachmentBuilder().apply(block).build())
+    public fun analysis(content: String) {
+        harmonyMessages.add(HarmonyMessage.assistant(content).withChannel("analysis"))
     }
 
     /**
-     * Adds a user message to the prompt using a ContentBuilderWithAttachment.
-     *
-     * This allows for more complex message construction with both text and attachments.
-     *
-     * Example:
-     * ```kotlin
-     * user {
-     *          text("I have a question about programming.")
-     *          text("How do I implement a binary search in Kotlin?")
-     *
-     *      attachments {
-     *          image("screenshot.png")
-     *      }
-     * }
-     * ```
-     *
-     * @param body The initialization block for the ContentBuilderWithAttachment
+     * Add commentary content (tool interactions).
+     * This goes to the commentary channel for tool calls and responses.
      */
-    public fun user(body: MessageContentBuilder.() -> Unit) {
-        val messageContent = MessageContentBuilder().apply(body).build()
-        user(messageContent.content, messageContent.attachments)
+    public fun commentary(content: String, recipient: String? = null) {
+        harmonyMessages.add(
+            HarmonyMessage.assistant(content)
+                .withChannel("commentary")
+                .let { msg -> recipient?.let { msg.withRecipient(it) } ?: msg }
+        )
     }
 
     /**
      * Adds an assistant message to the prompt.
      *
-     * Assistant messages represent responses from the language model.
-     *
-     * Example:
-     * ```kotlin
-     * assistant("The capital of France is Paris.")
-     * ```
-     *
-     * @param content The content of the assistant message
+     * Now creates HarmonyMessage directly in the final channel.
      */
     public fun assistant(content: String) {
-        messages.add(Message.Assistant(content, finishReason = null, metaInfo = ResponseMetaInfo.create(clock)))
+        harmonyMessages.add(HarmonyMessage.assistant(content).withChannel("final"))
     }
 
     /**
-     * Adds an assistant message to the prompt using a TextContentBuilder.
-     *
-     * This allows for more complex message construction.
-     *
-     * Example:
-     * ```kotlin
-     * assistant {
-     *     text("The capital of France is Paris.")
-     *     text("It's known for landmarks like the Eiffel Tower.")
-     * }
-     * ```
-     *
-     * @param init The initialization block for the TextContentBuilder
+     * Add a tool call message.
      */
-    public fun assistant(init: TextContentBuilder.() -> Unit) {
-        assistant(TextContentBuilder().apply(init).build())
+    public fun toolCall(toolName: String, arguments: String) {
+        harmonyMessages.add(
+            HarmonyMessage.assistant(arguments)
+                .withChannel("commentary")
+                .withRecipient("functions.$toolName")
+        )
+    }
+    
+    /**
+     * Add a tool response message.
+     */
+    public fun toolResponse(toolName: String, output: String) {
+        harmonyMessages.add(
+            HarmonyMessage.tool(output)
+                .withRecipient("assistant")
+                .withChannel("commentary")
+        )
     }
 
     /**
-     * Adds a generic message to the prompt.
-     *
-     * This method allows adding any type of Message object.
-     *
-     * Example:
-     * ```kotlin
-     * message(Message.System("You are a helpful assistant.", metaInfo = ...))
-     * ```
-     *
-     * @param message The message to add
+     * Add a raw HarmonyMessage.
      */
-    public fun message(message: Message) {
-        messages.add(message)
+    public fun harmonyMessage(message: HarmonyMessage) {
+        harmonyMessages.add(message)
     }
 
     /**
-     * Adds multiple messages to the prompt.
-     *
-     * This method allows adding a list of Message objects.
-     *
-     * Example:
-     * ```kotlin
-     * messages(listOf(
-     *     Message.System("You are a helpful assistant.", metaInfo = ...),
-     *     Message.User("What is the capital of France?", metaInfo = ...)
-     * ))
-     * ```
-     *
-     * @param messages The list of messages to add
+     * Add multiple HarmonyMessages.
      */
-    public fun messages(messages: List<Message>) {
-        this.messages.addAll(messages)
+    public fun harmonyMessages(messages: List<HarmonyMessage>) {
+        harmonyMessages.addAll(messages)
     }
 
     /**
-     * Builder class for adding tool-related messages to the prompt.
+     * Builds and returns a native Harmony Prompt.
      *
-     * This class provides methods for adding tool calls and tool results.
+     * @return A new Harmony-native Prompt
      */
-    @PromptDSL
-    public inner class ToolMessageBuilder(public val clock: Clock) {
-        /**
-         * Adds a tool call message to the prompt.
-         *
-         * Tool calls represent requests to execute a specific tool.
-         *
-         * @param call The tool call message to add
-         */
-        public fun call(call: Message.Tool.Call) {
-            this@PromptBuilder.messages.add(call)
-        }
-
-        /**
-         * Adds a tool call message to the prompt.
-         *
-         * This method creates a `Message.Tool.Call` instance and adds it to the message list.
-         * The tool call represents a request to execute a specific tool with the provided parameters.
-         *
-         * @param id The unique identifier for the tool call message.
-         * @param tool The name of the tool being called.
-         * @param content The content or payload of the tool call.
-         */
-        public fun call(id: String?, tool: String, content: String) {
-            call(Message.Tool.Call(id, tool, content, ResponseMetaInfo.create(clock)))
-        }
-
-        /**
-         * Adds a tool result message to the prompt.
-         *
-         * Tool results represent the output from executing a tool.
-         *
-         * @param result The tool result message to add
-         */
-        public fun result(result: Message.Tool.Result) {
-            this@PromptBuilder.messages
-                .indexOfLast { it is Message.Tool.Call && it.id == result.id }
-                .takeIf { it != -1 }
-                ?.let { index -> this@PromptBuilder.messages.add(index + 1, result) }
-                ?: throw IllegalStateException("Failed to add tool result: no call message with id ${result.id}")
-        }
-
-        /**
-         * Adds a tool result message to the prompt.
-         *
-         * This method creates a `Message.Tool.Result` instance and adds it to the message list.
-         * Tool results represent the output from executing a tool with the provided parameters.
-         *
-         * @param id The unique identifier for the tool result message.
-         * @param tool The name of the tool that provided the result.
-         * @param content The content or payload of the tool result.
-         */
-        public fun result(id: String?, tool: String, content: String) {
-            result(Message.Tool.Result(id, tool, content, RequestMetaInfo.create(clock)))
-        }
+    internal fun build(): Prompt {
+        return Prompt(
+            id = id,
+            systemContext = systemContext,
+            developerContext = developerContext,
+            conversation = ConversationGraph(harmonyMessages.toList()),
+            metadata = metadata
+        )
     }
-
-    private val tool = ToolMessageBuilder(clock)
-
-    /**
-     * Adds tool-related messages to the prompt using a ToolMessageBuilder.
-     *
-     * Example:
-     * ```kotlin
-     * tool {
-     *     call(Message.Tool.Call("calculator", "{ \"operation\": \"add\", \"a\": 5, \"b\": 3 }"))
-     *     result(Message.Tool.Result("calculator", "8"))
-     * }
-     * ```
-     *
-     * @param init The initialization block for the ToolMessageBuilder
-     */
-    public fun tool(init: ToolMessageBuilder.() -> Unit) {
-        tool.init()
-    }
-
-    /**
-     * Builds and returns a Prompt object from the current state of the builder.
-     *
-     * @return A new Prompt object
-     */
-    internal fun build(): Prompt = Prompt(messages.toList(), id, params)
 }

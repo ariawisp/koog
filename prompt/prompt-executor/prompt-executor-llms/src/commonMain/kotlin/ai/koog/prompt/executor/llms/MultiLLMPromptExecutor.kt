@@ -4,7 +4,6 @@ import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.LLMClient
-import ai.koog.prompt.executor.model.LLMChoice
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
@@ -139,7 +138,7 @@ public open class MultiLLMPromptExecutor(
      * @param prompt The prompt to execute, containing the messages and parameters.
      * @param model The LLM model to use for execution.
      **/
-    override suspend fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
+    public fun executeStreaming(prompt: Prompt, model: LLModel): Flow<String> = flow {
         logger.debug { "Executing streaming prompt: $prompt with model: $model" }
 
         val provider = model.provider
@@ -161,11 +160,11 @@ public open class MultiLLMPromptExecutor(
      * @return A list of `LLMChoice` objects containing the choices generated based on the prompt.
      * @throws IllegalArgumentException If no client is found for the model's provider and no fallback settings are configured.
      */
-    override suspend fun executeMultipleChoices(
+    public suspend fun executeMultipleChoices(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
-    ): List<LLMChoice> {
+    ): List<Message.Response> {
         logger.debug { "Executing prompt: $prompt with tools: $tools and model: $model" }
 
         val provider = model.provider
@@ -193,7 +192,7 @@ public open class MultiLLMPromptExecutor(
      * @return A `ModerationResult` representing the result of the moderation process.
      * @throws IllegalArgumentException If no client is found for the model's provider.
      */
-    override suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult {
+    public suspend fun moderate(prompt: Prompt, model: LLModel): ModerationResult {
         logger.debug { "Moderating multi-modal content with model: ${model.id}" }
 
         val provider = model.provider
