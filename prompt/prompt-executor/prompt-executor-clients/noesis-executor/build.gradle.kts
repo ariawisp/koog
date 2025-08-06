@@ -315,7 +315,6 @@ kotlin {
             dependencies {
                 api(project(":prompt:prompt-executor:prompt-executor-clients"))
                 api(project(":prompt:prompt-model"))
-                implementation(project(":agents:agents-core"))
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.oshai.kotlin.logging)

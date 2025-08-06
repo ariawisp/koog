@@ -4,9 +4,30 @@ import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.harmony.*
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.message.Message
 import ai.koog.agents.core.tools.ToolDescriptor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
+
+/**
+ * Response from LLM execution.
+ * Simplified response type for Noesis Runtime.
+ */
+@Serializable
+public data class Response(
+    val content: String,
+    val toolCalls: List<ToolCall> = emptyList(),
+    val finishReason: String? = null
+)
+
+/**
+ * Tool call in a response.
+ */
+@Serializable
+public data class ToolCall(
+    val id: String,
+    val name: String,
+    val arguments: String
+)
 
 /**
  * PromptExecutor - Execution interface for Koog prompts.
@@ -19,13 +40,13 @@ public interface PromptExecutor {
 
     /**
      * Execute a Prompt (which contains HarmonyCore internally).
-     * Returns legacy Message.Response for compatibility with agents.
+     * Returns Response for Noesis Runtime.
      */
     public suspend fun execute(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor> = emptyList()
-    ): List<Message.Response>
+    ): List<Response>
     
     /**
      * Execute a prompt and return a streaming flow of response chunks.
@@ -42,7 +63,7 @@ public interface PromptExecutor {
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor> = emptyList()
-    ): List<Message.Response> = execute(prompt, model, tools)
+    ): List<Response> = execute(prompt, model, tools)
     
     /**
      * Moderate the content of a prompt for safety.
