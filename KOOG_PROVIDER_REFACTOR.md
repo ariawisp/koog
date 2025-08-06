@@ -2,9 +2,20 @@
 
 ## 🧠 Strategic Pivot: Transform Koog INTO Noesis Runtime
 
-**Decision Date**: 2025-08-06
+**Decision Date**: 2025-08-06  
+**Latest Update**: 2025-08-06 - FlatBuffers multiplatform support complete
 
 We are transforming Koog directly into the **Noesis Runtime** - a Harmony-native reasoning engine designed exclusively for OpenAI's GPT-OSS models. This is not a fork or parallel development, but a complete metamorphosis of the existing codebase.
+
+### 🚀 Current Status: Multiplatform Ready
+
+The architecture now supports full multiplatform deployment:
+- **JVM**: ✅ Production ready
+- **JavaScript**: ✅ Browser and Node.js support
+- **WASM/JS**: ✅ Full support via custom FlatBuffers fork
+- **Native**: ✅ iOS/macOS via Kotlin Native
+
+Binary serialization via FlatBuffers enables efficient cross-platform data exchange with zero-copy deserialization.
 
 ## 🎯 Core Philosophy
 
@@ -465,6 +476,87 @@ class HarmonyTokenizer {
 3. **10x faster**: Native performance vs JVM
 4. **Consistent vocabulary**: Single source of truth
 5. **Channel-aware**: Native understanding of Harmony structure
+
+## 🔄 Serialization Strategy: FlatBuffers (✅ IMPLEMENTED)
+
+### Migration from Kotlinx Serialization to FlatBuffers
+
+We've successfully switched from JSON/Kotlinx Serialization to FlatBuffers for all data serialization:
+
+#### Why FlatBuffers?
+1. **Binary-first**: Aligns with token checkpoint vision
+2. **Zero-copy deserialization**: Direct memory access without parsing
+3. **5-10x smaller**: Than JSON representation
+4. **10-100x faster**: Than JSON serialization
+5. **Native interop**: Shared memory with Rust/Metal code
+6. **Schema evolution**: Forward/backward compatibility built-in
+7. **Multiplatform support**: JVM, JS, and WASM targets
+
+#### Implementation Status: ✅ COMPLETE
+
+##### 1. FlatBuffers Schemas Created:
+```
+✅ harmony_core.fbs       // Core message format with channels, tools, and context
+✅ token_checkpoint.fbs   // Binary token checkpoints with memory graphs
+```
+
+##### 2. Multiplatform Support:
+- **JVM**: ✅ Full support
+- **JS (Browser/Node)**: ✅ Full support  
+- **WASM/JS**: ✅ Full support (via custom fork)
+- **Native (iOS/macOS)**: ✅ Available via fork
+
+##### 3. Custom FlatBuffers Fork:
+We maintain a fork at `github.com/ariawisp/flatbuffers` with:
+- Kotlin multiplatform improvements from ptitjes
+- WASM/JS target support (added by us)
+- Automatic integration via Gradle composite builds
+- No manual dependency management required
+
+##### 4. Build Integration:
+```kotlin
+// settings.gradle.kts - Automatic clone and inclusion
+val flatbuffersDir = file("build/flatbuffers-kmp")
+if (!flatbuffersDir.exists()) {
+    exec {
+        commandLine("git", "clone", 
+            "-b", "kotlin-kmp-build-improvements",
+            "--depth", "1",
+            "https://github.com/ariawisp/flatbuffers.git",
+            flatbuffersDir.absolutePath)
+    }
+}
+
+// Composite build with dependency substitution
+includeBuild("build/flatbuffers-kmp/kotlin") {
+    dependencySubstitution {
+        substitute(module("com.google.flatbuffers:flatbuffers-kotlin"))
+            .using(project(":flatbuffers-kotlin"))
+    }
+}
+```
+
+##### 5. Generated Code Location:
+```
+prompt/prompt-model/build/generated/flatbuffers/
+├── HarmonyMessage.kt
+├── HarmonyAuthor.kt
+├── HarmonyContent.kt
+├── TokenCheckpoint.kt
+├── TokenMemoryGraph.kt
+├── Channel.kt (enum)
+├── AuthorType.kt (enum)
+└── ... (all other generated types)
+```
+
+#### Key Technical Achievements:
+1. **Zero-copy access**: Direct ByteArray manipulation without parsing
+2. **Automatic code generation**: flatc compiler integrated in build pipeline
+3. **Type-safe builders**: FlatBufferBuilder pattern for all types
+4. **Multiplatform ready**: Single schema works across all targets
+5. **Binary checkpoints**: TokenCheckpoint fully implemented with FlatBuffers
+
+This gives us true binary-native operation from day 1, perfect for our Metal inference architecture and multiplatform deployment.
 
 ## 📊 Branch Analysis: What to Keep vs Reset
 

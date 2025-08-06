@@ -1,0 +1,81 @@
+// FlatBuffers schema for binary token checkpoints
+// Enables perfect state reconstruction and instant recovery
+
+include "harmony_core.fbs";
+
+namespace ai.koog.noesis.flatbuffers;
+
+// Channel range in token stream
+table ChannelRange {
+    channel: Channel;
+    start_index: int;
+    end_index: int;
+}
+
+// Token memory node
+table TokenMemoryNode {
+    id: string;
+    tokens: [int]; // Raw token IDs
+    embedding: [float]; // Optional embedding vector
+    timestamp: long;
+    metadata: [KeyValue];
+    connections: [string]; // IDs of connected nodes
+}
+
+// Token memory graph
+table TokenMemoryGraph {
+    nodes: [TokenMemoryNode];
+    root_node: string;
+    last_accessed: long;
+}
+
+// Binary token checkpoint for perfect state recovery
+table TokenCheckpoint {
+    // Core checkpoint data
+    checkpoint_id: string;
+    model_id: string;
+    tokens: [int]; // Raw token IDs, not text
+    
+    // Channel information
+    channels: [ChannelRange];
+    
+    // Checkpoint metadata
+    timestamp: long;
+    parent_checkpoint: string; // For branching/forking
+    branch_point: int; // Token index where branch occurred
+    
+    // Memory state
+    memory_graph: TokenMemoryGraph;
+    
+    // Model state (for perfect reproduction)
+    model_config: ModelConfig;
+    random_seed: long;
+    
+    // Statistics
+    token_count: int;
+    checkpoint_size: int; // Size in bytes
+    compression_ratio: float;
+    
+    // Extensible metadata
+    metadata: [KeyValue];
+}
+
+// Checkpoint manifest for managing multiple checkpoints
+table CheckpointManifest {
+    checkpoints: [TokenCheckpoint];
+    active_checkpoint: string;
+    created_at: long;
+    last_modified: long;
+}
+
+// Delta between checkpoints (for efficient storage)
+table CheckpointDelta {
+    from_checkpoint: string;
+    to_checkpoint: string;
+    added_tokens: [int];
+    removed_token_count: int;
+    memory_delta: TokenMemoryGraph;
+    timestamp: long;
+}
+
+root_type TokenCheckpoint;

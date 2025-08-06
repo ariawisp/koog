@@ -1,0 +1,129 @@
+// FlatBuffers schema for HarmonyCore - the foundational message format for Noesis Runtime
+// This replaces all JSON serialization with binary-native operation
+
+namespace ai.koog.noesis.flatbuffers;
+
+// Author types in Harmony
+enum AuthorType : byte {
+    User = 0,
+    Assistant = 1, 
+    System = 2,
+    Tool = 3
+}
+
+// Content types
+enum ContentType : byte {
+    Text = 0,
+    ToolCall = 1,
+    ToolResult = 2,
+    Analysis = 3,
+    Commentary = 4
+}
+
+// Channel types for multi-stream reasoning
+enum Channel : byte {
+    Final = 0,      // User-facing responses
+    Analysis = 1,   // Internal reasoning (never exposed)
+    Commentary = 2, // Tool interactions  
+    Debug = 3       // Debug/trace information
+}
+
+// Tool call representation
+table ToolCall {
+    id: string;
+    name: string;
+    arguments: string; // Still JSON for now, will be binary later
+}
+
+// Tool result 
+table ToolResult {
+    tool_call_id: string;
+    content: string;
+    is_error: bool = false;
+}
+
+// Content block in a message
+table HarmonyContent {
+    type: ContentType;
+    text: string;
+    tool_call: ToolCall;
+    tool_result: ToolResult;
+    channel: Channel = Final;
+}
+
+// Author information
+table HarmonyAuthor {
+    type: AuthorType;
+    name: string;
+    role: string; // For system prompts
+}
+
+// Main Harmony message structure
+table HarmonyMessage {
+    author: HarmonyAuthor;
+    recipient: string;
+    content: [HarmonyContent];
+    channel: Channel = Final;
+    timestamp: long;
+    metadata: [KeyValue]; // Extensible metadata
+}
+
+// Key-value pair for metadata
+table KeyValue {
+    key: string;
+    value: string;
+}
+
+// Harmony conversation/context
+table HarmonyContext {
+    messages: [HarmonyMessage];
+    model_config: ModelConfig;
+    tools: [ToolDescriptor];
+    session_id: string;
+    parent_context: string; // For branching/forking
+}
+
+// Model configuration (replaces LLMParams)
+table ModelConfig {
+    model: string;
+    temperature: float = 0.7;
+    max_tokens: int = 4096;
+    top_p: float = 1.0;
+    frequency_penalty: float = 0.0;
+    presence_penalty: float = 0.0;
+    stop_sequences: [string];
+}
+
+// Tool descriptor
+table ToolDescriptor {
+    name: string;
+    description: string;
+    required_parameters: [ToolParameter];
+    optional_parameters: [ToolParameter];
+}
+
+// Tool parameter
+table ToolParameter {
+    name: string;
+    type: string;
+    description: string;
+    enum_values: [string];
+    default_value: string;
+}
+
+// Response from LLM execution
+table Response {
+    content: string;
+    tool_calls: [ToolCall];
+    finish_reason: string;
+    usage: TokenUsage;
+}
+
+// Token usage statistics
+table TokenUsage {
+    prompt_tokens: int;
+    completion_tokens: int;
+    total_tokens: int;
+}
+
+root_type HarmonyMessage;

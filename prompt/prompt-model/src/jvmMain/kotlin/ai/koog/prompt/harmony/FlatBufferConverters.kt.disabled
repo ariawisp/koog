@@ -1,0 +1,258 @@
+package ai.koog.prompt.harmony
+
+import ai.koog.noesis.flatbuffers.*
+import ai.koog.prompt.dsl.ModelConfig
+import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.executor.model.Response
+import ai.koog.agents.core.tools.ToolDescriptor
+import ai.koog.agents.core.tools.ToolParameter
+import com.google.flatbuffers.FlatBufferBuilder
+import java.nio.ByteBuffer
+
+/**
+ * Utility object for converting between Koog types and FlatBuffers.
+ * This replaces JSON serialization with binary-native operation.
+ */
+public object FlatBufferConverters {
+    
+    /**
+     * Convert a HarmonyCore message to FlatBuffer binary format.
+     */
+    public fun HarmonyCore.toFlatBuffer(): ByteArray {
+        val builder = FlatBufferBuilder(1024)
+        
+        // Build author
+        val authorOffset = when (author) {
+            is HarmonyAuthor.User -> createAuthor(builder, AuthorType.User, author.name ?: "user")
+            is HarmonyAuthor.Assistant -> createAuthor(builder, AuthorType.Assistant, author.name ?: "assistant")
+            is HarmonyAuthor.System -> createAuthor(builder, AuthorType.System, author.name ?: "system")
+            is HarmonyAuthor.Tool -> createAuthor(builder, AuthorType.Tool, author.name ?: "tool")
+        }
+        
+        // Build content blocks
+        val contentOffsets = content.map { block ->
+            when (block) {
+                is HarmonyContent.Text -> createTextContent(builder, block.text)
+                is HarmonyContent.ToolCall -> createToolCallContent(builder, block.call)
+                is HarmonyContent.ToolResult -> createToolResultContent(builder, block.result)
+                else -> 0 // Skip unsupported content types for now
+            }
+        }.filter { it != 0 }
+        
+        val contentVector = HarmonyMessage.createContentVector(builder, contentOffsets.toIntArray())
+        
+        // Build recipient string
+        val recipientOffset = recipient?.let { builder.createString(it) } ?: 0
+        
+        // Determine channel
+        val channel = when {
+            content.any { it is HarmonyContent.Analysis } -> Channel.Analysis
+            content.any { it is HarmonyContent.Commentary } -> Channel.Commentary
+            else -> Channel.Final
+        }
+        
+        // Build the message
+        HarmonyMessage.startHarmonyMessage(builder)
+        HarmonyMessage.addAuthor(builder, authorOffset)
+        if (recipientOffset != 0) {
+            HarmonyMessage.addRecipient(builder, recipientOffset)
+        }
+        HarmonyMessage.addContent(builder, contentVector)
+        HarmonyMessage.addChannel(builder, channel.value)
+        HarmonyMessage.addTimestamp(builder, System.currentTimeMillis())
+        
+        val message = HarmonyMessage.endHarmonyMessage(builder)
+        builder.finish(message)
+        
+        return builder.sizedByteArray()
+    }
+    
+    /**
+     * Parse a FlatBuffer binary back to HarmonyCore.
+     */
+    public fun ByteArray.toHarmonyCore(): HarmonyCore {
+        val buffer = ByteBuffer.wrap(this)
+        val message = HarmonyMessage.getRootAsHarmonyMessage(buffer)
+        
+        // Parse author
+        val author = message.author?.let { fbAuthor ->
+            when (fbAuthor.type) {
+                AuthorType.User -> HarmonyAuthor.User(fbAuthor.name)
+                AuthorType.Assistant -> HarmonyAuthor.Assistant(fbAuthor.name)
+                AuthorType.System -> HarmonyAuthor.System(fbAuthor.name, fbAuthor.role)
+                AuthorType.Tool -> HarmonyAuthor.Tool(fbAuthor.name)
+                else -> HarmonyAuthor.User()
+            }
+        } ?: HarmonyAuthor.User()
+        
+        // Parse content
+        val content = mutableListOf<HarmonyContent>()
+        for (i in 0 until message.contentLength) {
+            val fbContent = message.content(i)
+            when (fbContent?.type) {
+                ContentType.Text -> {
+                    fbContent.text?.let { content.add(HarmonyContent.Text(it)) }
+                }
+                ContentType.ToolCall -> {
+                    fbContent.toolCall?.let { call ->
+                        content.add(HarmonyContent.ToolCall(
+                            HarmonyToolCall(
+                                id = call.id ?: "",
+                                name = call.name ?: "",
+                                arguments = call.arguments ?: ""
+                            )
+                        ))
+                    }
+                }
+                ContentType.ToolResult -> {
+                    fbContent.toolResult?.let { result ->
+                        content.add(HarmonyContent.ToolResult(
+                            HarmonyToolResult(
+                                toolCallId = result.toolCallId ?: "",
+                                content = result.content ?: "",
+                                isError = result.isError
+                            )
+                        ))
+                    }
+                }
+                else -> {} // Skip unknown content types
+            }
+        }
+        
+        return HarmonyCore(
+            author = author,
+            recipient = message.recipient,
+            content = content
+        )
+    }
+    
+    /**
+     * Convert a ModelConfig to FlatBuffer format.
+     */
+    public fun ModelConfig.toFlatBuffer(): ByteArray {
+        val builder = FlatBufferBuilder(256)
+        
+        val modelOffset = builder.createString(model)
+        val stopSeqOffsets = stopSequences?.map { builder.createString(it) } ?: emptyList()
+        val stopSeqVector = if (stopSeqOffsets.isNotEmpty()) {
+            ai.koog.noesis.flatbuffers.ModelConfig.createStopSequencesVector(
+                builder, 
+                stopSeqOffsets.toIntArray()
+            )
+        } else 0
+        
+        ai.koog.noesis.flatbuffers.ModelConfig.startModelConfig(builder)
+        ai.koog.noesis.flatbuffers.ModelConfig.addModel(builder, modelOffset)
+        ai.koog.noesis.flatbuffers.ModelConfig.addTemperature(builder, temperature)
+        ai.koog.noesis.flatbuffers.ModelConfig.addMaxTokens(builder, maxTokens)
+        ai.koog.noesis.flatbuffers.ModelConfig.addTopP(builder, topP)
+        if (stopSeqVector != 0) {
+            ai.koog.noesis.flatbuffers.ModelConfig.addStopSequences(builder, stopSeqVector)
+        }
+        
+        val config = ai.koog.noesis.flatbuffers.ModelConfig.endModelConfig(builder)
+        builder.finish(config)
+        
+        return builder.sizedByteArray()
+    }
+    
+    /**
+     * Convert a Response to FlatBuffer format.
+     */
+    public fun Response.toFlatBuffer(): ByteArray {
+        val builder = FlatBufferBuilder(512)
+        
+        val contentOffset = builder.createString(content)
+        
+        // Build tool calls
+        val toolCallOffsets = toolCalls.map { call ->
+            val idOffset = builder.createString(call.id)
+            val nameOffset = builder.createString(call.name)
+            val argsOffset = builder.createString(call.arguments)
+            
+            ai.koog.noesis.flatbuffers.ToolCall.startToolCall(builder)
+            ai.koog.noesis.flatbuffers.ToolCall.addId(builder, idOffset)
+            ai.koog.noesis.flatbuffers.ToolCall.addName(builder, nameOffset)
+            ai.koog.noesis.flatbuffers.ToolCall.addArguments(builder, argsOffset)
+            ai.koog.noesis.flatbuffers.ToolCall.endToolCall(builder)
+        }
+        
+        val toolCallsVector = if (toolCallOffsets.isNotEmpty()) {
+            ai.koog.noesis.flatbuffers.Response.createToolCallsVector(
+                builder,
+                toolCallOffsets.toIntArray()
+            )
+        } else 0
+        
+        val finishReasonOffset = finishReason?.let { builder.createString(it) } ?: 0
+        
+        ai.koog.noesis.flatbuffers.Response.startResponse(builder)
+        ai.koog.noesis.flatbuffers.Response.addContent(builder, contentOffset)
+        if (toolCallsVector != 0) {
+            ai.koog.noesis.flatbuffers.Response.addToolCalls(builder, toolCallsVector)
+        }
+        if (finishReasonOffset != 0) {
+            ai.koog.noesis.flatbuffers.Response.addFinishReason(builder, finishReasonOffset)
+        }
+        
+        val response = ai.koog.noesis.flatbuffers.Response.endResponse(builder)
+        builder.finish(response)
+        
+        return builder.sizedByteArray()
+    }
+    
+    // Helper functions for creating FlatBuffer components
+    
+    private fun createAuthor(builder: FlatBufferBuilder, type: Byte, name: String?, role: String? = null): Int {
+        val nameOffset = name?.let { builder.createString(it) } ?: 0
+        val roleOffset = role?.let { builder.createString(it) } ?: 0
+        
+        HarmonyAuthor.startHarmonyAuthor(builder)
+        HarmonyAuthor.addType(builder, type)
+        if (nameOffset != 0) {
+            HarmonyAuthor.addName(builder, nameOffset)
+        }
+        if (roleOffset != 0) {
+            HarmonyAuthor.addRole(builder, roleOffset)
+        }
+        return HarmonyAuthor.endHarmonyAuthor(builder)
+    }
+    
+    private fun createTextContent(builder: FlatBufferBuilder, text: String): Int {
+        val textOffset = builder.createString(text)
+        
+        ai.koog.noesis.flatbuffers.HarmonyContent.startHarmonyContent(builder)
+        ai.koog.noesis.flatbuffers.HarmonyContent.addType(builder, ContentType.Text)
+        ai.koog.noesis.flatbuffers.HarmonyContent.addText(builder, textOffset)
+        return ai.koog.noesis.flatbuffers.HarmonyContent.endHarmonyContent(builder)
+    }
+    
+    private fun createToolCallContent(builder: FlatBufferBuilder, call: HarmonyToolCall): Int {
+        val idOffset = builder.createString(call.id)
+        val nameOffset = builder.createString(call.name)
+        val argsOffset = builder.createString(call.arguments)
+        
+        val toolCallOffset = ai.koog.noesis.flatbuffers.ToolCall.createToolCall(
+            builder, idOffset, nameOffset, argsOffset
+        )
+        
+        ai.koog.noesis.flatbuffers.HarmonyContent.startHarmonyContent(builder)
+        ai.koog.noesis.flatbuffers.HarmonyContent.addType(builder, ContentType.ToolCall)
+        ai.koog.noesis.flatbuffers.HarmonyContent.addToolCall(builder, toolCallOffset)
+        return ai.koog.noesis.flatbuffers.HarmonyContent.endHarmonyContent(builder)
+    }
+    
+    private fun createToolResultContent(builder: FlatBufferBuilder, result: HarmonyToolResult): Int {
+        val idOffset = builder.createString(result.toolCallId)
+        val contentOffset = builder.createString(result.content)
+        
+        val toolResultOffset = ai.koog.noesis.flatbuffers.ToolResult.createToolResult(
+            builder, idOffset, contentOffset, result.isError
+        )
+        
+        ai.koog.noesis.flatbuffers.HarmonyContent.startHarmonyContent(builder)
+        ai.koog.noesis.flatbuffers.HarmonyContent.addType(builder, ContentType.ToolResult)
+        ai.koog.noesis.flatbuffers.HarmonyContent.addToolResult(builder, toolResultOffset)
+        return ai.koog.noesis.flatbuffers.HarmonyContent.endHarmonyContent(builder)
+    }
+}
