@@ -1,7 +1,6 @@
 package ai.koog.prompt.dsl
 
 import ai.koog.prompt.harmony.*
-import ai.koog.prompt.params.LLMParams
 import ai.koog.agents.core.tools.ToolDescriptor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -35,7 +34,7 @@ public class PromptBuilder internal constructor(
     private val harmonyMessages = mutableListOf<HarmonyMessage>()
     private var systemContext = SystemContext()
     private var developerContext = DeveloperContext.empty()
-    private var metadata = LLMParams()
+    private var metadata = ModelConfig()
 
     internal companion object {
         internal fun from(prompt: Prompt, clock: Clock = Clock.System): PromptBuilder = PromptBuilder(
@@ -95,7 +94,7 @@ public class PromptBuilder internal constructor(
      * Set temperature for generation (standard parameter for all providers).
      */
     public fun temperature(temp: Double) {
-        metadata = metadata.copy(temperature = temp)
+        metadata = metadata.copy(temperature = temp.toFloat())
     }
     
     /**

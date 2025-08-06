@@ -1,10 +1,21 @@
 package ai.koog.prompt.dsl
 
 import ai.koog.prompt.harmony.*
-import ai.koog.prompt.params.LLMParams
 import ai.koog.agents.core.tools.ToolDescriptor
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
+
+/**
+ * Model configuration for Noesis Runtime.
+ * Simplified configuration focused on GPT-OSS models.
+ */
+@Serializable
+public data class ModelConfig(
+    val model: String = "gpt-oss-20b",
+    val temperature: Float = 0.7f,
+    val maxTokens: Int = 4096,
+    val topP: Float = 1.0f
+)
 
 /**
  * Prompt - The canonical Harmony intermediate representation for all LLM operations.
@@ -21,7 +32,7 @@ public data class Prompt(
     val systemContext: SystemContext,
     val developerContext: DeveloperContext,
     val conversation: ConversationGraph,
-    val metadata: LLMParams
+    val metadata: ModelConfig = ModelConfig()
 ) {
 
     /**
@@ -33,7 +44,7 @@ public data class Prompt(
     /**
      * Native Harmony parameters - alias for metadata
      */
-    public val params: LLMParams
+    public val params: ModelConfig
         get() = metadata
 
     /**
@@ -48,7 +59,7 @@ public data class Prompt(
             systemContext = SystemContext(),
             developerContext = DeveloperContext.empty(),
             conversation = ConversationGraph.empty(),
-            metadata = LLMParams()
+            metadata = ModelConfig()
         )
 
         /**
@@ -121,12 +132,12 @@ public fun prompt(
 /**
  * Updates prompt parameters.
  */
-public fun Prompt.withUpdatedParams(block: LLMParams.() -> LLMParams): Prompt {
+public fun Prompt.withUpdatedParams(block: ModelConfig.() -> ModelConfig): Prompt {
     return copy(metadata = metadata.block())
 }
 
 /**
  * Updates prompt parameters (alternate name).
  */
-public fun Prompt.withParams(block: LLMParams.() -> LLMParams): Prompt = 
+public fun Prompt.withParams(block: ModelConfig.() -> ModelConfig): Prompt = 
     withUpdatedParams(block)
