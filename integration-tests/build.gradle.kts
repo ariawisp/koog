@@ -25,13 +25,13 @@ kotlin {
                 implementation(project(":agents:agents-features:agents-features-trace"))
                 implementation(project(":agents:agents-features:agents-features-snapshot"))
                 implementation(
-                    project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-anthropic-client")
+                    project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor")
                 )
-                implementation(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-openai-client"))
+                implementation(project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor"))
                 implementation(
-                    project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-openrouter-client")
+                    project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor")
                 )
-                implementation(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-google-client"))
+                implementation(project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor"))
                 implementation(libs.junit.jupiter.params)
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.kotlinx.serialization.json)

@@ -1,4 +1,4 @@
-package ai.koog.prompt.executor.clients.harmony
+package ai.koog.prompt.executor.noesis
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Files

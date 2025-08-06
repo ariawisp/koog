@@ -25,7 +25,7 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-                implementation(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-openai-client"))
+                implementation(project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.coroutines.test)
             }

@@ -1,4 +1,4 @@
-package ai.koog.prompt.executor.clients.harmony
+package ai.koog.prompt.executor.noesis
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

@@ -19,7 +19,7 @@ kotlin {
                 api(project(":prompt:prompt-llm"))
                 api(project(":prompt:prompt-structure"))
 
-                api(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-openai-client"))
+                api(project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor"))
                 api(project(":prompt:prompt-markdown"))
 
                 api(libs.kotlinx.datetime)

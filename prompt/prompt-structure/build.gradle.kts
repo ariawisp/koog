@@ -15,7 +15,7 @@ kotlin {
                 api(project(":prompt:prompt-executor:prompt-executor-model"))
 
                 api(project(":prompt:prompt-markdown"))
-                api(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-openai-client"))
+                api(project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor"))
                 api(libs.kotlinx.coroutines.core)
                 api(libs.kotlinx.serialization.json)
                 implementation(libs.oshai.kotlin.logging)

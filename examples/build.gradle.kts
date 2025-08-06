@@ -28,9 +28,7 @@ dependencies {
 
     api(project(":prompt:prompt-markdown"))
     api(project(":prompt:prompt-structure"))
-    api(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-openai-client"))
-    api(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-anthropic-client"))
-    api(project(":prompt:prompt-executor:prompt-executor-clients:prompt-executor-bedrock-client"))
+    api(project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor"))
     api(project(":prompt:prompt-executor:prompt-executor-llms"))
     api(project(":prompt:prompt-executor:prompt-executor-llms-all"))
     api(project(":koog-ktor"))

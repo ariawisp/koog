@@ -1,4 +1,4 @@
-package ai.koog.prompt.executor.clients.harmony
+package ai.koog.prompt.executor.noesis
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*

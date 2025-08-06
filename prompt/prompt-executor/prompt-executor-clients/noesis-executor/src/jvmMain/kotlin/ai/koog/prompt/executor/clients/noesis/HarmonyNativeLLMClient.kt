@@ -1,4 +1,4 @@
-package ai.koog.prompt.executor.clients.harmony
+package ai.koog.prompt.executor.noesis
 
 import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.tools.ToolParameterType
