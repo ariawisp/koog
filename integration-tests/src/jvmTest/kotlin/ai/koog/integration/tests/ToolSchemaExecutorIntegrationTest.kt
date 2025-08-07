@@ -18,8 +18,8 @@ import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.params.LLMParams.ToolChoice
+import ai.koog.prompt.dsl.ModelConfig
+// Note: ToolChoice removed in Harmony-native architecture
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -134,7 +134,7 @@ class ToolSchemaExecutorIntegrationTest {
 
         val writeFileTool = tools.first { it.name == "writeFile" }
 
-        val prompt = prompt("test-write-file", params = LLMParams(toolChoice = ToolChoice.Required)) {
+        val prompt = prompt("test-write-file", params = ModelConfig()) {
             system("You are a helpful assistant with access to a file writing tool. ALWAYS use tools.")
             user("Please write 'Hello, World!' to a file named 'hello.txt'.")
         }
@@ -155,7 +155,7 @@ class ToolSchemaExecutorIntegrationTest {
     @MethodSource("invalidToolDescriptors")
     fun integration_testInvalidToolDescriptorShouldFail(invalidToolDescriptor: ToolDescriptor, message: String) =
         runTest(timeout = 300.seconds) {
-            val prompt = prompt("test-invalid-tool", params = LLMParams(toolChoice = ToolChoice.Required)) {
+            val prompt = prompt("test-invalid-tool", params = ModelConfig()) {
                 system("You are a helpful assistant with access to tools.")
                 user("Hi.")
             }

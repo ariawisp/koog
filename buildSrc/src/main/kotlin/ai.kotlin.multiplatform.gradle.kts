@@ -20,19 +20,20 @@ kotlin {
         configureTests()
     }
 
-    js(IR) {
-        browser {
-            binaries.library()
-        }
-
-        configureTests()
-    }
-
-    wasmJs {
-        browser()
-        nodejs()
-        binaries.library()
-    }
+    // Temporarily disabled JS and WASM targets for Noesis Runtime focus
+    // js(IR) {
+    //     browser {
+    //         binaries.library()
+    //     }
+    //
+    //     configureTests()
+    // }
+    //
+    // wasmJs {
+    //     browser()
+    //     nodejs()
+    //     binaries.library()
+    // }
 }
 
 configureJvmJarManifest("jvmJar")

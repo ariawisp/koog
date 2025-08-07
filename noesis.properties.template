@@ -1,0 +1,18 @@
+# Noesis Runtime Configuration Template
+# Copy this file to 'noesis.properties' and configure your local paths
+# The noesis.properties file is git-ignored and won't affect your git diff
+
+# Path to your GPT-OSS model file (required)
+# Download from: https://huggingface.co/collections/openai/gpt-oss-models
+# Example: /Users/yourname/models/gpt-oss-20b/model.bin
+gptoss.model.path=/path/to/your/model.bin
+
+# Optional: Override the default GPT-OSS build directory
+# Leave commented to use the auto-built version
+# gptoss.build.path=/path/to/custom/gpt-oss/build
+
+# Optional: Set the number of tokens to generate in tests
+# gptoss.test.max_tokens=100
+
+# Optional: Set temperature for generation (0.0 to 1.0)
+# gptoss.test.temperature=0.7

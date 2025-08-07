@@ -1,0 +1,24 @@
+diff --git a/kotlin/convention-plugins/src/main/kotlin/convention.publication.gradle.kts b/kotlin/convention-plugins/src/main/kotlin/convention.publication.gradle.kts
+index e5262796..63fc1aa9 100644
+--- a/kotlin/convention-plugins/src/main/kotlin/convention.publication.gradle.kts
++++ b/kotlin/convention-plugins/src/main/kotlin/convention.publication.gradle.kts
+@@ -89,7 +89,16 @@ publishing {
+   }
+ }
+ 
+-// Signing artifacts. Signing.* extra properties values will be used
+-signing {
+-  sign(publishing.publications)
++// Signing artifacts - disable for local builds
++if (project.hasProperty("signing.keyId") && 
++    project.property("signing.keyId") != null && 
++    project.property("signing.keyId").toString().isNotEmpty()) {
++  signing {
++    sign(publishing.publications)
++  }
++} else {
++  // Disable signing for local builds
++  tasks.withType<Sign> {
++    enabled = false
++  }
+ }

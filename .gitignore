@@ -27,6 +27,11 @@ local.properties
 # GPT-OSS build directory (from GitHub clone)
 **/gpt-oss/
 
+# Local configuration (user-specific paths)
+local.properties
+gradle.local.properties
+noesis.properties
+
 # macOS
 .DS_Store
 

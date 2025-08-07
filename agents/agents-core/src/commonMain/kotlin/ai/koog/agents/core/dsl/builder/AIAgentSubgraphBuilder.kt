@@ -14,7 +14,7 @@ import ai.koog.agents.core.agent.entity.ToolSelectionStrategy
 import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.tools.Tool
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -93,7 +93,7 @@ public abstract class AIAgentSubgraphBuilderBase<Input, Output> {
         name: String? = null,
         toolSelectionStrategy: ToolSelectionStrategy = ToolSelectionStrategy.ALL,
         llmModel: LLModel? = null,
-        llmParams: LLMParams? = null,
+        modelConfig: ModelConfig? = null,
         define: AIAgentSubgraphBuilderBase<Input, Output>.() -> Unit
     ): AIAgentSubgraphDelegate<Input, Output> {
         return AIAgentSubgraphBuilder<Input, Output>(
@@ -116,10 +116,10 @@ public abstract class AIAgentSubgraphBuilderBase<Input, Output> {
         name: String? = null,
         tools: List<Tool<*, *>>,
         llmModel: LLModel? = null,
-        llmParams: LLMParams? = null,
+        modelConfig: ModelConfig? = null,
         define: AIAgentSubgraphBuilderBase<Input, Output>.() -> Unit
     ): AIAgentSubgraphDelegate<Input, Output> {
-        return subgraph(name, ToolSelectionStrategy.Tools(tools.map { it.descriptor }), llmModel, llmParams, define)
+        return subgraph(name, ToolSelectionStrategy.Tools(tools.map { it.descriptor }), llmModel, modelConfig, define)
     }
 
     /**
@@ -251,7 +251,7 @@ public class AIAgentSubgraphBuilder<Input, Output>(
     outputType: KType,
     private val toolSelectionStrategy: ToolSelectionStrategy,
     private val llmModel: LLModel?,
-    private val llmParams: LLMParams?,
+    private val modelConfig: ModelConfig?,
 ) : AIAgentSubgraphBuilderBase<Input, Output>(),
     BaseBuilder<AIAgentSubgraphDelegate<Input, Output>> {
     override val nodeStart: StartNode<Input> = StartNode(subgraphName = name, type = inputType)
@@ -262,7 +262,7 @@ public class AIAgentSubgraphBuilder<Input, Output>(
             "FinishSubgraphNode can't be reached from the StartNode of the agent's graph. Please, review how it was defined."
         }
 
-        return AIAgentSubgraphDelegate(name, nodeStart, nodeFinish, toolSelectionStrategy, llmModel, llmParams)
+        return AIAgentSubgraphDelegate(name, nodeStart, nodeFinish, toolSelectionStrategy, llmModel, modelConfig)
     }
 }
 
@@ -290,7 +290,7 @@ public open class AIAgentSubgraphDelegate<Input, Output> internal constructor(
     public val nodeFinish: FinishNode<Output>,
     private val toolSelectionStrategy: ToolSelectionStrategy,
     private val llmModel: LLModel?,
-    private val llmParams: LLMParams?
+    private val modelConfig: ModelConfig?
 ) {
     private var subgraph: AIAgentSubgraph<Input, Output>? = null
 
@@ -315,7 +315,7 @@ public open class AIAgentSubgraphDelegate<Input, Output> internal constructor(
                 finish = nodeFinish,
                 toolSelectionStrategy = toolSelectionStrategy,
                 llmModel = llmModel,
-                llmParams = llmParams,
+                modelConfig = modelConfig,
             )
         }
 

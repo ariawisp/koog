@@ -23,7 +23,7 @@ import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.executor.ollama.client.OllamaClient
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.datetime.Clock
@@ -368,18 +368,18 @@ public class KoogAgentsConfig(private val scope: CoroutineScope) {
         /**
          * Configures and sets the prompt for the agent using the provided parameters and a prompt-building function.
          *
-         * @param llmParams The parameters that define the behavior of the language model, such as temperature
-         * and tool selection. Defaults to an instance of `LLMParams`.
+         * @param modelConfig The parameters that define the behavior of the language model, such as temperature.
+         * Defaults to an instance of `ModelConfig`.
          * @param buildPrompt A lambda function that is used to construct the prompt using a `PromptBuilder`.
          */
         @PromptDSL
         public fun prompt(
             name: String = "agent",
-            llmParams: LLMParams = LLMParams(),
+            modelConfig: ModelConfig = ModelConfig(),
             clock: Clock = Clock.System,
             build: PromptBuilder.() -> Unit
         ) {
-            prompt = koogPrompt(name, llmParams, clock, build)
+            prompt = koogPrompt(name, modelConfig, clock, build)
         }
 
         /**

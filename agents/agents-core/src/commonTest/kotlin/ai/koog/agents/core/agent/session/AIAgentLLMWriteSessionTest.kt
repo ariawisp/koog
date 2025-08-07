@@ -24,7 +24,7 @@ import ai.koog.prompt.llm.OllamaModels
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.prompt.message.ResponseMetaInfo
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -355,15 +355,15 @@ class AIAgentLLMWriteSessionTest {
     }
 
     @Test
-    fun testChangeLLMParams() = runTest {
+    fun testChangeModelConfig() = runTest {
         val mockExecutor = getMockExecutor {
             mockLLMAnswer("Changed params response").asDefaultResponse
         }
 
         val session = createSession(mockExecutor)
 
-        session.changeLLMParams(LLMParams(temperature = 0.5))
-        assertEquals(0.5, session.prompt.params.temperature)
+        session.changeModelConfig(ModelConfig(temperature = 0.5f))
+        assertEquals(0.5f, session.prompt.params.temperature)
 
         val response = session.requestLLM()
         assertEquals("Changed params response", response.content)

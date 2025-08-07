@@ -1,0 +1,77 @@
+// FlatBuffers schema for high-performance Noesis Runtime streaming events
+// Zero-copy communication between Rust and Kotlin through JNI
+
+namespace ai.koog.noesis.events;
+
+// Event types from Harmony StreamableParser
+enum EventType : byte {
+    ToolCall = 0,
+    ChannelSwitch = 1,
+    ContentDelta = 2,
+    MessageComplete = 3,
+    StreamComplete = 4,
+    ParseError = 5
+}
+
+// Tool call detected by Harmony parser
+table ToolCallEvent {
+    tool_name: string (required);
+    arguments_json: string (required);  // Will migrate to structured args later
+    recipient: string;
+    channel: string;
+}
+
+// Channel switch detected by Harmony parser
+table ChannelSwitchEvent {
+    from_channel: string;
+    to_channel: string (required);
+    recipient: string;
+}
+
+// Content delta from Harmony parser
+table ContentDeltaEvent {
+    text: string (required);
+    channel: string;
+    token_index: uint32;
+}
+
+// Message completion from Harmony parser
+table MessageCompleteEvent {
+    role: string (required);           // "assistant", "user", etc.
+    channel: string;
+    total_content_length: uint32;
+}
+
+// Stream completion
+table StreamCompleteEvent {
+    reason: string (required);         // "stop", "max_tokens", "tool_call", etc.
+    total_tokens: uint32;
+    generation_time_ms: uint32;
+}
+
+// Parse error from Harmony
+table ParseErrorEvent {
+    error_message: string (required);
+    token_position: uint32;
+    recovery_attempted: bool;
+}
+
+// Union of all event data types
+union EventData {
+    ToolCallEvent,
+    ChannelSwitchEvent,
+    ContentDeltaEvent,
+    MessageCompleteEvent,
+    StreamCompleteEvent,
+    ParseErrorEvent
+}
+
+// Main event structure - this is what gets serialized and passed through JNI
+table NoesisEvent {
+    type: EventType;
+    data: EventData (required);
+    timestamp_ns: uint64;              // High-resolution timestamp
+    sequence_id: uint32;               // For ordering in concurrent scenarios
+}
+
+root_type NoesisEvent;

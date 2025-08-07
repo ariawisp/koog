@@ -68,13 +68,11 @@ include(":examples")
 
 include(":integration-tests")
 
+include(":noesis-cli")
+
 include(":koog-agents")
 
-include(":prompt:prompt-cache:prompt-cache-files")
-include(":prompt:prompt-cache:prompt-cache-model")
-include(":prompt:prompt-cache:prompt-cache-redis")
-
-include(":prompt:prompt-executor:prompt-executor-cached")
+// Cache modules removed - Noesis Runtime handles caching in Rust
 
 include(":prompt:prompt-executor:prompt-executor-clients")
 include(":prompt:prompt-executor:prompt-executor-clients:noesis-executor")

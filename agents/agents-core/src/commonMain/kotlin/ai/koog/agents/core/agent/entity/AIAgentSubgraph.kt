@@ -12,7 +12,7 @@ import ai.koog.agents.core.prompt.Prompts.selectRelevantTools
 import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import ai.koog.prompt.structure.json.JsonSchemaGenerator
 import ai.koog.prompt.structure.json.JsonStructuredData
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -31,7 +31,7 @@ import kotlin.reflect.KType
  * @param finish The finishing node of the subgraph, which concludes the processing.
  * @param toolSelectionStrategy Strategy determining which tools should be available during this subgraph's execution.
  * @param llmModel Optional [LLModel] override for the subgraph execution.
- * @param llmParams Optional [LLMParams] override for the prompt for the subgraph execution.
+ * @param modelConfig Optional [ModelConfig] override for the prompt for the subgraph execution.
  */
 public open class AIAgentSubgraph<Input, Output>(
     override val name: String,
@@ -39,7 +39,7 @@ public open class AIAgentSubgraph<Input, Output>(
     public val finish: FinishNode<Output>,
     private val toolSelectionStrategy: ToolSelectionStrategy,
     private val llmModel: LLModel? = null,
-    private val llmParams: LLMParams? = null,
+    private val modelConfig: ModelConfig? = null,
 ) : AIAgentNodeBase<Input, Output>(), ExecutionPointNode {
     override val inputType: KType = start.inputType
     override val outputType: KType = finish.outputType

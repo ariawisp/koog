@@ -42,7 +42,7 @@ import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.message.Message
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -421,7 +421,7 @@ class AIAgentMultipleLLMIntegrationTest {
                     llm.writeSession {
                         model = AnthropicModels.Sonnet_3_7
                         rewritePrompt {
-                            prompt("test", params = LLMParams(toolChoice = LLMParams.ToolChoice.Auto)) {
+                            prompt("test", params = ModelConfig()) {
                                 system(
                                     "You are a helpful assistant. You need to solve my task. " +
                                         "CALL TOOLS!!! DO NOT SEND MESSAGES!!!!! ONLY SEND THE FINAL MESSAGE " +
@@ -450,7 +450,7 @@ class AIAgentMultipleLLMIntegrationTest {
                     llm.writeSession {
                         model = OpenAIModels.Chat.GPT4o
                         rewritePrompt {
-                            prompt("test", params = LLMParams(toolChoice = LLMParams.ToolChoice.Auto)) {
+                            prompt("test", params = ModelConfig()) {
                                 system(
                                     """
                                     You are a helpful assistant. You need to verify that the task is solved correctly.

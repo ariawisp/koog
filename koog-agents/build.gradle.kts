@@ -11,6 +11,7 @@ val excluded = setOf(
     ":agents:agents-test",
     ":examples",
     ":integration-tests",
+    ":noesis-cli", // Standalone CLI application
     ":koog-spring-boot-starter",
     ":koog-ktor",
     project.path, // the current project should not depend on itself
@@ -31,10 +32,7 @@ val included = setOf(
     ":agents:agents-utils",
     ":embeddings:embeddings-base",
     ":embeddings:embeddings-llm",
-    ":prompt:prompt-cache:prompt-cache-files",
-    ":prompt:prompt-cache:prompt-cache-model",
-    ":prompt:prompt-cache:prompt-cache-redis",
-    ":prompt:prompt-executor:prompt-executor-cached",
+    // Cache modules removed - handled by Noesis Runtime
     ":prompt:prompt-executor:prompt-executor-clients",
     ":prompt:prompt-executor:prompt-executor-clients:noesis-executor",
     ":prompt:prompt-executor:prompt-executor-llms",

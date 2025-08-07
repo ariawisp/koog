@@ -6,7 +6,7 @@ import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.Response
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -28,7 +28,7 @@ public open class SingleLLMPromptExecutor(
         private val logger = KotlinLogging.logger("ai.koog.prompt.executor.llms.LLMPromptExecutor")
     }
 
-    override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): List<Message.Response> {
+    override suspend fun execute(prompt: Prompt, model: LLModel, tools: List<ToolDescriptor>): List<Response> {
         logger.debug { "Executing prompt: $prompt with tools: $tools and model: $model" }
         val response = llmClient.execute(prompt, model, tools)
         logger.debug { "Response: $response" }
@@ -50,7 +50,7 @@ public open class SingleLLMPromptExecutor(
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
-    ): List<Message.Response> {
+    ): List<Response> {
         logger.debug { "Executing prompt: $prompt with tools: $tools and model: $model" }
         val choices = llmClient.executeMultipleChoices(prompt, model, tools)
         logger.debug { "Choices: $choices" }

@@ -11,7 +11,7 @@ import ai.koog.prompt.executor.model.LLMChoice
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import ai.koog.prompt.structure.StructuredData
 import ai.koog.prompt.structure.StructuredResponse
 import ai.koog.prompt.structure.executeStructured
@@ -128,13 +128,9 @@ public sealed class AIAgentLLMSession(
      */
     public open suspend fun requestLLMWithoutTools(): Message.Response {
         validateSession()
-        /*
-            Not all LLM providers support tool list when tool choice is set to "none", so we are rewriting all tool messages to regular messages,
-            for all requests without tools.
-         */
-        val promptWithDisabledTools = prompt
-            .copy(metadata = prompt.metadata.copy(toolChoice = null))
-            .let { preparePrompt(it, emptyList()) }
+        // In Harmony-native architecture, tool usage is controlled through natural reasoning
+        // rather than explicit tool choice parameters
+        val promptWithDisabledTools = preparePrompt(prompt, emptyList())
 
         return executeSingle(promptWithDisabledTools, emptyList())
     }
@@ -149,10 +145,9 @@ public sealed class AIAgentLLMSession(
      */
     public open suspend fun requestLLMOnlyCallingTools(): Message.Response {
         validateSession()
-        val promptWithOnlyCallingTools = prompt.copy(
-            metadata = prompt.metadata.copy(toolChoice = LLMParams.ToolChoice.Required)
-        )
-        return executeSingle(promptWithOnlyCallingTools, tools)
+        // In Harmony-native architecture, tool calling is guided through system instructions
+        // rather than explicit toolChoice parameters
+        return executeSingle(prompt, tools)
     }
 
     /**
@@ -172,10 +167,9 @@ public sealed class AIAgentLLMSession(
     public open suspend fun requestLLMForceOneTool(tool: ToolDescriptor): Message.Response {
         validateSession()
         check(tools.contains(tool)) { "Unable to force call to tool `${tool.name}` because it is not defined" }
-        val promptWithForcingOneTool = prompt.copy(
-            metadata = prompt.metadata.copy(toolChoice = LLMParams.ToolChoice.Named(tool.name))
-        )
-        return executeSingle(promptWithForcingOneTool, tools)
+        // In Harmony-native architecture, use system instructions to guide specific tool usage
+        // Tool selection happens through natural reasoning in the analysis channel
+        return executeSingle(prompt, listOf(tool))
     }
 
     /**

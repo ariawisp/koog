@@ -4,7 +4,7 @@ import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.prompt.dsl.ModerationResult
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.Response
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -24,7 +24,7 @@ public interface LLMClient {
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor> = emptyList()
-    ): List<Message.Response>
+    ): List<Response>
 
     /**
      * Executes a prompt and returns a streaming flow of response chunks.
@@ -47,7 +47,7 @@ public interface LLMClient {
         prompt: Prompt,
         model: LLModel,
         tools: List<ToolDescriptor>
-    ): List<Message.Response> =
+    ): List<Response> =
         throw UnsupportedOperationException("Not implemented for this client")
 
     /**

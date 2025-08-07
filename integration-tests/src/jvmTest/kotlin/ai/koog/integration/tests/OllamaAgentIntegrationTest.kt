@@ -21,7 +21,7 @@ import ai.koog.integration.tests.utils.annotations.RetryExtension
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.OllamaModels
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.Test
@@ -145,7 +145,7 @@ class OllamaAgentIntegrationTest {
             promptExecutor = executor,
             strategy = strategy,
             agentConfig = AIAgentConfig(
-                prompt("test-ollama", LLMParams(temperature = 0.0)) {},
+                prompt("test-ollama", ModelConfig(temperature = 0.0f)) {},
                 model,
                 15
             ),

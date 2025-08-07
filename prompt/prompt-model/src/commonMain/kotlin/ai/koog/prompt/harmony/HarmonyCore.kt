@@ -296,7 +296,7 @@ public data class HarmonyMessage(
 }
 
 
-// HarmonyMetadata removed - using LLMParams directly
+// HarmonyMetadata removed - using ModelConfig for simplified parameters
 
 /**
  * Reasoning effort levels control how much internal analysis the model performs.

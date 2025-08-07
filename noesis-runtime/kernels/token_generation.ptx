@@ -1,0 +1,33 @@
+//
+// PTX assembly for token generation kernel
+// This is a placeholder - real implementation would be compiled from CUDA C++
+//
+// Target: sm_80 (A100, RTX 3090)
+// Compute capability: 8.0+
+//
+
+.version 7.8
+.target sm_80
+.address_size 64
+
+// Token generation kernel placeholder
+// extern "C" __global__ void generate_tokens(
+//     const uint32_t* input_tokens,
+//     uint32_t* output_tokens,
+//     int input_length,
+//     int max_tokens,
+//     float temperature
+// )
+
+.visible .entry generate_tokens(
+    .param .u64 generate_tokens_param_0,  // input_tokens
+    .param .u64 generate_tokens_param_1,  // output_tokens
+    .param .u32 generate_tokens_param_2,  // input_length
+    .param .u32 generate_tokens_param_3,  // max_tokens
+    .param .f32 generate_tokens_param_4   // temperature
+)
+{
+    // Placeholder implementation
+    // Real kernel would implement token generation logic
+    ret;
+}

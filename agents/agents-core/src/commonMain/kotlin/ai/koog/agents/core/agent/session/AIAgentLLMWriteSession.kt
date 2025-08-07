@@ -15,7 +15,7 @@ import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import ai.koog.prompt.structure.StructuredData
 import ai.koog.prompt.structure.StructuredDataDefinition
 import ai.koog.prompt.structure.StructuredResponse
@@ -351,9 +351,9 @@ public class AIAgentLLMWriteSession internal constructor(
     /**
      * Updates the language model's parameters used in the current session prompt.
      *
-     * @param newParams The new set of LLMParams to replace the existing parameters in the prompt.
+     * @param newParams The new set of ModelConfig to replace the existing parameters in the prompt.
      */
-    public fun changeLLMParams(newParams: LLMParams): Unit = rewritePrompt {
+    public fun changeModelConfig(newParams: ModelConfig): Unit = rewritePrompt {
         it.copy(metadata = newParams)
     }
 

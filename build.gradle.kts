@@ -185,10 +185,7 @@ dependencies {
     dokka(project(":agents:agents-ext"))
     dokka(project(":embeddings:embeddings-base"))
     dokka(project(":embeddings:embeddings-llm"))
-    dokka(project(":prompt:prompt-cache:prompt-cache-files"))
-    dokka(project(":prompt:prompt-cache:prompt-cache-model"))
-    dokka(project(":prompt:prompt-cache:prompt-cache-redis"))
-    dokka(project(":prompt:prompt-executor:prompt-executor-cached"))
+    // Cache removed - handled by Rust token-native caching in Noesis Runtime
     dokka(project(":prompt:prompt-executor:prompt-executor-clients"))
     dokka(project(":prompt:prompt-executor:prompt-executor-clients:noesis-executor"))
     dokka(project(":prompt:prompt-executor:prompt-executor-llms"))

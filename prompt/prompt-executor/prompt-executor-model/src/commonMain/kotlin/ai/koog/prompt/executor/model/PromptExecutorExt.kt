@@ -2,6 +2,7 @@ package ai.koog.prompt.executor.model
 
 import ai.koog.prompt.dsl.Prompt
 import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.message.Response
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
@@ -36,7 +37,7 @@ public object PromptExecutorExt {
      * @throws IllegalArgumentException if the list contains more than one response.
      * @throws NoSuchElementException if the list is empty.
      */
-    public fun List<Message.Response>.singleResponse(): Message.Response {
+    public fun List<Response>.singleResponse(): Response {
         if (this.size > 1) {
             throw IllegalArgumentException("More than one response found. Size: ${this.size}")
         }

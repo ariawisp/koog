@@ -41,8 +41,8 @@ import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.ResponseMetaInfo
-import ai.koog.prompt.params.LLMParams
-import ai.koog.prompt.params.LLMParams.ToolChoice
+import ai.koog.prompt.dsl.ModelConfig
+// Note: ToolChoice removed in Harmony-native architecture
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
@@ -221,9 +221,8 @@ class AIAgentIntegrationTest {
             agentConfig = AIAgentConfig(
                 prompt = prompt(
                     id = "multiple-tool-calls-agent",
-                    params = LLMParams(
-                        temperature = 0.0,
-                        toolChoice = ToolChoice.Auto,
+                    params = ModelConfig(
+                        temperature = 0.0f
                     )
                 ) {
                     system("You are a helpful assistant.")
@@ -574,9 +573,8 @@ class AIAgentIntegrationTest {
                 agentConfig = AIAgentConfig(
                     prompt = prompt(
                         id = "react-agent-test",
-                        params = LLMParams(
-                            temperature = 0.0,
-                            toolChoice = ToolChoice.Auto,
+                        params = ModelConfig(
+                            temperature = 0.0f
                         )
                     ) {},
                     model = model,
@@ -994,9 +992,8 @@ class AIAgentIntegrationTest {
                 agentConfig = AIAgentConfig(
                     prompt = prompt(
                         id = "calculator-agent-test",
-                        params = LLMParams(
-                            temperature = 0.1,
-                            toolChoice = ToolChoice.Auto, // KG-163
+                        params = ModelConfig(
+                            temperature = 0.1f
                         )
                     ) {
                         system(

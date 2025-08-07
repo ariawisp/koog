@@ -23,5 +23,6 @@ gradlePlugin {
             id = "ai.koog.gradle.plugins.credentialsresolver"
             implementationClass = "ai.koog.gradle.plugins.CredentialsResolverPlugin"
         }
+
     }
 }

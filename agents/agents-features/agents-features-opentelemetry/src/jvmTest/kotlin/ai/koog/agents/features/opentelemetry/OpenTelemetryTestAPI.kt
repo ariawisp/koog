@@ -9,7 +9,7 @@ import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import kotlinx.datetime.Clock
 
 internal object OpenTelemetryTestAPI {
@@ -29,7 +29,7 @@ internal object OpenTelemetryTestAPI {
         installFeatures: AIAgent.FeatureContext.() -> Unit = { }
     ): AIAgent<String, String> {
         val agentConfig = AIAgentConfig(
-            prompt = prompt(promptId ?: "Test prompt", clock = clock, params = LLMParams(temperature = temperature)) {
+            prompt = prompt(promptId ?: "Test prompt", clock = clock, params = ModelConfig(temperature = temperature)) {
                 system(systemPrompt ?: "Test system message")
                 user(userPrompt ?: "Test user message")
                 assistant(assistantPrompt ?: "Test assistant response")

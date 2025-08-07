@@ -1,7 +1,7 @@
 package ai.koog.prompt.structure.json
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 import ai.koog.prompt.structure.StructuredData
 import ai.koog.prompt.structure.structure
 import ai.koog.prompt.text.TextContentBuilderBase

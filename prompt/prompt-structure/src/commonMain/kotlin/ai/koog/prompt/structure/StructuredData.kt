@@ -1,6 +1,6 @@
 package ai.koog.prompt.structure
 
-import ai.koog.prompt.params.LLMParams
+import ai.koog.prompt.dsl.ModelConfig
 
 /**
  * Represents a generic structure for handling data with a specific schema.

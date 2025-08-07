@@ -1,0 +1,71 @@
+namespace ai.koog.noesis.protocol;
+
+// Harmony message roles
+enum Role : byte {
+  User = 0,
+  Assistant = 1,
+  System = 2,
+  Developer = 3,
+  Tool = 4
+}
+
+// Reasoning effort levels for GPT-OSS
+enum ReasoningEffort : byte {
+  Low = 0,
+  Medium = 1,
+  High = 2
+}
+
+// Single message in conversation
+table Message {
+  role: Role;
+  content: string (required);
+  channel: string; // analysis, commentary, final
+  recipient: string; // For tool calls
+}
+
+// System configuration for GPT-OSS
+table SystemConfig {
+  model_identity: string;
+  reasoning_effort: ReasoningEffort = Medium;
+  knowledge_cutoff: string;
+  conversation_start_date: string;
+  required_channels: [string];
+}
+
+// Developer instructions
+table DeveloperConfig {
+  instructions: string (required);
+}
+
+// Generation request - binary format for zero-copy
+table GenerationRequest {
+  model_handle: long;
+  system_config: SystemConfig;
+  developer_config: DeveloperConfig;
+  messages: [Message] (required);
+  max_tokens: int = 2048;
+  temperature: float = 0.7;
+  top_p: float = 0.9;
+  top_k: int = 40;
+  seed: uint = 42;
+}
+
+// Token chunk for streaming
+table TokenChunk {
+  tokens: [uint];
+  channel: string;
+  is_final: bool;
+}
+
+// Generation response
+table GenerationResponse {
+  request_id: string;
+  tokens: [uint];
+  text: string;
+  channels: [string];
+  metadata: string; // JSON for flexibility
+  error: string;
+}
+
+root_type GenerationRequest;

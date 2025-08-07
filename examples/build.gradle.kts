@@ -10,6 +10,8 @@ plugins {
 }
 
 repositories {
+    mavenLocal() // For locally built FlatBuffers dependencies
+    mavenCentral()
     maven(url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 }
 
@@ -34,6 +36,7 @@ dependencies {
     api(project(":koog-ktor"))
 
     api(libs.kotlinx.datetime)
+    implementation(libs.clikt)
 
     implementation(libs.logback.classic)
     implementation(libs.opentelemetry.exporter.logging)
@@ -103,6 +106,7 @@ registerRunExampleTask("runExampleFeatureOpenTelemetry", "ai.koog.agents.example
 registerRunExampleTask("runExampleBedrockAgent", "ai.koog.agents.example.client.BedrockAgentKt")
 registerRunExampleTask("runExampleJokesWithModeration", "ai.koog.agents.example.moderation.JokesWithModerationKt")
 registerRunExampleTask("runExampleFilePersistentAgent", "ai.koog.agents.example.snapshot.FilePersistentAgentExampleKt")
+registerRunExampleTask("runNoesisCLI", "ai.koog.agents.example.noesis.NoesisCLIKt")
 
 dokka {
     dokkaSourceSets.named("main") {

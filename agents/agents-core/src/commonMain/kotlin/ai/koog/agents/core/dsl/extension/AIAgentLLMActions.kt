@@ -2,7 +2,8 @@ package ai.koog.agents.core.dsl.extension
 
 import ai.koog.agents.core.agent.session.AIAgentLLMWriteSession
 import ai.koog.prompt.message.Message
-import ai.koog.prompt.params.LLMParams
+// Note: ToolChoice functionality removed in Harmony-native architecture
+// Tool usage is now controlled through system message reasoning directives
 import kotlinx.datetime.Instant
 
 /**
@@ -47,50 +48,9 @@ public fun AIAgentLLMWriteSession.leaveMessagesFromTimestamp(timestamp: Instant)
     )
 }
 
-/**
- * Sets the [ai.koog.prompt.params.LLMParams.ToolChoice] for this LLM session.
- */
-public fun AIAgentLLMWriteSession.setToolChoice(toolChoice: LLMParams.ToolChoice?) {
-    prompt = prompt.copy(
-        metadata = prompt.metadata.copy(toolChoice = toolChoice)
-    )
-}
-
-/**
- * Set the [ai.koog.prompt.params.LLMParams.ToolChoice] to [ai.koog.prompt.params.LLMParams.ToolChoice.Auto] to make LLM automatically decide between calling tools and generating text
- */
-public fun AIAgentLLMWriteSession.setToolChoiceAuto() {
-    setToolChoice(LLMParams.ToolChoice.Auto)
-}
-
-/**
- * Set the [ai.koog.prompt.params.LLMParams.ToolChoice] to [ai.koog.prompt.params.LLMParams.ToolChoice.Required] to make LLM always call tools
- */
-public fun AIAgentLLMWriteSession.setToolChoiceRequired() {
-    setToolChoice(LLMParams.ToolChoice.Required)
-}
-
-/**
- * Set the [ai.koog.prompt.params.LLMParams.ToolChoice] to [ai.koog.prompt.params.LLMParams.ToolChoice.None] to make LLM never call tools
- */
-public fun AIAgentLLMWriteSession.setToolChoiceNone() {
-    setToolChoice(LLMParams.ToolChoice.None)
-}
-
-/**
- * Set the [ai.koog.prompt.params.LLMParams.ToolChoice] to [ai.koog.prompt.params.LLMParams.ToolChoice.None] to make LLM call one specific tool [toolName]
- */
-public fun AIAgentLLMWriteSession.setToolChoiceNamed(toolName: String) {
-    setToolChoice(LLMParams.ToolChoice.Named(toolName))
-}
-
-/**
- * Unset the [ai.koog.prompt.params.LLMParams.ToolChoice].
- * Mostly, if left unspecified, the default value of this parameter is [ai.koog.prompt.params.LLMParams.ToolChoice.Auto]
- */
-public fun AIAgentLLMWriteSession.unsetToolChoice() {
-    setToolChoice(null)
-}
+// Tool choice functionality has been removed in Harmony-native architecture.
+// GPT-OSS models handle tool selection through natural reasoning in the analysis channel.
+// Use system message directives or developer context to guide tool usage patterns.
 
 /**
  * Rewrites LLM message history, leaving only user message and resulting TLDR.

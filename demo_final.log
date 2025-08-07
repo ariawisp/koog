@@ -1,0 +1,2811 @@
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :buildSrc:compilePluginsBlocks UP-TO-DATE
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :buildSrc:generateScriptPluginAdapters UP-TO-DATE
+> Task :buildSrc:compileKotlin UP-TO-DATE
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:pluginDescriptors UP-TO-DATE
+> Task :buildSrc:processResources UP-TO-DATE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+
+> Configure project :koog-ktor
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsTest' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsTest.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The Kotlin source set jsTest was configured but not added to any Kotlin compilation.
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :embeddings:embeddings-base
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsTest' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsTest.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The Kotlin source set jsTest was configured but not added to any Kotlin compilation.
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :embeddings:embeddings-llm
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsTest' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsTest.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The Kotlin source set jsTest was configured but not added to any Kotlin compilation.
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :prompt:prompt-model
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsMain' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsMain.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsTest' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsTest.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The following Kotlin source sets were configured but not added to any Kotlin compilation:
+ * jsMain
+ * jsTest
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :prompt:prompt-structure
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsTest' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsTest.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The Kotlin source set jsTest was configured but not added to any Kotlin compilation.
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :prompt:prompt-tokenizer
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsTest' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsTest.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The Kotlin source set jsTest was configured but not added to any Kotlin compilation.
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :agents:agents-features:agents-features-common
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsMain' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsMain.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set wasmJsMain' without the registering the wasmJs target:
+kotlin {
+    wasmJs() /* <- register the 'wasmJs' target */
+
+    sourceSets.wasmJsMain.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the wasmJs target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The following Kotlin source sets were configured but not added to any Kotlin compilation:
+ * jsMain
+ * wasmJsMain
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :prompt:prompt-executor:prompt-executor-model
+w: [33m[1m⚠️ Source Set Used Without a Corresponding Target[0m[0m
+Accessed 'source set jsTest' without the registering the js target:
+kotlin {
+    js() /* <- register the 'js' target */
+
+    sourceSets.jsTest.dependencies {
+
+    }
+}
+[32m[1mSolution:[0m[0m
+[32m[3mPlease register the js target.[0m[0m
+
+w: [33m[1m⚠️ Unused Kotlin Source Sets[0m[0m
+The Kotlin source set jsTest was configured but not added to any Kotlin compilation.
+[32m[1mSolution:[0m[0m
+[32m[3mYou can add a source set to a target's compilation by connecting it with the compilation's default source set using 'dependsOn'.[0m[0m
+[36mSee [0m[34mhttps://kotl.in/connecting-source-sets[0m[36m[0m
+
+
+> Configure project :prompt:prompt-executor:prompt-executor-clients:noesis-executor
+Loaded noesis.properties with 3 settings
+
+> Task :noesis-cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :prompt:prompt-executor:prompt-executor-clients:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :prompt:prompt-executor:prompt-executor-model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :agents:agents-tools:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :prompt:prompt-llm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:cloneGptOss SKIPPED
+> Task :prompt:prompt-model:downloadFlatc SKIPPED
+
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:applyGptOssPatches SKIPPED
+GPT-OSS Metal backend patch already applied, skipping
+
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:buildGptOss SKIPPED
+> Task :prompt:prompt-executor:prompt-executor-clients:jvmProcessResources NO-SOURCE
+> Task :noesis-cli:processResources NO-SOURCE
+> Task :prompt:prompt-executor:prompt-executor-model:jvmProcessResources NO-SOURCE
+> Task :prompt:prompt-model:compileFlatBuffers UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:processJvmMainResources SKIPPED
+> Task :prompt:prompt-executor:prompt-executor-model:processJvmMainResources SKIPPED
+> Task :prompt:prompt-model:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :prompt:prompt-model:jvmProcessResources NO-SOURCE
+> Task :prompt:prompt-model:processJvmMainResources SKIPPED
+> Task :prompt:prompt-llm:compileKotlinJvm UP-TO-DATE
+> Task :agents:agents-tools:compileKotlinJvm UP-TO-DATE
+> Task :prompt:prompt-llm:compileJvmMainJava NO-SOURCE
+> Task :agents:agents-tools:compileJvmMainJava NO-SOURCE
+> Task :prompt:prompt-llm:jvmProcessResources NO-SOURCE
+> Task :prompt:prompt-llm:processJvmMainResources SKIPPED
+> Task :agents:agents-tools:jvmProcessResources NO-SOURCE
+> Task :prompt:prompt-llm:jvmMainClasses UP-TO-DATE
+> Task :agents:agents-tools:processJvmMainResources SKIPPED
+> Task :agents:agents-tools:jvmMainClasses UP-TO-DATE
+> Task :prompt:prompt-llm:jvmJar UP-TO-DATE
+> Task :agents:agents-tools:jvmJar UP-TO-DATE
+> Task :prompt:prompt-model:compileKotlinJvm UP-TO-DATE
+> Task :prompt:prompt-model:compileJvmMainJava NO-SOURCE
+> Task :prompt:prompt-model:jvmMainClasses UP-TO-DATE
+> Task :prompt:prompt-model:jvmJar UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-model:compileKotlinJvm UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-model:compileJvmMainJava NO-SOURCE
+> Task :prompt:prompt-executor:prompt-executor-model:jvmMainClasses UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-model:jvmJar UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:compileKotlinJvm UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:compileJvmMainJava NO-SOURCE
+> Task :prompt:prompt-executor:prompt-executor-clients:jvmMainClasses UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:jvmJar UP-TO-DATE
+
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:buildNoesisRuntime
+Building unified Noesis Runtime library
+  GPT-OSS path: /Users/aria/noesis-workspace/mitramod/koog/prompt/prompt-executor/prompt-executor-clients/noesis-executor/build/gpt-oss/build
+warning: noesis-runtime@1.0.0: Building for target OS: macos
+warning: noesis-runtime@1.0.0: Building with Metal support
+warning: noesis-runtime@1.0.0: GPT-OSS path: /Users/aria/noesis-workspace/mitramod/koog/prompt/prompt-executor/prompt-executor-clients/noesis-executor/build/gpt-oss/build
+warning: noesis-runtime@1.0.0: Embedding Metal shaders from: /Users/aria/noesis-workspace/mitramod/koog/prompt/prompt-executor/prompt-executor-clients/noesis-executor/build/gpt-oss/build/default.metallib
+warning: unused imports: `Deserialize` and `Serialize`
+ --> src/memory/channels.rs:7:13
+  |
+7 | use serde::{Serialize, Deserialize};
+  |             ^^^^^^^^^  ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::sync::RwLock as StdRwLock`
+   --> src/memory/channels.rs:297:13
+    |
+297 |         use std::sync::RwLock as StdRwLock;
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc as StdArc`
+   --> src/memory/channels.rs:298:13
+    |
+298 |         use std::sync::Arc as StdArc;
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `AtomicBool`
+  --> src/inference/noesis_metal.rs:13:25
+   |
+13 | use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+   |                         ^^^^^^^^^^
+
+warning: unused import: `NoesisResult`
+  --> src/inference/noesis_metal.rs:18:34
+   |
+18 | use crate::errors::{NoesisError, NoesisResult};
+   |                                  ^^^^^^^^^^^^
+
+warning: unused import: `Semaphore`
+  --> src/inference/noesis_metal.rs:24:25
+   |
+24 | use tokio::sync::{mpsc, Semaphore};
+   |                         ^^^^^^^^^
+
+warning: unused import: `tokio::time::Duration`
+  --> src/inference/noesis_metal.rs:25:5
+   |
+25 | use tokio::time::Duration;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `futures_util`
+  --> src/inference/noesis_metal.rs:26:5
+   |
+26 | use futures_util;
+   |     ^^^^^^^^^^^^
+
+warning: unused imports: `ReasoningEffort` and `SystemContent`
+    --> src/inference/noesis_metal.rs:1897:65
+     |
+1897 |         use openai_harmony::chat::{Message, Role, Conversation, SystemContent, ReasoningEffort};
+     |                                                                 ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused import: `MTLStorageMode`
+ --> src/inference/kernels.rs:9:70
+  |
+9 |     MTLDevice, MTLFunction, MTLLibrary, MTLResourceOptions, MTLSize, MTLStorageMode
+  |                                                                      ^^^^^^^^^^^^^^
+
+warning: unused import: `debug`
+  --> src/inference/kernels.rs:17:17
+   |
+17 | use log::{info, debug};
+   |                 ^^^^^
+
+warning: unused import: `OptimizedBufferPool as BufferPool`
+ --> src/inference/speculative.rs:5:65
+  |
+5 | use crate::gpu_optimized::{OptimizedMetalDevice as MetalDevice, OptimizedBufferPool as BufferPool};
+  |                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Context`
+ --> src/inference/speculative.rs:8:22
+  |
+8 | use anyhow::{Result, Context, bail};
+  |                      ^^^^^^^
+
+warning: unused import: `objc2::rc::Retained`
+  --> src/inference/speculative.rs:11:5
+   |
+11 | use objc2::rc::Retained;
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `AtomicUsize`
+ --> src/inference/parallel_contexts.rs:6:50
+  |
+6 | use std::sync::{Arc, RwLock, atomic::{AtomicU64, AtomicUsize, Ordering}};
+  |                                                  ^^^^^^^^^^^
+
+warning: unused import: `mpsc`
+ --> src/inference/parallel_contexts.rs:9:30
+  |
+9 | use tokio::sync::{Semaphore, mpsc};
+  |                              ^^^^
+
+warning: unused import: `error`
+  --> src/inference/parallel_contexts.rs:10:30
+   |
+10 | use log::{info, debug, warn, error};
+   |                              ^^^^^
+
+warning: unused import: `crate::gpu_optimized::OptimizedMetalDevice as MetalDevice`
+  --> src/inference/parallel_contexts.rs:19:5
+   |
+19 | use crate::gpu_optimized::OptimizedMetalDevice as MetalDevice;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `warn`
+ --> src/inference/fused_kernels.rs:7:24
+  |
+7 | use log::{info, debug, warn};
+  |                        ^^^^
+
+warning: unused import: `UnifiedMemoryManager`
+  --> src/inference/fused_kernels.rs:23:29
+   |
+23 | use crate::unified_memory::{UnifiedMemoryManager, ZeroCopyTokenBuffer};
+   |                             ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `CognitiveError`
+  --> src/inference/channel_aware_speculation.rs:10:33
+   |
+10 | use crate::cognitive::{Channel, CognitiveError};
+   |                                 ^^^^^^^^^^^^^^
+
+warning: unused import: `HarmonyChannelContext`
+  --> src/inference/channel_aware_speculation.rs:11:64
+   |
+11 | use crate::cognitive::harmony_channels::{HarmonyChannelRouter, HarmonyChannelContext};
+   |                                                                ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `GptOssStatus`
+  --> src/inference/channel_aware_speculation.rs:12:60
+   |
+12 | use crate::inference::noesis_metal::{MetalInferenceEngine, GptOssStatus};
+   |                                                            ^^^^^^^^^^^^
+
+warning: unused import: `bail`
+  --> src/inference/channel_aware_speculation.rs:14:31
+   |
+14 | use anyhow::{Result, Context, bail};
+   |                               ^^^^
+
+warning: unused import: `error`
+  --> src/inference/channel_aware_speculation.rs:17:30
+   |
+17 | use log::{info, debug, warn, error};
+   |                              ^^^^^
+
+warning: unused import: `Context`
+  --> src/inference/harmony_token_recycling.rs:13:22
+   |
+13 | use anyhow::{Result, Context};
+   |                      ^^^^^^^
+
+warning: unused import: `objc2_metal::MTLCommandQueue`
+  --> src/inference/harmony_token_recycling.rs:18:5
+   |
+18 | use objc2_metal::MTLCommandQueue;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `objc2::runtime::ProtocolObject`
+  --> src/inference/harmony_token_recycling.rs:19:5
+   |
+19 | use objc2::runtime::ProtocolObject;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Context`
+ --> src/harmony/encoder.rs:2:22
+  |
+2 | use anyhow::{Result, Context};
+  |                      ^^^^^^^
+
+warning: unused import: `debug`
+ --> src/harmony/encoder.rs:7:17
+  |
+7 | use log::{info, debug};
+  |                 ^^^^^
+
+warning: unused import: `ResourceType`
+  --> src/backend/streamlined.rs:12:61
+   |
+12 | use crate::errors::{NoesisError, NoesisResult, BackendType, ResourceType};
+   |                                                             ^^^^^^^^^^^^
+
+warning: unused import: `OptimizedBuffer`
+  --> src/backend/streamlined.rs:13:49
+   |
+13 | use crate::gpu_optimized::{OptimizedBufferPool, OptimizedBuffer, PerformanceTarget};
+   |                                                 ^^^^^^^^^^^^^^^
+
+warning: unused import: `MTLComputePassDescriptor`
+  --> src/backend/streamlined.rs:20:50
+   |
+20 |     MTLComputeCommandEncoder, MTLCommandEncoder, MTLComputePassDescriptor,
+   |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+  --> src/backend/streamlined.rs:23:5
+   |
+23 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `NoesisError`
+  --> src/backend/unified.rs:12:21
+   |
+12 | use crate::errors::{NoesisError, NoesisResult};
+   |                     ^^^^^^^^^^^
+
+warning: unused imports: `Receiver`, `Sender`, and `self`
+ --> src/streaming_output.rs:4:23
+  |
+4 | use std::sync::mpsc::{self, Receiver, Sender};
+  |                       ^^^^  ^^^^^^^^  ^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src/streaming_output.rs:5:5
+  |
+5 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `bounded`
+ --> src/streaming_output.rs:9:25
+  |
+9 | use crossbeam_channel::{bounded, unbounded, Receiver as CrossbeamReceiver, Sender as CrossbeamSender};
+  |                         ^^^^^^^
+
+warning: unused import: `AtomicUsize`
+ --> src/streaming/channel_router.rs:6:49
+  |
+6 | use std::sync::{Arc, Mutex, atomic::{AtomicU64, AtomicUsize, Ordering}};
+  |                                                 ^^^^^^^^^^^
+
+warning: unused imports: `error` and `warn`
+ --> src/streaming/channel_router.rs:9:24
+  |
+9 | use log::{info, debug, warn, error};
+  |                        ^^^^  ^^^^^
+
+warning: unused import: `SecurityLevel`
+  --> src/streaming/channel_router.rs:11:33
+   |
+11 | use crate::cognitive::{Channel, SecurityLevel};
+   |                                 ^^^^^^^^^^^^^
+
+warning: unused imports: `BackendType`, `CognitiveComponent`, and `NoesisError`
+ --> src/cognitive/channels.rs:8:21
+  |
+8 | use crate::errors::{NoesisError, NoesisResult, CognitiveComponent, BackendType};
+  |                     ^^^^^^^^^^^                ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^
+
+warning: unused import: `NoesisResult`
+  --> src/cognitive/harmony_channels.rs:10:34
+   |
+10 | use crate::errors::{NoesisError, NoesisResult};
+   |                                  ^^^^^^^^^^^^
+
+warning: unused import: `error`
+  --> src/cognitive/harmony_channels.rs:12:28
+   |
+12 | use tracing::{debug, warn, error};
+   |                            ^^^^^
+
+warning: unused import: `InsightType`
+  --> src/cognitive/harmony_engine.rs:12:41
+   |
+12 |     SafetyAssessment, CognitiveInsight, InsightType
+   |                                         ^^^^^^^^^^^
+
+warning: unused import: `warn`
+  --> src/cognitive/harmony_engine.rs:21:28
+   |
+21 | use tracing::{debug, info, warn, error};
+   |                            ^^^^
+
+warning: unused import: `MitigationAction`
+   --> src/cognitive/harmony_engine.rs:477:143
+    |
+477 | ...ion, BoundaryEnforcement, SafetyCategory, FilteringAction, MitigationAction};
+    |                                                               ^^^^^^^^^^^^^^^^
+
+warning: unused import: `warn`
+  --> src/cognitive/async_engine.rs:19:28
+   |
+19 | use tracing::{debug, info, warn, error, instrument};
+   |                            ^^^^
+
+warning: unused import: `CognitiveError`
+ --> src/cognitive/contradiction_detector.rs:7:33
+  |
+7 | use crate::cognitive::{Channel, CognitiveError};
+  |                                 ^^^^^^^^^^^^^^
+
+warning: unused import: `CognitiveError`
+ --> src/cognitive/semantic_processor.rs:7:49
+  |
+7 | use crate::cognitive::{Channel, ChannelContext, CognitiveError};
+  |                                                 ^^^^^^^^^^^^^^
+
+warning: unused import: `OptimizedBuffer`
+ --> src/cognitive/state_manager.rs:8:28
+  |
+8 | use crate::gpu_optimized::{OptimizedBuffer, OptimizedBufferPool};
+  |                            ^^^^^^^^^^^^^^^
+
+warning: unused import: `CognitiveError`
+  --> src/cognitive/state_manager.rs:10:33
+   |
+10 | use crate::cognitive::{Channel, CognitiveError, SemanticContext};
+   |                                 ^^^^^^^^^^^^^^
+
+warning: unused import: `CognitiveError`
+ --> src/cognitive/safety_filter.rs:8:66
+  |
+8 | use crate::cognitive::{Channel, ChannelContext, SemanticContext, CognitiveError};
+  |                                                                  ^^^^^^^^^^^^^^
+
+warning: unused imports: `CognitiveComponent` and `ErrorSeverity`
+  --> src/cognitive/mod.rs:34:48
+   |
+34 | use crate::errors::{NoesisError, NoesisResult, CognitiveComponent, ErrorSeverity};
+   |                                                ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^
+
+warning: unused import: `super::StructuredParser`
+ --> src/parsing/markdown.rs:4:5
+  |
+4 | use super::StructuredParser;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::error::Result`
+ --> src/parsing/tool_response.rs:6:5
+  |
+6 | use crate::error::Result;
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `JByteArray`
+  --> src/jni/runtime.rs:11:57
+   |
+11 | use jni::objects::{JClass, JString, JObject, JIntArray, JByteArray};
+   |                                                         ^^^^^^^^^^
+
+warning: unused imports: `jboolean`, `jfloat`, `jint`, and `jstring`
+  --> src/jni/runtime.rs:12:23
+   |
+12 | use jni::sys::{jlong, jint, jboolean, jbyteArray, jintArray, jstring, jfloat};
+   |                       ^^^^  ^^^^^^^^                         ^^^^^^^  ^^^^^^
+
+warning: unused import: `std::ffi::CStr`
+  --> src/jni/runtime.rs:13:5
+   |
+13 | use std::ffi::CStr;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused imports: `JByteArray` and `JString`
+  --> src/jni/streaming.rs:10:28
+   |
+10 | use jni::objects::{JClass, JString, JObject, JIntArray, JByteArray};
+   |                            ^^^^^^^                      ^^^^^^^^^^
+
+warning: unused imports: `jbyteArray` and `jstring`
+  --> src/jni/streaming.rs:11:39
+   |
+11 | use jni::sys::{jlong, jint, jboolean, jbyteArray, jintArray, jstring, jfloat};
+   |                                       ^^^^^^^^^^             ^^^^^^^
+
+warning: unused import: `flatbuffers::FlatBufferBuilder`
+  --> src/jni/streaming.rs:12:5
+   |
+12 | use flatbuffers::FlatBufferBuilder;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::events_generated::ai::koog::noesis::events::*`
+  --> src/jni/streaming.rs:13:5
+   |
+13 | use crate::events_generated::ai::koog::noesis::events::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `JByteArray`
+  --> src/jni/memory.rs:10:57
+   |
+10 | use jni::objects::{JClass, JString, JObject, JIntArray, JByteArray};
+   |                                                         ^^^^^^^^^^
+
+warning: unused imports: `jfloat` and `jstring`
+  --> src/jni/memory.rs:11:62
+   |
+11 | use jni::sys::{jlong, jint, jboolean, jbyteArray, jintArray, jstring, jfloat};
+   |                                                              ^^^^^^^  ^^^^^^
+
+warning: unused import: `JByteArray`
+  --> src/jni/utils.rs:10:57
+   |
+10 | use jni::objects::{JClass, JString, JObject, JIntArray, JByteArray};
+   |                                                         ^^^^^^^^^^
+
+warning: unused imports: `jboolean` and `jbyteArray`
+  --> src/jni/utils.rs:11:29
+   |
+11 | use jni::sys::{jlong, jint, jboolean, jbyteArray, jintArray, jstring, jfloat};
+   |                             ^^^^^^^^  ^^^^^^^^^^
+
+warning: unnecessary parentheses around closure body
+   --> src/jni/utils.rs:143:27
+    |
+143 |         .map(|(i, _word)| (i as u32 + 1000)) // Offset to avoid special tokens
+    |                           ^               ^
+    |
+    = note: `#[warn(unused_parens)]` on by default
+help: remove these parentheses
+    |
+143 -         .map(|(i, _word)| (i as u32 + 1000)) // Offset to avoid special tokens
+143 +         .map(|(i, _word)| i as u32 + 1000) // Offset to avoid special tokens
+    |
+
+warning: unused import: `core::mem`
+ --> src/events_generated.rs:6:5
+  |
+6 | use core::mem;
+  |     ^^^^^^^^^
+
+warning: unused import: `core::cmp::Ordering`
+ --> src/events_generated.rs:7:5
+  |
+7 | use core::cmp::Ordering;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `EndianScalar` and `Follow`
+  --> src/events_generated.rs:10:25
+   |
+10 | use self::flatbuffers::{EndianScalar, Follow};
+   |                         ^^^^^^^^^^^^  ^^^^^^
+
+warning: unused imports: `OptimizedMetalDevice` and `PerformanceTarget`
+  --> src/lib.rs:60:42
+   |
+60 | use gpu_optimized::{OptimizedBufferPool, OptimizedMetalDevice, OptimizedBuffer, PerformanceTarget}; // LEGACY
+   |                                          ^^^^^^^^^^^^^^^^^^^^                   ^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `StreamlinedGpuBackend` and `create_streamlined_backend`
+  --> src/lib.rs:63:28
+   |
+63 | use backend::streamlined::{StreamlinedGpuBackend, StreamlinedBackendTrait, create_streamlined_backend}; // LEGACY
+   |                            ^^^^^^^^^^^^^^^^^^^^^                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `TokenEvent`
+  --> src/lib.rs:67:48
+   |
+67 | use harmony::{HarmonyEncoder, StreamingParser, TokenEvent};
+   |                                                ^^^^^^^^^^
+
+warning: unused imports: `Hash` and `Hasher`
+   --> src/lib.rs:264:25
+    |
+264 |         use std::hash::{Hash, Hasher};
+    |                         ^^^^  ^^^^^^
+
+warning: unused import: `crate::jni::runtime::*`
+   --> src/lib.rs:522:9
+    |
+522 | pub use crate::jni::runtime::*;
+    |         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::jni::streaming::*`
+   --> src/lib.rs:523:9
+    |
+523 | pub use crate::jni::streaming::*;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::jni::memory::*`
+   --> src/lib.rs:524:9
+    |
+524 | pub use crate::jni::memory::*;
+    |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::jni::utils::*`
+   --> src/lib.rs:525:9
+    |
+525 | pub use crate::jni::utils::*;
+    |         ^^^^^^^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+  --> src/memory/channels.rs:97:13
+   |
+97 |         let mut current_channel = Channel::Final; // Default channel
+   |             ----^^^^^^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+   --> src/inference/noesis_metal.rs:964:13
+    |
+964 |         let mut context_state = self.contexts.get_mut(&model_handle)
+    |             ----^^^^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: unused variable: `primary_context`
+    --> src/inference/noesis_metal.rs:1387:9
+     |
+1387 |         primary_context: GptOssContext,
+     |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_primary_context`
+     |
+     = note: `#[warn(unused_variables)]` on by default
+
+warning: variable `tokens_written` is assigned to, but never used
+   --> src/inference/parallel_contexts.rs:364:17
+    |
+364 |         let mut tokens_written = 0;
+    |                 ^^^^^^^^^^^^^^
+    |
+    = note: consider using `_tokens_written` instead
+
+warning: unused variable: `token_offset`
+   --> src/inference/parallel_contexts.rs:389:17
+    |
+389 |             let token_offset = context.token_buffer.write_tokens(&[token])?;
+    |                 ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_token_offset`
+
+warning: unused variable: `context`
+   --> src/inference/channel_aware_speculation.rs:485:9
+    |
+485 |         context: &[u32],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `temperature`
+   --> src/inference/channel_aware_speculation.rs:486:9
+    |
+486 |         temperature: f32,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_temperature`
+
+warning: unused variable: `command_queue`
+   --> src/inference/channel_aware_speculation.rs:487:9
+    |
+487 |         command_queue: &ProtocolObject<dyn MTLCommandQueue>,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_command_queue`
+
+warning: unused variable: `medium_pressure`
+   --> src/inference/variable_effort_batching.rs:531:25
+    |
+531 |                     let medium_pressure = medium_depth as f32 / total_depth as f32;
+    |                         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_medium_pressure`
+
+warning: unused variable: `token_offset`
+   --> src/streaming/channel_router.rs:567:21
+    |
+567 |                 let token_offset = start_offset + batch_start + i;
+    |                     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_token_offset`
+
+warning: unreachable expression
+    --> src/inference/noesis_metal.rs:1347:9
+     |
+1243 |                 return result;
+     |                 ------------- any code following this expression is unreachable
+...
+1347 |         unreachable!("Should have returned from either parallel or serial path")
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unreachable expression
+     |
+     = note: `#[warn(unreachable_code)]` on by default
+
+warning: use of deprecated method `objc2_metal::MTLCompileOptions::setFastMathEnabled`: Use mathMode instead
+   --> src/backend/streamlined.rs:244:21
+    |
+244 |             options.setFastMathEnabled(true);
+    |                     ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `objc2_metal::MTLCompileOptions::setFastMathEnabled`: Use mathMode instead
+   --> src/backend/streamlined.rs:313:21
+    |
+313 |             options.setFastMathEnabled(true);
+    |                     ^^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+  --> src/cognitive/contradiction_detector.rs:82:89
+   |
+82 |                 contradiction_id: format!("complexity_{}_{}", token, chrono::Utc::now().timestamp_nanos()),
+   |                                                                                         ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+  --> src/cognitive/semantic_processor.rs:93:43
+   |
+93 |             timestamp: chrono::Utc::now().timestamp_nanos() as u64,
+   |                                           ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/semantic_processor.rs:476:46
+    |
+476 |             last_updated: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                              ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/semantic_processor.rs:490:48
+    |
+490 |         self.last_updated = chrono::Utc::now().timestamp_nanos() as u64;
+    |                                                ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/semantic_processor.rs:558:53
+    |
+558 |                     detected_at: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                                     ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:113:44
+    |
+113 |             created_at: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                            ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:114:46
+    |
+114 |             last_updated: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                              ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:179:71
+    |
+179 |         let unified_path_id = format!("merged_{}", chrono::Utc::now().timestamp_nanos());
+    |                                                                       ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:187:44
+    |
+187 |             created_at: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                            ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:188:46
+    |
+188 |             last_updated: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                              ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:229:49
+    |
+229 |                 last_update: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                                 ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:286:74
+    |
+286 |         let path_id = format!("{}_{}", checkpoint_id, chrono::Utc::now().timestamp_nanos());
+    |                                                                          ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:299:51
+    |
+299 |                     timestamp: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                                   ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:303:44
+    |
+303 |             created_at: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                            ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:304:46
+    |
+304 |             last_updated: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                              ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:335:43
+    |
+335 |             timestamp: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                           ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:340:48
+    |
+340 |         path.last_updated = chrono::Utc::now().timestamp_nanos() as u64;
+    |                                                ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:360:43
+    |
+360 |             timestamp: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                           ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:385:44
+    |
+385 |             created_at: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                            ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:445:43
+    |
+445 |             timestamp: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                           ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:449:69
+    |
+449 |         let checkpoint_id = format!("merged_{}", chrono::Utc::now().timestamp_nanos());
+    |                                                                     ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/state_manager.rs:756:47
+    |
+756 |                 timestamp: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                               ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/safety_filter.rs:360:43
+    |
+360 |             timestamp: chrono::Utc::now().timestamp_nanos() as u64,
+    |                                           ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/safety_filter.rs:389:46
+    |
+389 |                 let now = chrono::Utc::now().timestamp_nanos() as u64;
+    |                                              ^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src/cognitive/mod.rs:264:74
+    |
+264 |         let checkpoint_id = format!("uncertainty_{}", chrono::Utc::now().timestamp_nanos());
+    |                                                                          ^^^^^^^^^^^^^^^
+
+warning: unused import: `StreamlinedBackendTrait`
+  --> src/lib.rs:63:51
+   |
+63 | use backend::streamlined::{StreamlinedGpuBackend, StreamlinedBackendTrait, create_streamlined_backend}; // LEGACY
+   |                                                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `MTLFunction`
+  --> src/inference/fused_kernels.rs:12:28
+   |
+12 |     MTLDevice, MTLLibrary, MTLFunction, MTLComputePipelineState, 
+   |                            ^^^^^^^^^^^
+
+warning: unused variable: `size`
+   --> src/buffer/unified_gpu_buffer.rs:151:18
+    |
+151 |     fn new_metal(size: usize) -> NoesisResult<Self> {
+    |                  ^^^^ help: if this is intentional, prefix it with an underscore: `_size`
+
+warning: unnecessary `unsafe` block
+  --> src/unified_memory.rs:67:28
+   |
+67 |         let metal_buffer = unsafe {
+   |                            ^^^^^^ unnecessary `unsafe` block
+   |
+   = note: `#[warn(unused_unsafe)]` on by default
+
+warning: unnecessary `unsafe` block
+  --> src/unified_memory.rs:74:23
+   |
+74 |         let cpu_ptr = unsafe {
+   |                       ^^^^^^ unnecessary `unsafe` block
+
+warning: unused variable: `copy_size`
+   --> src/unified_memory.rs:330:17
+    |
+330 |             let copy_size = window_size * metadata.hidden_dim * std::mem::size_of::<u32>();
+    |                 ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_copy_size`
+
+warning: unused variable: `resolution`
+   --> src/memory/graph.rs:287:78
+    |
+287 | ...ndex, node_b: NodeIndex, resolution: crate::gpu_optimized::OptimizedBuffer) -> Result<()> {
+    |                             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resolution`
+
+warning: unused variable: `embedding`
+   --> src/memory/graph.rs:326:30
+    |
+326 |     pub fn search_knn(&self, embedding: &[f32], k: usize) -> Result<Vec<(NodeIndex, f32)>> {
+    |                              ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_embedding`
+
+warning: unused variable: `tokens`
+   --> src/memory/channels.rs:291:13
+    |
+291 |         let tokens: Vec<u32> = buffer
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_tokens`
+
+warning: unused variable: `channel`
+   --> src/memory/channels.rs:289:27
+    |
+289 |     pub fn process(&self, channel: crate::Channel, buffer: &Vec<u8>) -> Result<()> {
+    |                           ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_channel`
+
+warning: unused variable: `work_receiver`
+   --> src/inference/noesis_metal.rs:390:27
+    |
+390 |         let (work_sender, work_receiver) = mpsc::unbounded_channel::<ParallelTokenTask>();
+    |                           ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_work_receiver`
+
+warning: unused variable: `result_sender`
+   --> src/inference/noesis_metal.rs:391:14
+    |
+391 |         let (result_sender, result_receiver) = mpsc::unbounded_channel::<ParallelTokenResult>();
+    |              ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_result_sender`
+
+warning: unused variable: `result_tx`
+   --> src/inference/noesis_metal.rs:495:17
+    |
+495 |             let result_tx = result_sender.clone();
+    |                 ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_result_tx`
+
+warning: unused variable: `initial_model_path`
+   --> src/inference/noesis_metal.rs:457:16
+    |
+457 |     pub fn new(initial_model_path: &str) -> Result<Self> {
+    |                ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_initial_model_path`
+
+warning: unused variable: `idx`
+   --> src/inference/noesis_metal.rs:516:26
+    |
+516 |                     for (idx, position) in task.batch_positions.iter().enumerate() {
+    |                          ^^^ help: if this is intentional, prefix it with an underscore: `_idx`
+
+warning: unused variable: `kv_cache`
+   --> src/inference/noesis_metal.rs:781:24
+    |
+781 |                     Ok(kv_cache) => {
+    |                        ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_kv_cache`
+
+warning: unused variable: `streaming_router`
+   --> src/inference/noesis_metal.rs:863:17
+    |
+863 |             Ok((streaming_router, user_stream_rx, internal_stream_rx)) => {
+    |                 ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_streaming_router`
+
+warning: unused variable: `user_stream_rx`
+   --> src/inference/noesis_metal.rs:863:35
+    |
+863 |             Ok((streaming_router, user_stream_rx, internal_stream_rx)) => {
+    |                                   ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_user_stream_rx`
+
+warning: unused variable: `internal_stream_rx`
+   --> src/inference/noesis_metal.rs:863:51
+    |
+863 |             Ok((streaming_router, user_stream_rx, internal_stream_rx)) => {
+    |                                                   ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_internal_stream_rx`
+
+warning: unused variable: `buffer_pool`
+   --> src/inference/noesis_metal.rs:673:48
+    |
+673 |     pub fn load_model(&self, model_path: &str, buffer_pool: &crate::gpu_optimized::OptimizedBufferPool) -> Result<u64> {
+    |                                                ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_buffer_pool`
+
+warning: unused variable: `model_state`
+    --> src/inference/noesis_metal.rs:1049:13
+     |
+1049 |         let model_state = self.models.get(&context_state.model_path)
+     |             ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_model_state`
+
+warning: variable does not need to be mutable
+    --> src/inference/noesis_metal.rs:1045:13
+     |
+1045 |         let mut context_state = self.contexts.get_mut(&model_handle)
+     |             ----^^^^^^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: unused variable: `work_sender`
+    --> src/inference/noesis_metal.rs:1565:17
+     |
+1565 |             let work_sender = async_pipeline.work_sender.clone();
+     |                 ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_work_sender`
+
+warning: unused variable: `work_tx`
+    --> src/inference/noesis_metal.rs:1569:18
+     |
+1569 |             let (work_tx, work_rx) = tokio::sync::mpsc::unbounded_channel::<ParallelTokenTask>();
+     |                  ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_work_tx`
+
+warning: unused variable: `result_rx`
+    --> src/inference/noesis_metal.rs:1570:29
+     |
+1570 |             let (result_tx, result_rx) = tokio::sync::mpsc::unbounded_channel::<ParallelTokenResult>();
+     |                             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_result_rx`
+
+warning: unused variable: `gpu_context`
+    --> src/inference/noesis_metal.rs:1575:29
+     |
+1575 |             for (worker_id, gpu_context) in gpu_contexts.into_iter().enumerate() {
+     |                             ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_gpu_context`
+
+warning: unnecessary `unsafe` block
+  --> src/inference/kernels.rs:62:31
+   |
+62 |         let compile_options = unsafe {
+   |                               ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+  --> src/inference/kernels.rs:66:23
+   |
+66 |         let library = unsafe {
+   |                       ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+  --> src/inference/kernels.rs:77:30
+   |
+77 |         let softmax_kernel = unsafe {
+   |                              ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+  --> src/inference/kernels.rs:83:27
+   |
+83 |         let topk_kernel = unsafe {
+   |                           ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+  --> src/inference/kernels.rs:89:27
+   |
+89 |         let topp_kernel = unsafe {
+   |                           ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+  --> src/inference/kernels.rs:95:29
+   |
+95 |         let matmul_kernel = unsafe {
+   |                             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:101:32
+    |
+101 |         let layernorm_kernel = unsafe {
+    |                                ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:107:27
+    |
+107 |         let rope_kernel = unsafe {
+    |                           ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:113:32
+    |
+113 |         let softmax_pipeline = unsafe {
+    |                                ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:119:29
+    |
+119 |         let topk_pipeline = unsafe {
+    |                             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:125:29
+    |
+125 |         let topp_pipeline = unsafe {
+    |                             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:131:31
+    |
+131 |         let matmul_pipeline = unsafe {
+    |                               ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:364:29
+    |
+364 |         let logits_buffer = unsafe {
+    |                             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:370:28
+    |
+370 |         let probs_buffer = unsafe {
+    |                            ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/kernels.rs:376:30
+    |
+376 |         let indices_buffer = unsafe {
+    |                              ^^^^^^ unnecessary `unsafe` block
+
+warning: unused variable: `draft_model_ptr`
+   --> src/inference/speculative.rs:149:17
+    |
+149 |         let mut draft_model_ptr: *mut std::ffi::c_void = std::ptr::null_mut();
+    |                 ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_draft_model_ptr`
+
+warning: unused variable: `draft_path`
+   --> src/inference/speculative.rs:150:13
+    |
+150 |         let draft_path = std::ffi::CString::new("/path/to/draft_model.gguf")?; // Placeholder path
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_draft_path`
+
+warning: unused variable: `target_model_ptr`
+   --> src/inference/speculative.rs:174:17
+    |
+174 |         let mut target_model_ptr: *mut std::ffi::c_void = std::ptr::null_mut();
+    |                 ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_model_ptr`
+
+warning: unused variable: `target_path`
+   --> src/inference/speculative.rs:175:13
+    |
+175 |         let target_path = std::ffi::CString::new("/path/to/gpt-oss-20b.gguf")?; // Placeholder path
+    |             ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_path`
+
+warning: variable does not need to be mutable
+   --> src/inference/speculative.rs:149:13
+    |
+149 |         let mut draft_model_ptr: *mut std::ffi::c_void = std::ptr::null_mut();
+    |             ----^^^^^^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/inference/speculative.rs:174:13
+    |
+174 |         let mut target_model_ptr: *mut std::ffi::c_void = std::ptr::null_mut();
+    |             ----^^^^^^^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: unused variable: `command_queue`
+   --> src/inference/speculative.rs:272:9
+    |
+272 |         command_queue: &ProtocolObject<dyn MTLCommandQueue>,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_command_queue`
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:289:22
+    |
+289 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:298:13
+    |
+298 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(draft_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:303:22
+    |
+303 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:308:13
+    |
+308 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(draft_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:315:26
+    |
+315 |             let status = unsafe {
+    |                          ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:332:26
+    |
+332 |             let status = unsafe {
+    |                          ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:345:26
+    |
+345 |             let status = unsafe {
+    |                          ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:356:9
+    |
+356 |         unsafe { crate::inference::noesis_metal::release_gptoss_context(draft_context); }
+    |         ^^^^^^ unnecessary `unsafe` block
+
+warning: value assigned to `candidates` is never read
+   --> src/inference/speculative.rs:369:17
+    |
+369 |         let mut candidates = Vec::new();
+    |                 ^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` on by default
+
+warning: unused variable: `command_queue`
+   --> src/inference/speculative.rs:411:9
+    |
+411 |         command_queue: &ProtocolObject<dyn MTLCommandQueue>,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_command_queue`
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:417:22
+    |
+417 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:430:22
+    |
+430 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:439:13
+    |
+439 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(target_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:444:22
+    |
+444 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:449:13
+    |
+449 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(target_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:461:30
+    |
+461 |                 let status = unsafe {
+    |                              ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:487:30
+    |
+487 |                 let status = unsafe {
+    |                              ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:500:30
+    |
+500 |                 let status = unsafe {
+    |                              ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:513:30
+    |
+513 |                 let status = unsafe {
+    |                              ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:535:9
+    |
+535 |         unsafe { crate::inference::noesis_metal::release_gptoss_context(target_context); }
+    |         ^^^^^^ unnecessary `unsafe` block
+
+warning: unused variable: `encoder`
+   --> src/inference/speculative.rs:547:9
+    |
+547 |         encoder: &ProtocolObject<dyn MTLComputeCommandEncoder>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_encoder`
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:551:22
+    |
+551 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:564:22
+    |
+564 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:573:13
+    |
+573 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(draft_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:578:22
+    |
+578 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:583:13
+    |
+583 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(draft_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:591:9
+    |
+591 |         unsafe { crate::inference::noesis_metal::release_gptoss_context(draft_context); }
+    |         ^^^^^^ unnecessary `unsafe` block
+
+warning: unused variable: `encoder`
+   --> src/inference/speculative.rs:600:9
+    |
+600 |         encoder: &ProtocolObject<dyn MTLComputeCommandEncoder>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_encoder`
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:604:22
+    |
+604 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:617:22
+    |
+617 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:626:13
+    |
+626 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(target_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:631:22
+    |
+631 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:636:13
+    |
+636 |             unsafe { crate::inference::noesis_metal::release_gptoss_context(target_context); }
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:644:9
+    |
+644 |         unsafe { crate::inference::noesis_metal::release_gptoss_context(target_context); }
+    |         ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/speculative.rs:658:26
+    |
+658 |             let status = unsafe {
+    |                          ^^^^^^ unnecessary `unsafe` block
+
+warning: unused variable: `logits`
+   --> src/inference/speculative.rs:695:9
+    |
+695 |         logits: &[f32],
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_logits`
+
+warning: unused variable: `strategy`
+   --> src/inference/speculative.rs:697:9
+    |
+697 |         strategy: SamplingStrategy,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_strategy`
+
+warning: unused variable: `encoder`
+   --> src/inference/speculative.rs:698:9
+    |
+698 |         encoder: &ProtocolObject<dyn MTLComputeCommandEncoder>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_encoder`
+
+warning: unused variable: `depth`
+   --> src/inference/speculative.rs:851:52
+    |
+851 |     fn add_candidates(&mut self, branch_id: usize, depth: usize, tokens: Vec<u32>) {
+    |                                                    ^^^^^ help: if this is intentional, prefix it with an underscore: `_depth`
+
+warning: unnecessary `unsafe` block
+   --> src/inference/parallel_contexts.rs:332:22
+    |
+332 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/parallel_contexts.rs:348:22
+    |
+348 |         let status = unsafe {
+    |                      ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/parallel_contexts.rs:372:26
+    |
+372 |             let status = unsafe {
+    |                          ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/parallel_contexts.rs:399:26
+    |
+399 |             let status = unsafe {
+    |                          ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/parallel_contexts.rs:413:26
+    |
+413 |             let status = unsafe {
+    |                          ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/parallel_contexts.rs:494:13
+    |
+494 |             unsafe {
+    |             ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/fused_kernels.rs:292:9
+    |
+292 |         unsafe { encoder.endEncoding(); }
+    |         ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/inference/fused_kernels.rs:403:9
+    |
+403 |         unsafe { encoder.endEncoding(); }
+    |         ^^^^^^ unnecessary `unsafe` block
+
+warning: unused variable: `input_tokens`
+   --> src/inference/fused_kernels.rs:536:9
+    |
+536 |         input_tokens: &ZeroCopyTokenBuffer,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_input_tokens`
+
+warning: unused variable: `router_weights`
+   --> src/inference/fused_kernels.rs:537:9
+    |
+537 |         router_weights: &ZeroCopyTokenBuffer,
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_router_weights`
+
+warning: unused variable: `expert_indices`
+   --> src/inference/fused_kernels.rs:548:9
+    |
+548 |         expert_indices: &[u8; crate::constants::moe::ACTIVE_EXPERTS_PER_TOKEN],
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_expert_indices`
+
+warning: unused variable: `context_buffer`
+   --> src/inference/fused_kernels.rs:654:17
+    |
+654 |         for (i, context_buffer) in contexts.iter().enumerate() {
+    |                 ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context_buffer`
+
+warning: unused variable: `tokens_generated`
+   --> src/inference/harmony_token_recycling.rs:340:33
+    |
+340 |     fn record_cache_miss(&self, tokens_generated: usize, time_spent: Duration) {
+    |                                 ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_tokens_generated`
+
+warning: unused variable: `time_spent`
+   --> src/inference/harmony_token_recycling.rs:340:58
+    |
+340 |     fn record_cache_miss(&self, tokens_generated: usize, time_spent: Duration) {
+    |                                                          ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_time_spent`
+
+warning: unused variable: `config`
+   --> src/harmony/bridge.rs:101:13
+    |
+101 |         let config: RenderConfig = serde_json::from_str(&config_str)
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `author`
+   --> src/harmony/bridge.rs:125:17
+    |
+125 |             let author = if let Some(name) = json_msg.name {
+    |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_author`
+
+warning: variable does not need to be mutable
+   --> src/harmony/bridge.rs:313:5
+    |
+313 |     mut env: JNIEnv,
+    |     ----^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/harmony/bridge.rs:359:5
+    |
+359 |     mut env: JNIEnv,
+    |     ----^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: unused variable: `conversation`
+   --> src/harmony/types.rs:168:9
+    |
+168 |         conversation: &Conversation,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_conversation`
+
+warning: unused variable: `next_role`
+   --> src/harmony/types.rs:169:9
+    |
+169 |         next_role: Role,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_next_role`
+
+warning: unused variable: `max_tokens`
+   --> src/harmony/types.rs:170:9
+    |
+170 |         max_tokens: Option<u32>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_tokens`
+
+warning: unused variable: `tokens`
+   --> src/harmony/types.rs:179:9
+    |
+179 |         tokens: Vec<u32>,
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_tokens`
+
+warning: unused variable: `role`
+   --> src/harmony/types.rs:180:9
+    |
+180 |         role: Option<Role>,
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_role`
+
+warning: unused variable: `output_buffer`
+   --> src/backend/streamlined.rs:144:13
+    |
+144 |         let output_buffer = self.buffer_pool.allocate_token_buffer(max_tokens)?;
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_output_buffer`
+
+warning: unused variable: `input_buffer`
+   --> src/backend/streamlined.rs:131:9
+    |
+131 |         input_buffer: &ProtocolObject<dyn MTLBuffer>,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_input_buffer`
+
+warning: unnecessary `unsafe` block
+   --> src/backend/streamlined.rs:242:31
+    |
+242 |         let compile_options = unsafe {
+    |                               ^^^^^^ unnecessary `unsafe` block
+
+warning: unnecessary `unsafe` block
+   --> src/backend/streamlined.rs:310:31
+    |
+310 |         let compile_options = unsafe {
+    |                               ^^^^^^ unnecessary `unsafe` block
+
+warning: unreachable pattern
+   --> src/backend/unified.rs:187:13
+    |
+186 |             UnifiedBackend::Metal(backend) => Some(backend),
+    |             ------------------------------ matches all the relevant values
+187 |             _ => None,
+    |             ^ no value can reach this
+    |
+    = note: `#[warn(unreachable_patterns)]` on by default
+
+warning: variable `token_count` is assigned to, but never used
+   --> src/streaming_output.rs:239:17
+    |
+239 |         let mut token_count = 0;
+    |                 ^^^^^^^^^^^
+    |
+    = note: consider using `_token_count` instead
+
+warning: unused variable: `channel`
+   --> src/streaming/channel_router.rs:425:40
+    |
+425 |     fn update_streaming_metrics(&self, channel: Channel, processing_time: std::time::Duration) {
+    |                                        ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_channel`
+
+warning: unused variable: `active_channels`
+   --> src/cognitive/channels.rs:111:9
+    |
+111 |         active_channels: &[Channel],
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_active_channels`
+
+warning: unused variable: `token_buffer`
+   --> src/cognitive/channels.rs:147:9
+    |
+147 |         token_buffer: &OptimizedBuffer,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_token_buffer`
+
+warning: unused variable: `token_buffer`
+   --> src/cognitive/channels.rs:187:9
+    |
+187 |         token_buffer: &OptimizedBuffer,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_token_buffer`
+
+warning: unused variable: `error`
+   --> src/cognitive/harmony_engine.rs:316:32
+    |
+316 |     fn parse_error(token: u32, error: CognitiveError) -> Self {
+    |                                ^^^^^ help: if this is intentional, prefix it with an underscore: `_error`
+
+warning: unused variable: `error`
+   --> src/cognitive/async_engine.rs:338:38
+    |
+338 |     pub fn harmony_error(token: u32, error: NoesisError) -> Self {
+    |                                      ^^^^^ help: if this is intentional, prefix it with an underscore: `_error`
+
+warning: unused variable: `exploration_depth`
+   --> src/cognitive/state_manager.rs:283:9
+    |
+283 |         exploration_depth: usize,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_exploration_depth`
+
+warning: variable does not need to be mutable
+  --> src/parsing/tool_response.rs:63:21
+   |
+63 |                 let mut data = ToolResult::Markdown(MarkdownResult {
+   |                     ----^^^^
+   |                     |
+   |                     help: remove this `mut`
+
+warning: unused variable: `end_markers`
+  --> src/parsing/mod.rs:60:13
+   |
+60 |         let end_markers = ["}", "]"];
+   |             ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_end_markers`
+
+warning: unused variable: `env`
+  --> src/jni/runtime.rs:18:9
+   |
+18 |     mut env: JNIEnv,
+   |         ^^^ help: if this is intentional, prefix it with an underscore: `_env`
+
+warning: variable does not need to be mutable
+  --> src/jni/runtime.rs:18:5
+   |
+18 |     mut env: JNIEnv,
+   |     ----^^^
+   |     |
+   |     help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/jni/runtime.rs:82:5
+   |
+82 |     mut env: JNIEnv,
+   |     ----^^^
+   |     |
+   |     help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src/jni/runtime.rs:145:5
+    |
+145 |     mut env: JNIEnv,
+    |     ----^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: unused variable: `env`
+   --> src/jni/runtime.rs:193:9
+    |
+193 |     mut env: JNIEnv,
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_env`
+
+warning: variable does not need to be mutable
+   --> src/jni/runtime.rs:193:5
+    |
+193 |     mut env: JNIEnv,
+    |     ----^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: unused variable: `runtime`
+  --> src/jni/streaming.rs:30:9
+   |
+30 |     let runtime = unsafe {
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_runtime`
+
+warning: unused variable: `model_handle`
+  --> src/jni/streaming.rs:21:5
+   |
+21 |     model_handle: jlong,
+   |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_model_handle`
+
+warning: variable does not need to be mutable
+  --> src/jni/streaming.rs:18:5
+   |
+18 |     mut env: JNIEnv,
+   |     ----^^^
+   |     |
+   |     help: remove this `mut`
+
+warning: unused variable: `runtime`
+   --> src/jni/streaming.rs:100:9
+    |
+100 |     let runtime = unsafe {
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_runtime`
+
+warning: unused variable: `model_handle`
+  --> src/jni/streaming.rs:90:5
+   |
+90 |     model_handle: jlong,
+   |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_model_handle`
+
+warning: unused variable: `temperature`
+  --> src/jni/streaming.rs:93:5
+   |
+93 |     temperature: jfloat,
+   |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_temperature`
+
+warning: unused variable: `top_p`
+  --> src/jni/streaming.rs:94:5
+   |
+94 |     top_p: jfloat,
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_top_p`
+
+warning: unused variable: `callback`
+   --> src/jni/streaming.rs:262:44
+    |
+262 | fn send_flatbuffer_event(env: &mut JNIEnv, callback: &JObject, event_data: &[u8]) {
+    |                                            ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_callback`
+
+warning: variable does not need to be mutable
+   --> src/jni/memory.rs:102:5
+    |
+102 |     mut env: JNIEnv,
+    |     ----^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: unused variable: `runtime`
+  --> src/jni/utils.rs:24:9
+   |
+24 |     let runtime = unsafe {
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_runtime`
+
+warning: variable does not need to be mutable
+  --> src/jni/utils.rs:71:5
+   |
+71 |     mut env: JNIEnv,
+   |     ----^^^
+   |     |
+   |     help: remove this `mut`
+
+warning: unused variable: `query_buffer`
+   --> src/lib.rs:402:13
+    |
+402 |         let query_buffer = self.buffer_pool.allocate_by_size(query_tokens.len() * 4)?;
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_query_buffer`
+
+warning: unused variable: `resolution_buffer`
+   --> src/lib.rs:442:17
+    |
+442 |             let resolution_buffer = self.buffer_pool.allocate_by_size(resolution_prompt.len())?;
+    |                 ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resolution_buffer`
+
+warning: unused variable: `resolution`
+   --> src/lib.rs:446:17
+    |
+446 |             let resolution: Vec<u32> = vec![]; // Placeholder
+    |                 ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resolution`
+
+warning: type `SpeculativeMetrics` is more private than the item `SpeculativeEngine::get_metrics`
+   --> src/inference/speculative.rs:705:5
+    |
+705 |     pub fn get_metrics(&self) -> SpeculativeMetrics {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `SpeculativeEngine::get_metrics` is reachable at visibility `pub`
+    |
+note: but type `SpeculativeMetrics` is only usable at visibility `pub(self)`
+   --> src/inference/speculative.rs:110:1
+    |
+110 | struct SpeculativeMetrics {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_interfaces)]` on by default
+
+warning: type `ChannelAwareMetrics` is more private than the item `ChannelAwareSpeculativeEngine::get_metrics`
+   --> src/inference/channel_aware_speculation.rs:469:5
+    |
+469 |     pub fn get_metrics(&self) -> ChannelAwareMetrics {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `ChannelAwareSpeculativeEngine::get_metrics` is reachable at visibility `pub`
+    |
+note: but type `ChannelAwareMetrics` is only usable at visibility `pub(self)`
+   --> src/inference/channel_aware_speculation.rs:67:1
+    |
+ 67 | struct ChannelAwareMetrics {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `TokenRecyclingMetrics` is more private than the item `HarmonyTokenRecycler::get_metrics`
+   --> src/inference/harmony_token_recycling.rs:349:5
+    |
+349 |     pub fn get_metrics(&self) -> TokenRecyclingMetrics {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `HarmonyTokenRecycler::get_metrics` is reachable at visibility `pub`
+    |
+note: but type `TokenRecyclingMetrics` is only usable at visibility `pub(self)`
+   --> src/inference/harmony_token_recycling.rs:169:1
+    |
+169 | struct TokenRecyclingMetrics {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `streaming_output` is never read
+   --> src/lib.rs:103:5
+    |
+ 75 | pub struct NoesisRuntime {
+    |            ------------- field in this struct
+...
+103 |     streaming_output: Option<StreamingOutputManager>,
+    |     ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: fields `token_data`, `timestamp`, and `channels` are never read
+   --> src/lib.rs:132:5
+    |
+130 | pub struct BinaryCheckpoint {
+    |            ---------------- fields in this struct
+131 |     // Raw token data (can be mmap'd)
+132 |     token_data: Vec<u8>,
+    |     ^^^^^^^^^^
+...
+138 |     timestamp: i64,
+    |     ^^^^^^^^^
+139 |     channels: Vec<Channel>,
+    |     ^^^^^^^^
+
+warning: method `return_buffer` is never used
+   --> src/gpu_optimized.rs:193:19
+    |
+ 58 | impl OptimizedBufferPool {
+    | ------------------------ method in this implementation
+...
+193 |     pub(crate) fn return_buffer(&self, buffer: OptimizedBuffer) -> NoesisResult<()> {
+    |                   ^^^^^^^^^^^^^
+
+warning: fields `buffer_size` and `device` are never read
+   --> src/gpu_optimized.rs:333:5
+    |
+328 | pub struct TokenRingBuffer {
+    |            --------------- fields in this struct
+...
+333 |     buffer_size: usize,
+    |     ^^^^^^^^^^^
+...
+344 |     device: Arc<OptimizedMetalDevice>,
+    |     ^^^^^^
+
+warning: fields `command_queue` and `core_count` are never read
+   --> src/gpu_optimized.rs:574:5
+    |
+572 | pub struct OptimizedMetalDevice {
+    |            -------------------- fields in this struct
+573 |     device: Retained<ProtocolObject<dyn MTLDevice>>,
+574 |     command_queue: Retained<ProtocolObject<dyn MTLCommandQueue>>,
+    |     ^^^^^^^^^^^^^
+...
+579 |     core_count: usize,
+    |     ^^^^^^^^^^
+
+warning: field `storage_mode` is never read
+  --> src/unified_memory.rs:51:5
+   |
+41 | pub struct ZeroCopyTokenBuffer {
+   |            ------------------- field in this struct
+...
+51 |     storage_mode: MTLStorageMode,
+   |     ^^^^^^^^^^^^
+
+warning: field `n_heads` is never read
+   --> src/unified_memory.rs:189:5
+    |
+183 | struct KvCacheMetadata {
+    |        --------------- field in this struct
+...
+189 |     n_heads: usize,
+    |     ^^^^^^^
+
+warning: field `token_buffer` is never read
+   --> src/unified_memory.rs:361:5
+    |
+356 | pub struct UnifiedMemoryManager {
+    |            -------------------- field in this struct
+...
+361 |     token_buffer: Arc<ZeroCopyTokenBuffer>,
+    |     ^^^^^^^^^^^^
+
+warning: fields `command_queue`, `batch_config`, `kernel_library`, and `sampling_accelerator` are never read
+   --> src/inference/noesis_metal.rs:270:5
+    |
+249 | pub struct MetalInferenceEngine {
+    |            -------------------- fields in this struct
+...
+270 |     command_queue: Option<Retained<dyn MTLCommandQueue>>,
+    |     ^^^^^^^^^^^^^
+271 |     // Fixed batch size configuration for optimal GPU utilization
+272 |     batch_config: BatchConfiguration,
+    |     ^^^^^^^^^^^^
+...
+278 |     kernel_library: Option<Arc<MetalKernelLibrary>>,
+    |     ^^^^^^^^^^^^^^
+279 |     // GPU-accelerated sampling with kernel optimization
+280 |     sampling_accelerator: Option<Arc<SamplingAccelerator>>,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `num_tokens`, `max_tokens`, `pending_batch`, and `batch_position` are never read
+   --> src/inference/noesis_metal.rs:297:5
+    |
+294 | struct ContextState {
+    |        ------------ fields in this struct
+...
+297 |     num_tokens: usize,
+    |     ^^^^^^^^^^
+298 |     max_tokens: usize,
+    |     ^^^^^^^^^^
+299 |     // Batch processing state
+300 |     pending_batch: Vec<u32>,
+    |     ^^^^^^^^^^^^^
+301 |     batch_position: usize,
+    |     ^^^^^^^^^^^^^^
+
+warning: fields `result_receiver`, `command_queue`, and `buffer_pool` are never read
+   --> src/inference/noesis_metal.rs:322:5
+    |
+316 | pub struct AsyncTokenPipeline {
+    |            ------------------ fields in this struct
+...
+322 |     result_receiver: mpsc::UnboundedReceiver<ParallelTokenResult>,
+    |     ^^^^^^^^^^^^^^^
+...
+327 |     command_queue: Option<Retained<dyn MTLCommandQueue>>,
+    |     ^^^^^^^^^^^^^
+328 |     /// Buffer pool for zero-copy operations
+329 |     buffer_pool: Option<Arc<crate::gpu_optimized::OptimizedBufferPool>>,
+    |     ^^^^^^^^^^^
+
+warning: field `batch_size` is never read
+   --> src/inference/noesis_metal.rs:361:5
+    |
+351 | struct ParallelTokenTask {
+    |        ----------------- field in this struct
+...
+361 |     batch_size: usize,
+    |     ^^^^^^^^^^
+    |
+    = note: `ParallelTokenTask` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: methods `load_optimized_metal_shaders`, `initialize_parallel_contexts`, `initialize_metal_sampling_shaders`, and `decode_token_internal` are never used
+    --> src/inference/noesis_metal.rs:1636:8
+     |
+ 379 | impl MetalInferenceEngine {
+     | ------------------------- methods in this implementation
+...
+1636 |     fn load_optimized_metal_shaders(&self) -> Result<OptimizedShaderLibrary> {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1691 |     async fn initialize_parallel_contexts(
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1726 |     fn initialize_metal_sampling_shaders(&self) -> Result<()> {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2041 |     fn decode_token_internal(&self, model_state: &ModelState, token_id: u32) -> Result<Vec<u8>> {
+     |        ^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `model` is never read
+    --> src/inference/noesis_metal.rs:2143:5
+     |
+2140 | struct GpuContextPool {
+     |        -------------- field in this struct
+...
+2143 |     model: GptOssModel,
+     |     ^^^^^
+
+warning: function `get_metal_core_count` is never used
+    --> src/inference/noesis_metal.rs:2288:4
+     |
+2288 | fn get_metal_core_count() -> Option<usize> {
+     |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `create_temporary_context_and_generate` is never used
+    --> src/inference/noesis_metal.rs:2340:4
+     |
+2340 | fn create_temporary_context_and_generate(temperature: f32, rng_seed: u64) -> u32 {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_model_retain` is never used
+  --> src/inference/noesis_metal.rs:88:8
+   |
+88 |     fn gptoss_model_retain(model: GptOssModel) -> GptOssStatus;
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_tokenizer_get_num_tokens` is never used
+  --> src/inference/noesis_metal.rs:97:8
+   |
+97 |     fn gptoss_tokenizer_get_num_tokens(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_tokenizer_retain` is never used
+   --> src/inference/noesis_metal.rs:109:8
+    |
+109 |     fn gptoss_tokenizer_retain(tokenizer: GptOssTokenizer) -> GptOssStatus;
+    |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_context_get_num_tokens` is never used
+   --> src/inference/noesis_metal.rs:118:8
+    |
+118 |     fn gptoss_context_get_num_tokens(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_context_get_max_tokens` is never used
+   --> src/inference/noesis_metal.rs:123:8
+    |
+123 |     fn gptoss_context_get_max_tokens(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_context_get_tokens` is never used
+   --> src/inference/noesis_metal.rs:128:8
+    |
+128 |     fn gptoss_context_get_tokens(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_context_sample_batch` is never used
+   --> src/inference/noesis_metal.rs:152:8
+    |
+152 |     fn gptoss_context_sample_batch(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_context_process_async` is never used
+   --> src/inference/noesis_metal.rs:161:8
+    |
+161 |     fn gptoss_context_process_async(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_context_retain` is never used
+   --> src/inference/noesis_metal.rs:165:8
+    |
+165 |     fn gptoss_context_retain(context: GptOssContext) -> GptOssStatus;
+    |        ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `gptoss_context_append_chars` is never used
+   --> src/inference/noesis_metal.rs:169:8
+    |
+169 |     fn gptoss_context_append_chars(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: multiple fields are never read
+  --> src/inference/kernels.rs:36:5
+   |
+35 | pub struct MetalKernelLibrary {
+   |            ------------------ fields in this struct
+36 |     device: Arc<MetalDevice>,
+   |     ^^^^^^
+37 |     library: Retained<ProtocolObject<dyn MTLLibrary>>,
+   |     ^^^^^^^
+...
+40 |     softmax_kernel: Retained<ProtocolObject<dyn MTLFunction>>,
+   |     ^^^^^^^^^^^^^^
+41 |     topk_kernel: Retained<ProtocolObject<dyn MTLFunction>>,
+   |     ^^^^^^^^^^^
+42 |     topp_kernel: Retained<ProtocolObject<dyn MTLFunction>>,
+   |     ^^^^^^^^^^^
+43 |     matmul_kernel: Retained<ProtocolObject<dyn MTLFunction>>,
+   |     ^^^^^^^^^^^^^
+44 |     layernorm_kernel: Retained<ProtocolObject<dyn MTLFunction>>,
+   |     ^^^^^^^^^^^^^^^^
+45 |     rope_kernel: Retained<ProtocolObject<dyn MTLFunction>>,
+   |     ^^^^^^^^^^^
+
+warning: fields `draft_length` and `acceptance_threshold` are never read
+   --> src/inference/kernels.rs:480:5
+    |
+477 | pub struct SpeculativeDecoder {
+    |            ------------------ fields in this struct
+...
+480 |     draft_length: usize,
+    |     ^^^^^^^^^^^^
+481 |     acceptance_threshold: f32,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `memory_manager` and `kernel_library` are never read
+  --> src/inference/speculative.rs:51:5
+   |
+45 | pub struct SpeculativeEngine {
+   |            ----------------- fields in this struct
+...
+51 |     memory_manager: Arc<UnifiedMemoryManager>,
+   |     ^^^^^^^^^^^^^^
+52 |     /// Metal kernel library
+53 |     kernel_library: Arc<MetalKernelLibrary>,
+   |     ^^^^^^^^^^^^^^
+
+warning: fields `device`, `sampler`, `weights_buffer`, `hidden_dim`, and `n_layers` are never read
+  --> src/inference/speculative.rs:62:5
+   |
+61 | struct DraftModel {
+   |        ---------- fields in this struct
+62 |     device: Arc<MetalDevice>,
+   |     ^^^^^^
+63 |     sampler: SamplingAccelerator,
+   |     ^^^^^^^
+64 |     /// Model weights (much smaller than target)
+65 |     weights_buffer: Arc<ZeroCopyTokenBuffer>,
+   |     ^^^^^^^^^^^^^^
+...
+69 |     hidden_dim: usize,
+   |     ^^^^^^^^^^
+70 |     /// Number of layers (fewer than target)
+71 |     n_layers: usize,
+   |     ^^^^^^^^
+
+warning: fields `device`, `sampler`, `weights_buffer`, `hidden_dim`, and `n_layers` are never read
+  --> src/inference/speculative.rs:86:5
+   |
+85 | struct TargetModel {
+   |        ----------- fields in this struct
+86 |     device: Arc<MetalDevice>,
+   |     ^^^^^^
+87 |     sampler: SamplingAccelerator,
+   |     ^^^^^^^
+88 |     /// Model weights
+89 |     weights_buffer: Arc<ZeroCopyTokenBuffer>,
+   |     ^^^^^^^^^^^^^^
+...
+93 |     hidden_dim: usize,
+   |     ^^^^^^^^^^
+94 |     /// Number of layers
+95 |     n_layers: usize,
+   |     ^^^^^^^^
+
+warning: methods `run_target_inference` and `calculate_token_probability` are never used
+   --> src/inference/speculative.rs:597:8
+    |
+127 | impl SpeculativeEngine {
+    | ---------------------- methods in this implementation
+...
+597 |     fn run_target_inference(
+    |        ^^^^^^^^^^^^^^^^^^^^
+...
+684 |     fn calculate_token_probability(&self, logits: &[f32], token: u32) -> Result<f32> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `num_branches` is never read
+   --> src/inference/speculative.rs:821:5
+    |
+819 | struct SpeculationTree {
+    |        --------------- field in this struct
+820 |     branches: Vec<SpeculationBranch>,
+821 |     num_branches: usize,
+    |     ^^^^^^^^^^^^
+
+warning: fields `vocab_size`, `n_layers`, `hidden_dim`, and `n_heads` are never read
+  --> src/inference/parallel_contexts.rs:51:5
+   |
+48 | pub struct ModelMetadata {
+   |            ------------- fields in this struct
+...
+51 |     vocab_size: u32,
+   |     ^^^^^^^^^^
+52 |     n_layers: usize,
+   |     ^^^^^^^^
+53 |     hidden_dim: usize,
+   |     ^^^^^^^^^^
+54 |     n_heads: usize,
+   |     ^^^^^^^
+   |
+   = note: `ModelMetadata` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `created_at` is never read
+  --> src/inference/parallel_contexts.rs:68:5
+   |
+58 | pub struct ParallelContextHandle {
+   |            --------------------- field in this struct
+...
+68 |     created_at: std::time::Instant,
+   |     ^^^^^^^^^^
+
+warning: fields `current_tokens` and `max_tokens` are never read
+  --> src/inference/parallel_contexts.rs:78:5
+   |
+77 | struct ContextMetadata {
+   |        --------------- fields in this struct
+78 |     current_tokens: usize,
+   |     ^^^^^^^^^^^^^^
+79 |     max_tokens: usize,
+   |     ^^^^^^^^^^
+   |
+   = note: `ContextMetadata` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `library`, `multihead_attention_pipeline`, `embedding_encoding_pipeline`, and `expert_routing_pipeline` are never read
+  --> src/inference/fused_kernels.rs:32:5
+   |
+28 | pub struct FusedKernelManager {
+   |            ------------------ fields in this struct
+...
+32 |     library: Retained<ProtocolObject<dyn MTLLibrary>>,
+   |     ^^^^^^^
+...
+42 |     multihead_attention_pipeline: Retained<ProtocolObject<dyn MTLComputePipelineState>>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 |     #[cfg(target_os = "macos")]
+44 |     embedding_encoding_pipeline: Retained<ProtocolObject<dyn MTLComputePipelineState>>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+50 |     expert_routing_pipeline: Retained<ProtocolObject<dyn MTLComputePipelineState>>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `expert_weights_buffer` and `kernel_params` are never read
+   --> src/inference/fused_kernels.rs:104:5
+    |
+101 | pub struct PrecomputedExpertData {
+    |            --------------------- fields in this struct
+...
+104 |     expert_weights_buffer: Retained<ProtocolObject<dyn MTLBuffer>>,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+105 |     /// Optimized kernel parameters
+106 |     kernel_params: MoEKernelParams,
+    |     ^^^^^^^^^^^^^
+
+warning: field `streaming_router` is never read
+  --> src/inference/channel_aware_speculation.rs:58:5
+   |
+52 | pub struct ChannelAwareSpeculativeEngine {
+   |            ----------------------------- field in this struct
+...
+58 |     streaming_router: Arc<StreamingChannelRouter>,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: field `context_manager` is never read
+   --> src/inference/variable_effort_batching.rs:158:5
+    |
+150 | pub struct VariableEffortBatcher {
+    |            --------------------- field in this struct
+...
+158 |     context_manager: Arc<ParallelContextManager>,
+    |     ^^^^^^^^^^^^^^^
+
+warning: field `average_batch_size` is never read
+   --> src/inference/variable_effort_batching.rs:195:5
+    |
+182 | struct BatchingMetrics {
+    |        --------------- field in this struct
+...
+195 |     average_batch_size: AtomicUsize,
+    |     ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `BatchingMetrics` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: field `encoding` is never read
+   --> src/harmony/types.rs:202:5
+    |
+201 | pub struct StreamableParser {
+    |            ---------------- field in this struct
+202 |     encoding: HarmonyEncoding,
+    |     ^^^^^^^^
+
+warning: field `layernorm_pipeline` is never read
+  --> src/backend/streamlined.rs:44:5
+   |
+32 | pub struct StreamlinedGpuBackend {
+   |            --------------------- field in this struct
+...
+44 |     layernorm_pipeline: Option<Retained<ProtocolObject<dyn MTLComputePipelineState>>>,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: method `create_token_generation_pipeline` is never used
+   --> src/backend/streamlined.rs:302:8
+    |
+ 59 | impl StreamlinedGpuBackend {
+    | -------------------------- method in this implementation
+...
+302 |     fn create_token_generation_pipeline(&self) -> NoesisResult<Retained<ProtocolObject<dyn MTLComputePipelineState>>> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `config` and `start_time` are never read
+   --> src/streaming_output.rs:106:5
+    |
+103 | pub struct StreamingOutputManager {
+    |            ---------------------- fields in this struct
+...
+106 |     config: StreamingOutputConfig,
+    |     ^^^^^^
+107 |     start_time: Instant,
+    |     ^^^^^^^^^^
+
+warning: fields `prediction_hits` and `prediction_misses` are never read
+   --> src/streaming/channel_router.rs:172:5
+    |
+157 | pub struct StreamingMetrics {
+    |            ---------------- fields in this struct
+...
+172 |     prediction_hits: AtomicU64,
+    |     ^^^^^^^^^^^^^^^
+173 |     prediction_misses: AtomicU64,
+    |     ^^^^^^^^^^^^^^^^^
+    |
+    = note: `StreamingMetrics` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: fields `backend` and `token_graph` are never read
+  --> src/cognitive/mod.rs:43:16
+   |
+41 | pub struct CognitiveEngine {
+   |            --------------- fields in this struct
+42 |     // Zero-cost compile-time dispatch backend
+43 |     pub(crate) backend: Arc<UnifiedBackend>,
+   |                ^^^^^^^
+...
+53 |     pub(crate) token_graph: Arc<TokenGraph>,
+   |                ^^^^^^^^^^^
+
+warning: field `backend` is never read
+  --> src/cognitive/channels.rs:93:5
+   |
+92 | pub struct ChannelRouter {
+   |            ------------- field in this struct
+93 |     backend: Arc<dyn StreamlinedBackendTrait>,
+   |     ^^^^^^^
+
+warning: fields `backend` and `token_graph` are never read
+  --> src/cognitive/harmony_engine.rs:33:5
+   |
+28 | pub struct HarmonyCognitiveEngine {
+   |            ---------------------- fields in this struct
+...
+33 |     backend: Arc<UnifiedBackend>,
+   |     ^^^^^^^
+...
+42 |     token_graph: Arc<TokenGraph>,
+   |     ^^^^^^^^^^^
+
+warning: fields `backend` and `token_graph` are never read
+  --> src/cognitive/async_engine.rs:30:5
+   |
+25 | pub struct AsyncCognitiveEngine {
+   |            -------------------- fields in this struct
+...
+30 |     backend: Arc<dyn StreamlinedBackendTrait>,
+   |     ^^^^^^^
+...
+39 |     token_graph: Arc<TokenGraph>,
+   |     ^^^^^^^^^^^
+
+warning: field `backend` is never read
+   --> src/cognitive/async_engine.rs:526:5
+    |
+525 | pub struct AsyncContradictionProcessor {
+    |            --------------------------- field in this struct
+526 |     backend: Arc<dyn StreamlinedBackendTrait>,
+    |     ^^^^^^^
+
+warning: field `backend` is never read
+   --> src/cognitive/async_engine.rs:550:5
+    |
+549 | pub struct AsyncSemanticProcessor {
+    |            ---------------------- field in this struct
+550 |     backend: Arc<dyn StreamlinedBackendTrait>,
+    |     ^^^^^^^
+
+warning: fields `token_graph` and `backend` are never read
+   --> src/cognitive/async_engine.rs:574:5
+    |
+573 | pub struct AsyncStateManager {
+    |            ----------------- fields in this struct
+574 |     token_graph: Arc<TokenGraph>,
+    |     ^^^^^^^^^^^
+575 |     backend: Arc<dyn StreamlinedBackendTrait>,
+    |     ^^^^^^^
+
+warning: field `backend` is never read
+   --> src/cognitive/async_engine.rs:600:5
+    |
+599 | pub struct AsyncSafetyFilter {
+    |            ----------------- field in this struct
+600 |     backend: Arc<dyn StreamlinedBackendTrait>,
+    |     ^^^^^^^
+
+warning: fields `semantic_threshold`, `logical_threshold`, and `factual_threshold` are never read
+  --> src/cognitive/contradiction_detector.rs:25:5
+   |
+17 | pub struct ContradictionDetector {
+   |            --------------------- fields in this struct
+...
+25 |     semantic_threshold: f32,
+   |     ^^^^^^^^^^^^^^^^^^
+26 |     logical_threshold: f32,
+   |     ^^^^^^^^^^^^^^^^^
+27 |     factual_threshold: f32,
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: field `buffer_pool` is never read
+  --> src/cognitive/semantic_processor.rs:20:5
+   |
+17 | pub struct SemanticProcessor {
+   |            ----------------- field in this struct
+...
+20 |     buffer_pool: Arc<OptimizedBufferPool>,
+   |     ^^^^^^^^^^^
+
+warning: fields `buffer_pool` and `checkpoint_retention_limit` are never read
+  --> src/cognitive/state_manager.rs:26:5
+   |
+23 | pub struct CognitiveStateManager {
+   |            --------------------- fields in this struct
+...
+26 |     buffer_pool: Arc<OptimizedBufferPool>,
+   |     ^^^^^^^^^^^
+...
+42 |     checkpoint_retention_limit: usize,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `CheckpointCreationParams` is never constructed
+   --> src/cognitive/state_manager.rs:520:8
+    |
+520 | struct CheckpointCreationParams {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `StateMergeParams` is never constructed
+   --> src/cognitive/state_manager.rs:527:8
+    |
+527 | struct StateMergeParams {
+    |        ^^^^^^^^^^^^^^^^
+
+warning: struct `MergeResultData` is never constructed
+   --> src/cognitive/state_manager.rs:535:8
+    |
+535 | struct MergeResultData {
+    |        ^^^^^^^^^^^^^^^
+
+warning: fields `checkpoints` and `cognitive_context` are never read
+   --> src/cognitive/state_manager.rs:722:5
+    |
+720 | pub struct CognitiveInsightIterator<'a> {
+    |            ------------------------ fields in this struct
+721 |     active_paths: &'a DashMap<String, ReasoningPath>,
+722 |     checkpoints: &'a DashMap<String, CognitiveCheckpoint>,
+    |     ^^^^^^^^^^^
+723 |     cognitive_context: &'a ArcSwap<CognitiveContext>,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: fields `backend`, `risk_threshold`, `harm_threshold`, and `toxicity_threshold` are never read
+  --> src/cognitive/safety_filter.rs:20:5
+   |
+18 | pub struct SafetyFilter {
+   |            ------------ fields in this struct
+19 |     // Cross-platform GPU backend (works on Metal/CUDA/ONNX)
+20 |     backend: Arc<dyn StreamlinedBackendTrait>,
+   |     ^^^^^^^
+...
+30 |     risk_threshold: f32,
+   |     ^^^^^^^^^^^^^^
+31 |     harm_threshold: f32,
+   |     ^^^^^^^^^^^^^^
+32 |     toxicity_threshold: f32,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: fields `token`, `violation_type`, `description`, and `mitigation_applied` are never read
+   --> src/cognitive/safety_filter.rs:514:5
+    |
+512 | struct SafetyViolation {
+    |        --------------- fields in this struct
+513 |     timestamp: u64,
+514 |     token: u32,
+    |     ^^^^^
+...
+517 |     violation_type: ViolationType,
+    |     ^^^^^^^^^^^^^^
+518 |     description: String,
+    |     ^^^^^^^^^^^
+519 |     mitigation_applied: Vec<MitigationAction>,
+    |     ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `SafetyViolation` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `pattern`, `severity`, and `created_at` are never read
+   --> src/cognitive/safety_filter.rs:533:5
+    |
+532 | struct BlockedPattern {
+    |        -------------- fields in this struct
+533 |     pattern: String,
+    |     ^^^^^^^
+534 |     severity: f32,
+    |     ^^^^^^^^
+535 |     created_at: u64,
+    |     ^^^^^^^^^^
+    |
+    = note: `BlockedPattern` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `buffer_pool` is never read
+  --> src/parsing/mod.rs:37:5
+   |
+35 | pub struct ParsingContext {
+   |            -------------- field in this struct
+36 |     tokenizer: tiktoken_rs::CoreBPE,
+37 |     buffer_pool: Arc<crate::gpu_optimized::OptimizedBufferPool>,
+   |     ^^^^^^^^^^^
+
+warning: fields `extract_code`, `extract_tables`, and `extract_links` are never read
+  --> src/parsing/markdown.rs:39:5
+   |
+38 | pub struct MarkdownParser {
+   |            -------------- fields in this struct
+39 |     extract_code: bool,
+   |     ^^^^^^^^^^^^
+40 |     extract_tables: bool,
+   |     ^^^^^^^^^^^^^^
+41 |     extract_links: bool,
+   |     ^^^^^^^^^^^^^
+
+warning: unused `std::result::Result` that must be used
+  --> src/cognitive/harmony_channels.rs:63:9
+   |
+63 |         parser.process(token);
+   |         ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+   = note: `#[warn(unused_must_use)]` on by default
+help: use `let _ = ...` to ignore the resulting value
+   |
+63 |         let _ = parser.process(token);
+   |         +++++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+    --> src/events_generated.rs:1943:34
+     |
+1943 | pub fn root_as_noesis_event(buf: &[u8]) -> Result<NoesisEvent, flatbuffers::InvalidFlatbuffer> {
+     |                                  ^^^^^            ----------- the same lifetime is hidden here
+     |                                  |
+     |                                  the lifetime is elided here
+     |
+     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+     |
+1943 | pub fn root_as_noesis_event(buf: &[u8]) -> Result<NoesisEvent<'_>, flatbuffers::InvalidFlatbuffer> {
+     |                                                              ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+    --> src/events_generated.rs:1953:48
+     |
+1953 | pub fn size_prefixed_root_as_noesis_event(buf: &[u8]) -> Result<NoesisEvent, flatbuffers::InvalidFlatbuffer> {
+     |                                                ^^^^^            ----------- the same lifetime is hidden here
+     |                                                |
+     |                                                the lifetime is elided here
+     |
+     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+     |
+1953 | pub fn size_prefixed_root_as_noesis_event(buf: &[u8]) -> Result<NoesisEvent<'_>, flatbuffers::InvalidFlatbuffer> {
+     |                                                                            ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+    --> src/events_generated.rs:1986:51
+     |
+1986 | pub unsafe fn root_as_noesis_event_unchecked(buf: &[u8]) -> NoesisEvent {
+     |                                                   ^^^^^     ----------- the same lifetime is hidden here
+     |                                                   |
+     |                                                   the lifetime is elided here
+     |
+     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+     |
+1986 | pub unsafe fn root_as_noesis_event_unchecked(buf: &[u8]) -> NoesisEvent<'_> {
+     |                                                                        ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+    --> src/events_generated.rs:1993:65
+     |
+1993 | pub unsafe fn size_prefixed_root_as_noesis_event_unchecked(buf: &[u8]) -> NoesisEvent {
+     |                                                                 ^^^^^     ----------- the same lifetime is hidden here
+     |                                                                 |
+     |                                                                 the lifetime is elided here
+     |
+     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+     |
+1993 | pub unsafe fn size_prefixed_root_as_noesis_event_unchecked(buf: &[u8]) -> NoesisEvent<'_> {
+     |                                                                                      ++++
+
+warning: `noesis-runtime` (lib) generated 336 warnings (run `cargo fix --lib -p noesis-runtime` to apply 94 suggestions)
+    Finished `release` profile [optimized] target(s) in 0.12s
+Noesis Runtime library built and copied to resources
+
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:cloneFlatBuffers SKIPPED
+
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:applyFlatBuffersPatches
+Applying FlatBuffers patches...
+Patch already applied or not needed: flatbuffers-disable-signing.patch
+✅ FlatBuffers patches processed
+
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:buildFlatBuffers
+Building FlatBuffers compiler...
+-- Proceeding with version: 1.12.0.1350
+-- CMAKE_CXX_FLAGS: 
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /Users/aria/noesis-workspace/mitramod/koog/prompt/prompt-executor/prompt-executor-clients/noesis-executor/build/flatbuffers-kmp/build
+[  5%] Built target flatbuffers
+[ 47%] Built target flatc
+[ 48%] Built target flatsample
+[ 51%] Built target flatsamplebinary
+[ 64%] Built target flatsamplebfbs
+[ 64%] Built target flatsampletext
+[100%] Built target flattests
+FlatBuffers compiler built successfully at /Users/aria/noesis-workspace/mitramod/koog/prompt/prompt-executor/prompt-executor-clients/noesis-executor/build/flatbuffers-kmp/flatc
+
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:generateNoesisEventsFB UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:compileKotlinJvm UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:compileJvmMainJava NO-SOURCE
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:copyNativeLibraryToResources UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:jvmProcessResources UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:processJvmMainResources SKIPPED
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:jvmMainClasses UP-TO-DATE
+> Task :prompt:prompt-executor:prompt-executor-clients:noesis-executor:jvmJar UP-TO-DATE
+> Task :noesis-cli:compileKotlin UP-TO-DATE
+> Task :noesis-cli:compileJava NO-SOURCE
+> Task :noesis-cli:classes UP-TO-DATE
+
+> Task :noesis-cli:run FAILED
+🚀 Noesis Runtime CLI
+Type 'noesis --help' for usage information
+Use 'noesis repl' for interactive mode
+🎪 Noesis Comprehensive Demo
+===========================
+Showcasing real-time streaming, channel awareness, and performance
+[JNI] Initializing NoesisRuntime with unified backend...
+[Metal] Compiling optimized shader library...
+[Metal] ✅ Shader library compiled successfully
+[Metal] Loading optimized_softmax function...
+[Metal] ✅ optimized_softmax function loaded
+[NoesisRuntime] ✅ Real-time harmony streaming enabled
+[JNI] ✅ NoesisRuntime initialized successfully, ptr: 5442412544
+[JNI] Destroying NoesisRuntime...
+[NoesisRuntime] Starting cleanup...
+[NoesisRuntime] Cleanup completed
+[StreamingOutput] Shutting down streaming output manager
+[StreamingOutput] Event channel disconnected, stopping output thread
+[JNI] ✅ NoesisRuntime destroyed successfully
+Exception in thread "main" java.lang.IllegalStateException: No model found in default locations
+	at ai.koog.noesis.cli.DemoCommand.findDefaultModel(NoesisCLI.kt:760)
+	at ai.koog.noesis.cli.DemoCommand.access$findDefaultModel(NoesisCLI.kt:603)
+	at ai.koog.noesis.cli.DemoCommand$run$1.invokeSuspend(NoesisCLI.kt:616)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at ai.koog.noesis.cli.DemoCommand.run(NoesisCLI.kt:608)
+	at com.github.ajalt.clikt.parsers.Parser.finalizeAndRun(Parser.kt:348)
+	at com.github.ajalt.clikt.parsers.Parser.parse(Parser.kt:218)
+	at com.github.ajalt.clikt.parsers.Parser.parse(Parser.kt:245)
+	at com.github.ajalt.clikt.parsers.Parser.parse(Parser.kt:42)
+	at com.github.ajalt.clikt.core.CliktCommand.parse(CliktCommand.kt:457)
+	at com.github.ajalt.clikt.core.CliktCommand.parse$default(CliktCommand.kt:454)
+	at com.github.ajalt.clikt.core.CliktCommand.main(CliktCommand.kt:474)
+	at com.github.ajalt.clikt.core.CliktCommand.main(CliktCommand.kt:481)
+	at ai.koog.noesis.cli.NoesisCLIKt.main(NoesisCLI.kt:1032)
+
+[Incubating] Problems report is available at: file:///Users/aria/noesis-workspace/mitramod/koog/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':noesis-cli:run'.
+> Process 'command '/Users/aria/Library/Java/JavaVirtualMachines/azul-17.0.10/Contents/Home/bin/java'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2s
+30 actionable tasks: 4 executed, 26 up-to-date
